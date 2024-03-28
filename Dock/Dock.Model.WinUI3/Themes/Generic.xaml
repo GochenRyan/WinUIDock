@@ -1,0 +1,47 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Dock.Model.WinUI3">
+
+    <Style TargetType="local2:DockableBase" xmlns:local2="using:Dock.Model.WinUI3.Core">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local2:DockableBase">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="local2:DockBase" xmlns:local2="using:Dock.Model.WinUI3.Core">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local2:DockBase">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="local2:DockWindow" xmlns:local2="using:Dock.Model.WinUI3.Core">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local2:DockWindow">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
