@@ -349,8 +349,8 @@ public abstract partial class FactoryBase : IFactory
         var window = CreateDockWindow();
         window.Id = nameof(IDockWindow);
         window.Title = "";
-        window.Width = double.NaN;
-        window.Height = double.NaN;
+        window.WindowWidth = double.NaN;
+        window.WindowHeight = double.NaN;
         window.Layout = root;
 
         root.Window = window;
@@ -375,8 +375,8 @@ public abstract partial class FactoryBase : IFactory
             AddWindow(rootDock, window);
             window.X = x;
             window.Y = y;
-            window.Width = width;
-            window.Height = height;
+            window.WindowWidth = width;
+            window.WindowHeight = height;
             window.Present(false);
 
             if (window.Layout is { })

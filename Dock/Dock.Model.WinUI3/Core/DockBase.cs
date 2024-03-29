@@ -1,6 +1,7 @@
+using Dock.Model.Adapters;
 using Dock.Model.Core;
-using Microsoft.UI.Xaml.Controls;
-using System;
+using Dock.Model.WinUI3.Internal;
+using Microsoft.UI.Xaml;
 using System.Collections.Generic;
 using System.Windows.Input;
 
@@ -9,129 +10,116 @@ using System.Windows.Input;
 
 namespace Dock.Model.WinUI3.Core
 {
-    public abstract class DockBase : Control, IDock
+    public abstract class DockBase : DockableBase, IDock
     {
         public DockBase()
         {
             this.DefaultStyleKey = typeof(DockBase);
+            _navigateAdapter = new NavigateAdapter(this);
+            _visibleDockables = new List<IDockable>();
+            GoBack = Command.Create(() => _navigateAdapter.GoBack());
+            GoForward = Command.Create(() => _navigateAdapter.GoForward());
+            Navigate = Command.Create<object>(root => _navigateAdapter.Navigate(root, true));
+            Close = Command.Create(() => _navigateAdapter.Close());
         }
 
-        public IList<IDockable> VisibleDockables { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDockable ActiveDockable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDockable DefaultDockable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDockable FocusedDockable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public double Proportion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DockMode Dock { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsActive { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsEmpty { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsCollapsable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int OpenedDockablesCount { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IList<IDockable> VisibleDockables { get => (IList<IDockable>)GetValue(VisibleDockablesProperty); set => SetValue(VisibleDockablesProperty, value); }
+        public IDockable ActiveDockable { get => (IDockable)GetValue(ActiveDockableProperty); set => SetValue(ActiveDockableProperty, value); }
+        public IDockable DefaultDockable { get => (IDockable)GetValue(DefaultDockableProperty); set => SetValue(DefaultDockableProperty, value); }
+        public IDockable FocusedDockable { get => (IDockable)GetValue(FocusedDockableProperty); set => SetValue(FocusedDockableProperty, value); }
+        public double Proportion { get => (double)GetValue(ProportionProperty); set => SetValue(ProportionProperty, value); }
+        public DockMode Dock { get => (DockMode)GetValue(DockProperty); set => SetValue(DockProperty, value); }
+        public bool IsActive { get => (bool)GetValue(IsActiveProperty); set => SetValue(IsActiveProperty, value); }
+        public bool IsEmpty { get => (bool)GetValue(IsEmptyProperty); set => SetValue(IsEmptyProperty, value); }
+        public bool IsCollapsable { get => (bool)GetValue(IsCollapsableProperty); set => SetValue(IsCollapsableProperty, value); }
+        public int OpenedDockablesCount { get => (int)GetValue(OpenedDockablesCountProperty); set => SetValue(OpenedDockablesCountProperty, value); }
 
-        public bool CanGoBack => throw new NotImplementedException();
+        public bool CanGoBack => (bool)GetValue(CanGoBackProperty);
 
-        public bool CanGoForward => throw new NotImplementedException();
+        public bool CanGoForward => (bool)GetValue(CanGoForwardProperty);
 
-        public ICommand GoBack => throw new NotImplementedException();
+        public ICommand GoBack { get; }
 
-        public ICommand GoForward => throw new NotImplementedException();
+        public ICommand GoForward { get; }
 
-        public ICommand Navigate => throw new NotImplementedException();
+        public ICommand Navigate { get; }
 
-        public ICommand Close => throw new NotImplementedException();
+        public ICommand Close { get; }
 
-        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Title { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public object Context { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDockable Owner { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDockable OriginalOwner { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IFactory Factory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool CanClose { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool CanPin { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool CanFloat { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public void GetPinnedBounds(out double x, out double y, out double width, out double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+            nameof(VisibleDockables),
+            typeof(IList<IDockable>),
+            typeof(DockBase),
+            new PropertyMetadata(default(IList<IDockable>)));
 
-        public void GetPointerPosition(out double x, out double y)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty ActiveDockableProperty = DependencyProperty.Register(
+            nameof(ActiveDockable),
+            typeof(IDockable),
+            typeof(DockBase),
+            new PropertyMetadata(default(IDockable)));
 
-        public void GetPointerScreenPosition(out double x, out double y)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
+            nameof(DefaultDockable),
+            typeof(IDockable),
+            typeof(DockBase),
+            new PropertyMetadata(default(IDockable)));
 
-        public void GetTabBounds(out double x, out double y, out double width, out double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
+            nameof(FocusedDockable),
+            typeof(IDockable),
+            typeof(DockBase),
+            new PropertyMetadata(default(IDockable)));
 
-        public void GetVisibleBounds(out double x, out double y, out double width, out double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty ProportionProperty = DependencyProperty.Register(
+            nameof(Proportion),
+            typeof(double),
+            typeof(DockBase),
+            new PropertyMetadata(double.NaN));
 
-        public bool OnClose()
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty DockProperty = DependencyProperty.Register(
+            nameof(Dock),
+            typeof(DockMode),
+            typeof(DockBase),
+            new PropertyMetadata(DockMode.Center));
 
-        public void OnPinnedBoundsChanged(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty IsActiveProperty = DependencyProperty.Register(
+            nameof(IsActive),
+            typeof(bool),
+            typeof(DockBase),
+            new PropertyMetadata(default(bool)));
 
-        public void OnPointerPositionChanged(double x, double y)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty IsEmptyProperty = DependencyProperty.Register(
+            nameof(IsEmpty),
+            typeof(bool),
+            typeof(DockBase),
+            new PropertyMetadata(default(bool)));
 
-        public void OnPointerScreenPositionChanged(double x, double y)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
+            nameof(IsCollapsable),
+            typeof(bool),
+            typeof(DockBase),
+            new PropertyMetadata(true));
 
-        public void OnSelected()
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty OpenedDockablesCountProperty = DependencyProperty.Register(
+            nameof(OpenedDockablesCount),
+            typeof(int),
+            typeof(DockBase),
+            new PropertyMetadata(default(int)));
 
-        public void OnTabBoundsChanged(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty CanGoBackProperty = DependencyProperty.Register(
+            nameof(CanGoBack),
+            typeof(bool),
+            typeof(DockBase),
+            new PropertyMetadata(default(bool)));
 
-        public void OnVisibleBoundsChanged(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
+        DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
+            nameof(CanGoForward),
+            typeof(bool),
+            typeof(DockBase),
+            new PropertyMetadata(default(bool)));
 
-        public void SetPinnedBounds(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetPointerPosition(double x, double y)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetPointerScreenPosition(double x, double y)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetTabBounds(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetVisibleBounds(double x, double y, double width, double height)
-        {
-            throw new NotImplementedException();
-        }
+        internal INavigateAdapter _navigateAdapter;
+        private IList<IDockable> _visibleDockables;
     }
 }

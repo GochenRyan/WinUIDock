@@ -29,8 +29,8 @@ public class HostAdapter : IHostAdapter
             _window.Y = y;
 
             _window.Host.GetSize(out var width, out var height);
-            _window.Width = width;
-            _window.Height = height;
+            _window.WindowWidth = width;
+            _window.WindowHeight = height;
         }
     }
 
@@ -55,7 +55,7 @@ public class HostAdapter : IHostAdapter
         {
             _window.Host.Present(isDialog);
             _window.Host.SetPosition(_window.X, _window.Y);
-            _window.Host.SetSize(_window.Width, _window.Height);
+            _window.Host.SetSize(_window.WindowWidth, _window.WindowHeight);
             _window.Host.SetTitle(_window.Title);
             _window.Host.SetLayout(_window.Layout);
             _window.Host.IsTracked = true;

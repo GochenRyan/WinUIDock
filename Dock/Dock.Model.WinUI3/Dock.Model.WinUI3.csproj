@@ -11,4 +11,8 @@
       <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
       <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dock.Model\Dock.Model.csproj" />
+  </ItemGroup>
 </Project>

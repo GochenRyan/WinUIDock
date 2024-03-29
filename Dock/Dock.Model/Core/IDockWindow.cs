@@ -25,12 +25,12 @@ public interface IDockWindow
     /// <summary>
     /// Gets or sets window width.
     /// </summary>
-    double Width { get; set; }
+    double WindowWidth { get; set; }
 
     /// <summary>
     /// Gets or sets window height.
     /// </summary>
-    double Height { get; set; }
+    double WindowHeight { get; set; }
 
     /// <summary>
     /// Gets or sets whether this window appears on top of all other windows.
