@@ -14,7 +14,6 @@ namespace Dock.Model.WinUI3.Core
     {
         public DockBase()
         {
-            this.DefaultStyleKey = typeof(DockBase);
             _navigateAdapter = new NavigateAdapter(this);
             _visibleDockables = new List<IDockable>();
             GoBack = Command.Create(() => _navigateAdapter.GoBack());

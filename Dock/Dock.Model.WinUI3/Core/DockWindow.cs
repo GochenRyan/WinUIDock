@@ -2,19 +2,16 @@ using Dock.Model.Adapters;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Dock.Model.WinUI3.Core
 {
-    public abstract class DockWindow : Control, IDockWindow
+    public class DockWindow : FrameworkElement, IDockWindow
     {
         public DockWindow()
         {
-            this.DefaultStyleKey = typeof(DockWindow);
-
             Id = nameof(IDockWindow);
             Title = nameof(IDockWindow);
             _hostAdapter = new HostAdapter(this);

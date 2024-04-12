@@ -7,15 +7,19 @@ using System;
 namespace Dock.Model.WinUI3.Controls
 {
     [ContentProperty(Name = "Content")]
-    public class Document : DockableBase, IDocument, IDocumentContent
+    public class Tool : DockableBase, ITool, IDocument, IToolContent
     {
         public object Content { get => GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
         DependencyProperty ContentProperty = DependencyProperty.Register(
             nameof(Content),
             typeof(object),
-            typeof(Document),
+            typeof(Tool),
             new PropertyMetadata(default));
+
+        public Tool()
+        {
+        }
 
         public Type DataType { get; set; }
 
@@ -28,5 +32,6 @@ namespace Dock.Model.WinUI3.Controls
 
             return DataType.IsInstanceOfType(data);
         }
+
     }
 }
