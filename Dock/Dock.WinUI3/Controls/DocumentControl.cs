@@ -5,11 +5,11 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Dock.WinUI3.Controls
 {
-    public sealed partial class DockTarget : ContentControl
+    public sealed class DocumentControl : ContentControl
     {
-        public DockTarget()
+        public DocumentControl()
         {
-            this.InitializeComponent();
+            this.DefaultStyleKey = typeof(DocumentControl);
         }
     }
 }

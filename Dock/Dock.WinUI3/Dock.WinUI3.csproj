@@ -9,15 +9,36 @@
   <ItemGroup>
     <None Remove="Controls\DockControl.xaml" />
     <None Remove="Controls\DockTarget.xaml" />
+    <None Remove="Controls\DockTemplate.xaml" />
+    <None Remove="Controls\DocumentControl.xaml" />
+    <None Remove="Controls\DocumentDockControl.xaml" />
+    <None Remove="Controls\PinnedDockControl.xaml" />
+    <None Remove="Controls\ProportionalDockControl.xaml" />
+    <None Remove="Controls\ProportionalStackPanelSplitter.xaml" />
+    <None Remove="Controls\RootDockControl.xaml" />
+    <None Remove="Controls\ToolChromeControl.xaml" />
+    <None Remove="Controls\ToolControl.xaml" />
+    <None Remove="Controls\ToolDockControl.xaml" />
+    <None Remove="Controls\ToolPinItemControl.xaml" />
+    <None Remove="Controls\ToolPinnedControl.xaml" />
+    <None Remove="Controls\ToolTabStrip.xaml" />
+    <None Remove="Controls\ToolTabStripItem.xaml" />
+    <None Remove="DockTarget.xaml" />
   </ItemGroup>
 
   <ItemGroup>
-      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
-      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
+      <PackageReference Include="CommunityToolkit.WinUI.Controls.LayoutTransformControl" Version="8.0.240109" />
+      <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
+      <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
+      <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.0.240109" />
+      <PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
+      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240428000" />
+      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Assets\" />
+    <Folder Include="Converters\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,7 +47,103 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Controls\ToolTabStripItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolChromeControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolTabStrip.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolDockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\PinnedDockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Update="Controls\DockTarget.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="DockTarget.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolPinItemControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolPinnedControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ProportionalDockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ProportionalStackPanelSplitter.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DocumentControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DocumentDockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\RootDockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DockControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DockTemplate.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

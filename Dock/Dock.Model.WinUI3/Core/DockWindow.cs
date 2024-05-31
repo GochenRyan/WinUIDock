@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml;
 
 namespace Dock.Model.WinUI3.Core
 {
-    public class DockWindow : FrameworkElement, IDockWindow
+    public class DockWindow : DependencyObject, IDockWindow
     {
         public DockWindow()
         {

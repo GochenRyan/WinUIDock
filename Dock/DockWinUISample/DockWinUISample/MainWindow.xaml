@@ -6,11 +6,108 @@
     xmlns:local="using:DockWinUISample"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Dock.WinUI3.Controls" 
+    xmlns:modewinui3="using:Dock.Model.WinUI3" 
+    xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
     mc:Ignorable="d">
 
-    
-    
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-    </StackPanel>
+    <Grid RowDefinitions="Auto,*">
+        <MenuBar Grid.Row="0">
+            <MenuBarItem Title="File">
+                <MenuFlyoutSubItem Text="New">
+                    <MenuFlyoutItem Text="Plain Text Document"/>
+                    <MenuFlyoutItem Text="Rich Text Document"/>
+                    <MenuFlyoutItem Text="Other Formats..."/>
+                </MenuFlyoutSubItem>
+                <MenuFlyoutItem Text="Open..."/>
+                <MenuFlyoutItem Text="Save"/>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Exit"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Undo"/>
+                <MenuFlyoutItem Text="Cut"/>
+                <MenuFlyoutItem Text="Copy"/>
+                <MenuFlyoutItem Text="Paste"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="View">
+                <MenuFlyoutItem Text="Output"/>
+                <MenuFlyoutSeparator/>
+                <RadioMenuFlyoutItem Text="Landscape" GroupName="OrientationGroup"/>
+                <RadioMenuFlyoutItem Text="Portrait" GroupName="OrientationGroup" IsChecked="True"/>
+                <MenuFlyoutSeparator/>
+                <RadioMenuFlyoutItem Text="Small icons" GroupName="SizeGroup"/>
+                <RadioMenuFlyoutItem Text="Medium icons" IsChecked="True" GroupName="SizeGroup"/>
+                <RadioMenuFlyoutItem Text="Large icons" GroupName="SizeGroup"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Help">
+                <MenuFlyoutItem Text="About"/>
+            </MenuBarItem>
+        </MenuBar>
+
+        <controls:DockControl x:Name="Dock" Grid.Row="1" InitializeLayout="True" InitializeFactory="True">
+            <controls:DockControl.Factory>
+                <modewinui3:Factory/>
+            </controls:DockControl.Factory>
+            <winui3controls:RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{x:Bind MainLayout}">
+                <winui3controls:RootDock.Windows>
+                    
+                </winui3controls:RootDock.Windows>
+
+                <winui3controls:ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Horizontal">
+
+                    <!-- Left Pane -->
+                    <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left">
+                        <winui3controls:Tool x:Name="SolutionExplorer" Id="SolutionExplorer" Title="Solution Explorer">
+                            <TextBlock Text="{Binding Title}"/>
+                        </winui3controls:Tool>
+                    </winui3controls:ToolDock>
+
+                    <winui3controls:ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter" />
+
+                    <!-- Right Pane -->
+                    <winui3controls:ProportionalDock x:Name="TopPane" Id="TopPane" Orientation="Vertical">
+                        <winui3controls:ProportionalDock x:Name="RightPane" Id="RightPane" Orientation="Horizontal">
+
+                            <!-- Documents Pane -->
+                            <winui3controls:DocumentDock x:Name="DocumentsPane" Id="DocumentsPane" CanCreateDocument="True" ActiveDockable="{x:Bind Document1}">
+                                <winui3controls:Document x:Name="Document1" Id="Document1" Title="Program.cs">
+                                    <TextBlock Text="{Binding Title}"/>
+                                </winui3controls:Document>
+                                <winui3controls:Document x:Name="Document2" Id="Document2" Title="App.axaml">
+                                    <TextBlock Text="{Binding Title}"/>
+                                </winui3controls:Document>
+                            </winui3controls:DocumentDock>
+
+                            <winui3controls:ProportionalDockSplitter x:Name="RightSplitter" Id="RightSplitter" />
+
+                            <!-- Properties Pane -->
+                            <winui3controls:ToolDock x:Name="PropertiesPane" Id="PropertiesPane" Proportion="0.3" Alignment="Right">
+                                <winui3controls:Tool x:Name="Properties" Id="Properties" Title="Properties">
+                                    <TextBlock Text="{Binding Title}"/>
+                                </winui3controls:Tool>
+                            </winui3controls:ToolDock>
+
+                        </winui3controls:ProportionalDock>
+
+                        <!-- Bottom Pane -->
+
+                        <winui3controls:ToolDock x:Name="BottomPane" Id="BottomPane" Proportion="0.3" Alignment="Bottom" ActiveDockable="{x:Bind Output}">
+                            <winui3controls:Tool x:Name="ErrorList" Id="ErrorList" Title="Error List">
+                                <TextBlock Text="{Binding Title}"/>
+                            </winui3controls:Tool>
+                            <winui3controls:Tool x:Name="Output" Id="Output" Title="Output">
+                                <TextBlock Text="{Binding Title}"/>
+                            </winui3controls:Tool>
+                        </winui3controls:ToolDock>
+
+                    </winui3controls:ProportionalDock>
+
+                </winui3controls:ProportionalDock>
+            </winui3controls:RootDock>
+        </controls:DockControl>
+    </Grid>
 </Window>

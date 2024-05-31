@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Dock.WinUI3.Controls"
+    xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:ui="using:CommunityToolkit.WinUI.UI">
+
+    <converters:CollectionVisibilityConverter x:Key="CollectionVisibilityConverter" />
+
+    <Style TargetType="local:ToolDockControl">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:ToolDockControl">
+                    <local:DockableControl Name="PART_DockableControl"
+                                           TrackingMode="Visible"
+                                           Background="{TemplateBinding Background}">
+                        <local:ToolChromeControl IsActive="{Binding IsActive}" 
+                                                 Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">
+                            <local:ToolControl ui:FrameworkElementExtensions.AncestorType="DockControl"
+                                               IsHitTestVisible="{Binding (ui:FrameworkElementExtensions.Ancestor).IsDraggingDock, RelativeSource={RelativeSource Self}}"/>
+                        </local:ToolChromeControl>
+                    </local:DockableControl>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

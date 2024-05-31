@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Dock.WinUI3.Controls" 
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <Style TargetType="local:ToolControl">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:ToolControl">
+                    <controls:DockPanel x:Name="PART_DockPanel">
+                        <local:ToolTabStrip x:Name="PART_TabStrip"
+                                            ItemsSource="{Binding VisibleDockables}"
+                                            SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
+                                            controls:DockPanel.Dock="Bottom"/>
+                        <Border x:Name="PART_Border">
+                            <local:DockableControl DataContext="{Binding ActiveDockable}"
+                                                   TrackingMode="Visible">
+                                <ContentControl x:Name="PART_ContentPresenter"
+                                                Content="{Binding Content}"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"/>
+                            </local:DockableControl>
+                        </Border>
+                    </controls:DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

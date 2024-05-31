@@ -1,14 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ContentControl
-    x:Class="Dock.WinUI3.Controls.DockTarget"
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    xmlns:local="using:Dock.WinUI3.Controls">
 
-    <Grid>
+    <Style TargetType="local:DockTarget">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:DockTarget">
+                    <Grid x:Name="PART_IndicatorGrid" RowDefinitions="*,*" ColumnDefinitions="*,*">
+                        <Popup x:Name="PART_TopIndicator" 
+                               Grid.Row="0" 
+                               Grid.ColumnSpan="2" 
+                               Grid.Column="0" 
+                               Opacity="0"/>
+                        <Popup x:Name="PART_BottomIndicator" 
+                               Grid.Row="1" 
+                               Grid.ColumnSpan="2" 
+                               Grid.Column="0" 
+                               Opacity="0"/>
+                        <Popup x:Name="PART_LeftIndicator" 
+                               Grid.Row="0" 
+                               Grid.RowSpan="2" 
+                               Grid.Column="0" 
+                               Opacity="0"/>
+                        <Popup x:Name="PART_RightIndicator" 
+                               Grid.Column="1" 
+                               Grid.Row="0" 
+                               Grid.RowSpan="2" 
+                               Opacity="0"/>
+                        <Popup x:Name="PART_CenterIndicator" 
+                               Grid.ColumnSpan="2" 
+                               Grid.Column="0" 
+                               Grid.Row="0" 
+                               Grid.RowSpan="2" 
+                               Opacity="0"/>
+                        <Popup x:Name="PART_SelectorPanel" 
+                               Grid.Row="0" 
+                               Grid.RowSpan="2" 
+                               Grid.ColumnSpan="2" 
+                               Grid.Column="0">
+                            <Grid x:Name="PART_SelectorGrid" 
+                                  RowDefinitions="*,*,*" 
+                                  ColumnDefinitions="*,*,*"
+                                  MaxWidth="125"
+                                  MaxHeight="125">
+                                <Image x:Name="PART_TopSelector" 
+                                       Grid.Row="0" 
+                                       Grid.Column="1" 
+                                       Source="ms-appx:///Assets/DockAnchorableTop.png"
+                                       Width="40"
+                                       Height="40"/>
+                                <Image x:Name="PART_BottomSelector" 
+                                       Grid.Row="2" 
+                                       Grid.Column="1" 
+                                       Source="ms-appx:///Assets/DockAnchorableBottom.png"
+                                       Width="40"
+                                       Height="40"/>
+                                <Image x:Name="PART_LeftSelector" 
+                                       Grid.Row="1" 
+                                       Grid.Column="0" 
+                                       Source="ms-appx:///Assets/DockAnchorableLeft.png"
+                                       Width="40"
+                                       Height="40"/>
+                                <Image x:Name="PART_RightSelector" 
+                                       Grid.Row="1" 
+                                       Grid.Column="2" 
+                                       Source="ms-appx:///Assets/DockAnchorableRight.png"
+                                       Width="40"
+                                       Height="40"/>
+                                <Image x:Name="PART_CenterSelector" 
+                                       Grid.Row="1" 
+                                       Grid.Column="1" 
+                                       Source="ms-appx:///Assets/DockDocumentInside.png"
+                                       Width="40"
+                                       Height="40"/>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
-    </Grid>
-</ContentControl>
+</ResourceDictionary>

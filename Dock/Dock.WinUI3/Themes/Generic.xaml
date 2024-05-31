@@ -1,0 +1,23 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DockTarget.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentDockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/PinnedDockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ProportionalDockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ProportionalStackPanelSplitter.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/RootDockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolChromeControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolDockControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolPinItemControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolPinnedControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolTabStrip.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolTabStripItem.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

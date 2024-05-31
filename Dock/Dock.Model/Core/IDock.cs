@@ -8,11 +8,6 @@ namespace Dock.Model.Core;
 public interface IDock : IDockable
 {
     /// <summary>
-    /// Gets or sets visible dockables.
-    /// </summary>
-    IList<IDockable>? VisibleDockables { get; set; }
-
-    /// <summary>
     /// Gets or sets active dockable.
     /// </summary>
     IDockable? ActiveDockable { get; set; }
@@ -86,4 +81,9 @@ public interface IDock : IDockable
     /// Close layout.
     /// </summary>
     ICommand Close { get; }
+
+    /// <summary>
+    /// Gets or Sets visible dockables.
+    /// </summary>
+    IList<IDockable> VisibleDockables { get; set; }
 }

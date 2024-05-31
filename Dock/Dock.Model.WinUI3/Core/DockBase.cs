@@ -22,7 +22,8 @@ namespace Dock.Model.WinUI3.Core
             Close = Command.Create(() => _navigateAdapter.Close());
         }
 
-        public IList<IDockable> VisibleDockables { get => (IList<IDockable>)GetValue(VisibleDockablesProperty); set => SetValue(VisibleDockablesProperty, value); }
+        public virtual IList<IDockable> VisibleDockables { get; set; }
+
         public IDockable ActiveDockable { get => (IDockable)GetValue(ActiveDockableProperty); set => SetValue(ActiveDockableProperty, value); }
         public IDockable DefaultDockable { get => (IDockable)GetValue(DefaultDockableProperty); set => SetValue(DefaultDockableProperty, value); }
         public IDockable FocusedDockable { get => (IDockable)GetValue(FocusedDockableProperty); set => SetValue(FocusedDockableProperty, value); }
@@ -45,80 +46,73 @@ namespace Dock.Model.WinUI3.Core
 
         public ICommand Close { get; }
 
-
-        DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
-            nameof(VisibleDockables),
-            typeof(IList<IDockable>),
-            typeof(DockBase),
-            new PropertyMetadata(default(IList<IDockable>)));
-
-        DependencyProperty ActiveDockableProperty = DependencyProperty.Register(
+        public static DependencyProperty ActiveDockableProperty = DependencyProperty.Register(
             nameof(ActiveDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(default(IDockable)));
 
-        DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
+        public static DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
             nameof(DefaultDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(default(IDockable)));
 
-        DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
+        public static DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
             nameof(FocusedDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(default(IDockable)));
 
-        DependencyProperty ProportionProperty = DependencyProperty.Register(
+        public static DependencyProperty ProportionProperty = DependencyProperty.Register(
             nameof(Proportion),
             typeof(double),
             typeof(DockBase),
             new PropertyMetadata(double.NaN));
 
-        DependencyProperty DockProperty = DependencyProperty.Register(
+        public static DependencyProperty DockProperty = DependencyProperty.Register(
             nameof(Dock),
             typeof(DockMode),
             typeof(DockBase),
             new PropertyMetadata(DockMode.Center));
 
-        DependencyProperty IsActiveProperty = DependencyProperty.Register(
+        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
             nameof(IsActive),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(default(bool)));
 
-        DependencyProperty IsEmptyProperty = DependencyProperty.Register(
+        public static DependencyProperty IsEmptyProperty = DependencyProperty.Register(
             nameof(IsEmpty),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(default(bool)));
 
-        DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
+        public static DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
             nameof(IsCollapsable),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(true));
 
-        DependencyProperty OpenedDockablesCountProperty = DependencyProperty.Register(
+        public static DependencyProperty OpenedDockablesCountProperty = DependencyProperty.Register(
             nameof(OpenedDockablesCount),
             typeof(int),
             typeof(DockBase),
             new PropertyMetadata(default(int)));
 
-        DependencyProperty CanGoBackProperty = DependencyProperty.Register(
+        public static DependencyProperty CanGoBackProperty = DependencyProperty.Register(
             nameof(CanGoBack),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(default(bool)));
 
-        DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
+        public static DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
             nameof(CanGoForward),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(default(bool)));
 
         internal INavigateAdapter _navigateAdapter;
-        private IList<IDockable> _visibleDockables;
+        protected IList<IDockable> _visibleDockables;
     }
 }

@@ -1,19 +1,20 @@
 ﻿using Dock.Model.Controls;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
 using System;
 
 namespace Dock.Model.WinUI3.Controls
 {
     [ContentProperty(Name = "Content")]
-    public class DocumentTemplate : IDocumentTemplate
+    public class DocumentTemplate : DependencyObject, IDocumentTemplate
     {
-        public object Content { get; set; }
+        DependencyProperty ContentProperty = DependencyProperty.Register(
+            nameof(Content),
+            typeof(object),
+            typeof(DocumentTemplate),
+            new PropertyMetadata(default));
 
-        //DependencyProperty ContentProperty = DependencyProperty.Register(
-        //    nameof(Content),
-        //    typeof(object),
-        //    typeof(Document),
-        //    new PropertyMetadata(default));
+        public object Content { get => GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
         public DocumentTemplate()
         {

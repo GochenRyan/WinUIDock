@@ -5,21 +5,31 @@ using Microsoft.UI.Xaml.Input;
 
 namespace Dock.WinUI3.Controls
 {
-    public sealed class DockableControl : Panel
+    public class DockableControl : Panel, IDockableControl
     {
         private IDockable _currentDockable;
 
         public DockableControl()
         {
-            Loading += DockableControl_Loading;
+            PressedHandler = new PointerEventHandler(OnPressed);
+            MovedHandler = new PointerEventHandler(OnMoved);
+
+            Loaded += DockableControl_Loaded;
+            Unloaded += DockableControl_Unloaded;
             SizeChanged += DockableControl_SizeChanged;
             DataContextChanged += DockableControl_DataContextChanged;
         }
 
-        private void DockableControl_Loading(FrameworkElement sender, object args)
+        private void DockableControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            AddHandler(PointerPressedEvent, new PointerEventHandler(PressedHandler), true);
-            AddHandler(PointerMovedEvent, new PointerEventHandler(MovedHandler), true);
+            RemoveHandler(PointerPressedEvent, PressedHandler);
+            RemoveHandler(PointerMovedEvent, MovedHandler);
+        }
+
+        private void DockableControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            AddHandler(PointerPressedEvent, PressedHandler, true);
+            AddHandler(PointerMovedEvent, MovedHandler, true);
         }
 
         private void DockableControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -28,14 +38,83 @@ namespace Dock.WinUI3.Controls
 
         private void DockableControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
+            if (_currentDockable is not null)
+            {
+                UnRegister(_currentDockable);
+                _currentDockable = null;
+            }
+
+            if (args.NewValue is IDockable dockableChanged)
+            {
+                _currentDockable = dockableChanged;
+                Register(dockableChanged);
+            }
         }
 
-        private void PressedHandler(object sender, PointerRoutedEventArgs e)
+        private void Register(IDockable dockable)
         {
+            switch (TrackingMode)
+            {
+                case TrackingMode.Visible:
+                    if (dockable.Factory is not null)
+                    {
+                        dockable.Factory.VisibleDockableControls[dockable] = this;
+                    }
+                    break;
+                case TrackingMode.Pinned:
+                    if (dockable.Factory is not null)
+                    {
+                        dockable.Factory.PinnedDockableControls[dockable] = this;
+                    }
+                    break;
+                case TrackingMode.Tab:
+                    if (dockable.Factory is not null)
+                    {
+                        dockable.Factory.TabDockableControls[dockable] = this;
+                    }
+                    break;
+            }
         }
 
-        private void MovedHandler(object sender, PointerRoutedEventArgs e)
+        private void UnRegister(IDockable dockable)
         {
+            switch (TrackingMode)
+            {
+                case TrackingMode.Visible:
+                    dockable.Factory?.VisibleDockableControls.Remove(dockable);
+                    break;
+                case TrackingMode.Pinned:
+                    dockable.Factory?.PinnedDockableControls.Remove(dockable);
+                    break;
+                case TrackingMode.Tab:
+                    dockable.Factory?.TabDockableControls.Remove(dockable);
+                    break;
+            }
+        }
+
+        private void OnPressed(object sender, PointerRoutedEventArgs e)
+        {
+            SetPointerTracking(e);
+        }
+
+        private void OnMoved(object sender, PointerRoutedEventArgs e)
+        {
+            SetPointerTracking(e);
+        }
+
+        private void SetPointerTracking(PointerRoutedEventArgs e)
+        {
+            if (DataContext is not IDockable dockable)
+            {
+                return;
+            }
+
+            var position = e.GetCurrentPoint(this).Position;
+
+            //var screenPoint = DockHelpers.ToDockPoint(this.PointToScreen(position).ToPoint(1.0));
+
+            dockable.SetPointerPosition(position.X, position.Y);
+            //dockable.SetPointerScreenPosition(screenPoint.X, screenPoint.Y);
         }
 
         public static readonly DependencyProperty TrackingModeProperty =
@@ -43,7 +122,7 @@ namespace Dock.WinUI3.Controls
             nameof(TrackingMode),
             typeof(TrackingMode),
             typeof(DockableControl),
-            new PropertyMetadata(null, new PropertyChangedCallback(OnTrackingModeChanged)));
+            new PropertyMetadata(default));
 
         public TrackingMode TrackingMode
         {
@@ -55,5 +134,7 @@ namespace Dock.WinUI3.Controls
         {
 
         }
+        private PointerEventHandler PressedHandler { get; set; }
+        private PointerEventHandler MovedHandler { get; set; }
     }
 }
