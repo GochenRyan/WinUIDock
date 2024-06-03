@@ -12,7 +12,7 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class RootDock : DockBase, IRootDock
     {
-        public static DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(IList<IDockable>),
             typeof(RootDock),
@@ -75,11 +75,7 @@ namespace Dock.Model.WinUI3.Controls
         public override IList<IDockable> VisibleDockables
         {
             get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
-            set
-            {
-                SetValue(VisibleDockablesProperty, value);
-                _visibleDockables = value;
-            }
+            set => SetValue(VisibleDockablesProperty, value);
         }
 
         public bool IsFocusableRoot { get => (bool)GetValue(IsFocusableRootProperty); set => SetValue(IsFocusableRootProperty, value); }

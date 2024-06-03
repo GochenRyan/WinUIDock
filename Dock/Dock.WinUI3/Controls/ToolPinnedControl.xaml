@@ -5,7 +5,7 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:ui="using:CommunityToolkit.WinUI.UI">
 
-    <Style TargetType="local:ToolPinnedControl" BasedOn="{StaticResource ItemsControlStyle}">
+    <Style TargetType="local:ToolPinnedControl">
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>

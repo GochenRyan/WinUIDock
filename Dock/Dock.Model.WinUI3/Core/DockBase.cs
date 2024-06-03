@@ -15,7 +15,6 @@ namespace Dock.Model.WinUI3.Core
         public DockBase()
         {
             _navigateAdapter = new NavigateAdapter(this);
-            _visibleDockables = new List<IDockable>();
             GoBack = Command.Create(() => _navigateAdapter.GoBack());
             GoForward = Command.Create(() => _navigateAdapter.GoForward());
             Navigate = Command.Create<object>(root => _navigateAdapter.Navigate(root, true));
@@ -113,6 +112,5 @@ namespace Dock.Model.WinUI3.Core
             new PropertyMetadata(default(bool)));
 
         internal INavigateAdapter _navigateAdapter;
-        protected IList<IDockable> _visibleDockables;
     }
 }

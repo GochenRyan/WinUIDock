@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.Foundation;
 
 namespace Dock.WinUI3.Controls
 {
@@ -134,6 +135,20 @@ namespace Dock.WinUI3.Controls
         {
 
         }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            if (Children.Count > 0)
+            {
+                foreach (var child in Children)
+                {
+                    child.Measure(availableSize);
+                }
+            }
+
+            return availableSize;
+        }
+
         private PointerEventHandler PressedHandler { get; set; }
         private PointerEventHandler MovedHandler { get; set; }
     }

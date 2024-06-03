@@ -23,7 +23,7 @@
                 <local:DockTemplateSelector>
                     <local:DockTemplateSelector.RootDockTemplate>
                         <DataTemplate>
-                            <local:RootDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>
+                            <local:RootDockControl Content="{Binding ActiveDockable, Mode=OneWay}"/>
                         </DataTemplate>
                     </local:DockTemplateSelector.RootDockTemplate>
                 </local:DockTemplateSelector>

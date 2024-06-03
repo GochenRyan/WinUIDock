@@ -33,18 +33,14 @@ namespace Dock.Model.WinUI3.Controls
         public override IList<IDockable> VisibleDockables
         {
             get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
-            set
-            {
-                SetValue(VisibleDockablesProperty, value);
-                _visibleDockables = value;
-            }
+            set => SetValue(VisibleDockablesProperty, value);
         }
 
         public bool CanCreateDocument { get => (bool)GetValue(CanCreateDocumentProperty); set => SetValue(CanCreateDocumentProperty, value); }
         public ICommand CreateDocument { get; set; }
         public IDocumentTemplate DocumentTemplate { get => (IDocumentTemplate)GetValue(DocumentTemplateProperty); set => SetValue(DocumentTemplateProperty, value); }
 
-        public DocumentDock()
+        public DocumentDock() : base()
         {
             CreateDocument = new Command(() => CreateDocumentFromTemplate());
         }

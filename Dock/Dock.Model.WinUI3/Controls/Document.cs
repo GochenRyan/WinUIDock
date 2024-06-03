@@ -11,7 +11,7 @@ namespace Dock.Model.WinUI3.Controls
     {
         public object Content { get => GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
-        DependencyProperty ContentProperty = DependencyProperty.Register(
+        public static DependencyProperty ContentProperty = DependencyProperty.Register(
             nameof(Content),
             typeof(object),
             typeof(Document),

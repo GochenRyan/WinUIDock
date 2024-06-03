@@ -24,5 +24,29 @@ namespace Dock.WinUI3.Controls
             get => (Orientation)GetValue(OrientationProperty);
             set => SetValue(OrientationProperty, value);
         }
+
+        /// <inheritdoc/>
+        protected override DependencyObject GetContainerForItemOverride()
+        {
+            return base.GetContainerForItemOverride();
+        }
+
+        /// <inheritdoc/>
+        protected override bool IsItemItsOwnContainerOverride(object item)
+        {
+            return base.IsItemItsOwnContainerOverride(item);
+        }
+
+        /// <inheritdoc/>
+        protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
+        {
+            base.PrepareContainerForItemOverride(element, item);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnItemsChanged(object e)
+        {
+            base.OnItemsChanged(e);
+        }
     }
 }

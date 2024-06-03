@@ -1,9 +1,11 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -179,6 +181,29 @@ namespace Dock.WinUI3.Controls
         /// <inheritdoc/>
         protected override Size MeasureOverride(Size availableSize)
         {
+            var horizontal = Orientation == Orientation.Horizontal;
+            if ((horizontal && double.IsInfinity(availableSize.Width))
+                || (!horizontal && double.IsInfinity(availableSize.Height)))
+            {
+                throw new Exception("Proportional StackPanel cannot be inside a control that offers infinite space.");
+            }
+
+            bool bLoaded = true;
+            for (var i = 0; i < Children.Count; i++)
+            {
+                var child = Children[i];
+                if (VisualTreeHelper.GetChildrenCount(child) == 0)
+                {
+                    child.Measure(new Size(0.0, 0.0));
+                    bLoaded = false;
+                }
+            }
+
+            if (!bLoaded)
+            {
+                return new Size(0.0, 0.0);
+            }
+
             var usedWidth = 0.0;
             var usedHeight = 0.0;
             var maximumWidth = 0.0;
@@ -188,6 +213,9 @@ namespace Dock.WinUI3.Controls
             AssignProportions(Children);
 
             var needsNextSplitter = false;
+
+
+
 
             for (var i = 0; i < Children.Count; i++)
             {

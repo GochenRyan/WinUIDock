@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 using Windows.Foundation;
 using Windows.System;
 using Vector = Dock.WinUI3.Internal.Vector;
@@ -25,11 +24,11 @@ namespace Dock.WinUI3.Controls
             this.DefaultStyleKey = typeof(DockControl);
         }
 
-        public static readonly DependencyProperty LayoutProperty = DependencyProperty.Register(
-            nameof(Layout),
-            typeof(IDock),
-            typeof(DockControl),
-            new PropertyMetadata(null, OnLayoutChanged));
+        //public static readonly DependencyProperty LayoutProperty = DependencyProperty.Register(
+        //    nameof(Layout),
+        //    typeof(IDock),
+        //    typeof(DockControl),
+        //    new PropertyMetadata(null, OnLayoutChanged));
 
         public static readonly DependencyProperty DefaultContextProperty = DependencyProperty.Register(
             nameof(DefaultContext),
@@ -63,8 +62,8 @@ namespace Dock.WinUI3.Controls
 
         public IDock Layout
         {
-            get { return (IDock)GetValue(LayoutProperty); }
-            set { SetValue(LayoutProperty, value); }
+            get { return (IDock)GetValue(ContentProperty); }
+            set { SetValue(ContentProperty, value); }
         }
 
         public object DefaultContext
@@ -101,19 +100,31 @@ namespace Dock.WinUI3.Controls
 
         public IDockControlState DockControlState => _dockControlState;
 
-        private static void OnLayoutChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        //private static void OnLayoutChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        //{
+        //    var control = ob as DockControl;
+        //    if (control._isInitialized)
+        //    {
+        //        control.DeInitialize((IDock)args.OldValue);
+        //    }
+
+        //    control.Initialize((IDock)args.NewValue);
+        //}
+
+        protected override void OnApplyTemplate()
         {
-            var control = ob as DockControl;
-            if (control._isInitialized)
+            base.OnApplyTemplate();
+            if (_isInitialized)
             {
-                control.DeInitialize((IDock)args.OldValue);
+                DeInitialize(Layout);
             }
 
-            control.Initialize((IDock)args.NewValue);
+            Initialize(Layout);
         }
 
         protected override void OnContentChanged(object oldContent, object newContent)
         {
+            base.OnContentChanged(oldContent, newContent);
             if (_isInitialized)
             {
                 DeInitialize((IDock)oldContent);
@@ -185,6 +196,16 @@ namespace Dock.WinUI3.Controls
             }
 
             _isInitialized = true;
+        }
+
+        protected override void OnContentTemplateChanged(DataTemplate oldContentTemplate, DataTemplate newContentTemplate)
+        {
+            base.OnContentChanged(oldContentTemplate, newContentTemplate);
+        }
+
+        protected override void OnContentTemplateSelectorChanged(DataTemplateSelector oldContentTemplateSelector, DataTemplateSelector newContentTemplateSelector)
+        {
+            base.OnContentTemplateSelectorChanged(oldContentTemplateSelector, newContentTemplateSelector);
         }
 
         /// <inheritdoc/>

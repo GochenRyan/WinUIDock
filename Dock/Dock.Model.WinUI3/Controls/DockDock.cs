@@ -13,7 +13,7 @@ namespace Dock.Model.WinUI3.Controls
         public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(IList<IDockable>),
-            typeof(DocumentDock),
+            typeof(DockDock),
             new PropertyMetadata(new List<IDockable>()));
 
         public static DependencyProperty LastChildFillProperty = DependencyProperty.Register(
@@ -26,11 +26,7 @@ namespace Dock.Model.WinUI3.Controls
         public override IList<IDockable> VisibleDockables
         {
             get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
-            set
-            {
-                SetValue(VisibleDockablesProperty, value);
-                _visibleDockables = value;
-            }
+            set => SetValue(VisibleDockablesProperty, value);
         }
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -5,7 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Dock.WinUI3.Controls
 {
-    public sealed class RootDockControl : ItemsControl
+    public sealed class RootDockControl : ContentControl
     {
         public RootDockControl()
         {

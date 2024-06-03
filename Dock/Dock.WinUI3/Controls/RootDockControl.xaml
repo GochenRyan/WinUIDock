@@ -5,22 +5,43 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
+    <DataTemplate x:Key="ProportionalDockTemplate1">
+        <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=TwoWay}"/>
+    </DataTemplate>
+
     <Style TargetType="local:RootDockControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:RootDockControl">
                     <local:DockableControl TrackingMode="Visible">
                         <controls:DockPanel>
-                            <local:ToolPinnedControl controls:DockPanel.Dock="Left"
-                                                     />
+                            <!--<local:ToolPinnedControl controls:DockPanel.Dock="Left" 
+                                                     Orientation="Vertical"
+                                                     ItemsSource="{Binding LeftPinnedDockables, Mode=OneWay}"
+                                                     Visibility="{Binding LeftPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
+                            <local:ToolPinnedControl controls:DockPanel.Dock="Right" 
+                                                     Orientation="Vertical"
+                                                     ItemsSource="{Binding RightPinnedDockables}"
+                                                     Visibility="{Binding RightPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
+                            <local:ToolPinnedControl controls:DockPanel.Dock="Top" 
+                                                     Orientation="Horizontal"
+                                                     ItemsSource="{Binding TopPinnedDockables}"
+                                                     Visibility="{Binding TopPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
+                            <local:ToolPinnedControl controls:DockPanel.Dock="Bottom" 
+                                                     Orientation="Horizontal"
+                                                     ItemsSource="{Binding BottomPinnedDockables}"
+                                                     Visibility="{Binding BottomPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />-->
+
+                            <ContentPresenter/>
+                            <local:PinnedDockControl />
                         </controls:DockPanel>
                     </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="ItemTemplateSelector">
+        <Setter Property="ContentTemplateSelector">
             <Setter.Value>
-                <local:RootTemplateSelector DocumentDockTemplate="{StaticResource DocumentDockTemplate}"/>
+                <local:RootTemplateSelector ProportionalDockTemplate="{StaticResource ProportionalDockTemplate1}" />
             </Setter.Value>
         </Setter>
     </Style>

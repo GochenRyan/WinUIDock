@@ -13,28 +13,28 @@ namespace Dock.Model.WinUI3.Controls
         public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(IList<IDockable>),
-            typeof(DocumentDock),
+            typeof(ToolDock),
             new PropertyMetadata(new List<IDockable>()));
 
-        DependencyProperty AlignmentProperty = DependencyProperty.Register(
+        public static DependencyProperty AlignmentProperty = DependencyProperty.Register(
             nameof(Alignment),
             typeof(Alignment),
             typeof(ToolDock),
             new PropertyMetadata(default));
 
-        DependencyProperty IsExpandedProperty = DependencyProperty.Register(
+        public static DependencyProperty IsExpandedProperty = DependencyProperty.Register(
             nameof(IsExpanded),
             typeof(bool),
             typeof(ToolDock),
             new PropertyMetadata(default));
 
-        DependencyProperty AutoHideProperty = DependencyProperty.Register(
+        public static DependencyProperty AutoHideProperty = DependencyProperty.Register(
             nameof(AutoHide),
             typeof(bool),
             typeof(ToolDock),
             new PropertyMetadata(default));
 
-        DependencyProperty GripModeProperty = DependencyProperty.Register(
+        public static DependencyProperty GripModeProperty = DependencyProperty.Register(
             nameof(GripMode),
             typeof(GripMode),
             typeof(ToolDock),
@@ -43,11 +43,7 @@ namespace Dock.Model.WinUI3.Controls
         public override IList<IDockable> VisibleDockables
         {
             get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
-            set
-            {
-                SetValue(VisibleDockablesProperty, value);
-                _visibleDockables = value;
-            }
+            set => SetValue(VisibleDockablesProperty, value);
         }
 
         public Alignment Alignment { get => (Alignment)GetValue(AlignmentProperty); set => SetValue(AlignmentProperty, value); }

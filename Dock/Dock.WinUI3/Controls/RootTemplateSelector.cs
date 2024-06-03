@@ -6,13 +6,17 @@ namespace Dock.WinUI3.Controls
 {
     public class RootTemplateSelector : DataTemplateSelector
     {
-        public DataTemplate DocumentDockTemplate { get; set; }
+        public DataTemplate ProportionalDockTemplate 
+        { 
+            get; 
+            set; 
+        }
 
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
-            if (item is IDocumentDock)
+            if (item is IProportionalDock)
             {
-                return DocumentDockTemplate;
+                return ProportionalDockTemplate;
             }
             else
             {

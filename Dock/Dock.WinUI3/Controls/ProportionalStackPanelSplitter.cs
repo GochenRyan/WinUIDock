@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using System.Diagnostics;
 using Windows.Foundation;
 
@@ -107,7 +108,8 @@ namespace Dock.WinUI3.Controls
         {
             if (element is ContentPresenter contentPresenter)
             {
-                if (contentPresenter.Content is ProportionalStackPanelSplitter childSplitter)
+                var control = VisualTreeHelper.GetChild(contentPresenter, 0);
+                if (control is ProportionalStackPanelSplitter childSplitter)
                 {
                     proportionalStackPanelSplitter = childSplitter;
                     return true;
