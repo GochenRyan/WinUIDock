@@ -10,7 +10,7 @@ namespace Dock.WinUI3.Controls
     {
         private IDockable _currentDockable;
 
-        public DockableControl()
+        public DockableControl(): base()
         {
             PressedHandler = new PointerEventHandler(OnPressed);
             MovedHandler = new PointerEventHandler(OnMoved);
@@ -31,6 +31,9 @@ namespace Dock.WinUI3.Controls
         {
             AddHandler(PointerPressedEvent, PressedHandler, true);
             AddHandler(PointerMovedEvent, MovedHandler, true);
+
+            _bLoaded = true;
+            InvalidateMeasure();
         }
 
         private void DockableControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -138,6 +141,12 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
+            if (!_bLoaded)
+            {
+                var size = base.MeasureOverride(availableSize);
+                return size;
+            }
+
             if (Children.Count > 0)
             {
                 foreach (var child in Children)
@@ -151,5 +160,7 @@ namespace Dock.WinUI3.Controls
 
         private PointerEventHandler PressedHandler { get; set; }
         private PointerEventHandler MovedHandler { get; set; }
+
+        private bool _bLoaded = false;
     }
 }

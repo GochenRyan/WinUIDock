@@ -2,18 +2,17 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls" 
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls">
 
     <Style TargetType="local:ToolControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolControl">
-                    <controls:DockPanel x:Name="PART_DockPanel">
+                    <local:DockPanel x:Name="PART_DockPanel">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
                                             ItemsSource="{Binding VisibleDockables}"
                                             SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
-                                            controls:DockPanel.Dock="Bottom"/>
+                                            local:DockPanel.Dock="Bottom"/>
                         <Border x:Name="PART_Border">
                             <local:DockableControl DataContext="{Binding ActiveDockable}"
                                                    TrackingMode="Visible">
@@ -23,7 +22,7 @@
                                                 VerticalAlignment="Stretch"/>
                             </local:DockableControl>
                         </Border>
-                    </controls:DockPanel>
+                    </local:DockPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

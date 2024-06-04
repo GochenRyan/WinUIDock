@@ -6,20 +6,24 @@
     xmlns:ui="using:CommunityToolkit.WinUI.UI">
 
     <Style TargetType="local:ToolPinnedControl">
-        <Setter Property="ItemsPanel">
+        <Setter Property="Template">
             <Setter.Value>
-                <ItemsPanelTemplate>
-                    <StackPanel ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
-                                Orientation ="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
-                </ItemsPanelTemplate>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="ItemTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <local:ToolPinItemControl ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
-                                              Orientation="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
-                </DataTemplate>
+                <ControlTemplate TargetType="local:ToolPinnedControl">
+                    <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
+                                            Orientation ="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:ToolPinItemControl ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
+                                                          Orientation="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>

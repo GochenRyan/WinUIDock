@@ -1,19 +1,23 @@
+using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System.Collections.Generic;
+using Windows.Foundation;
+using Orientation = Microsoft.UI.Xaml.Controls.Orientation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Dock.WinUI3.Controls
 {
-    public sealed class ToolPinnedControl : ItemsControl
+    public sealed class ToolPinnedControl : Control
     {
         public ToolPinnedControl()
         {
             this.DefaultStyleKey = typeof(ToolPinnedControl);
         }
 
-        public static DependencyProperty OrientationProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty OrientationProperty = DependencyProperty.Register(
             nameof(Orientation),
             typeof(Orientation),
             typeof(ToolPinnedControl),
@@ -25,28 +29,16 @@ namespace Dock.WinUI3.Controls
             set => SetValue(OrientationProperty, value);
         }
 
-        /// <inheritdoc/>
-        protected override DependencyObject GetContainerForItemOverride()
-        {
-            return base.GetContainerForItemOverride();
-        }
+        public DependencyProperty ItemsProperty = DependencyProperty.Register(
+            nameof(Items),
+            typeof(IList<IDockable>),
+            typeof(ToolPinnedControl),
+            new PropertyMetadata(new List<IDockable>()));
 
-        /// <inheritdoc/>
-        protected override bool IsItemItsOwnContainerOverride(object item)
+        public IList<IDockable> Items
         {
-            return base.IsItemItsOwnContainerOverride(item);
-        }
-
-        /// <inheritdoc/>
-        protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
-        {
-            base.PrepareContainerForItemOverride(element, item);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnItemsChanged(object e)
-        {
-            base.OnItemsChanged(e);
+            get => (IList<IDockable>)GetValue(ItemsProperty);
+            set => SetValue(ItemsProperty, value);
         }
     }
 }

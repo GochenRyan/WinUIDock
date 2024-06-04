@@ -4,7 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls" 
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:ui="using:CommunityToolkit.WinUI.UI">
+    xmlns:ui="using:CommunityToolkit.WinUI.UI" 
+    xmlns:converters="using:CommunityToolkit.WinUI.Converters">
+
+    <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
 
     <Style TargetType="local:PinnedDockControl">
         <Setter Property="Template">

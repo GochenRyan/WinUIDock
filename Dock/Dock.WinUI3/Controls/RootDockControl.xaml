@@ -2,8 +2,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls">
 
     <DataTemplate x:Key="ProportionalDockTemplate1">
         <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=TwoWay}"/>
@@ -14,27 +13,27 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:RootDockControl">
                     <local:DockableControl TrackingMode="Visible">
-                        <controls:DockPanel>
-                            <!--<local:ToolPinnedControl controls:DockPanel.Dock="Left" 
+                        <local:DockPanel>
+                            <!--<local:ToolPinnedControl local:DockPanel.Dock="Left" 
                                                      Orientation="Vertical"
-                                                     ItemsSource="{Binding LeftPinnedDockables, Mode=OneWay}"
+                                                     Items="{Binding LeftPinnedDockables, Mode=OneWay}"
                                                      Visibility="{Binding LeftPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
-                            <local:ToolPinnedControl controls:DockPanel.Dock="Right" 
+                            <local:ToolPinnedControl local:DockPanel.Dock="Right" 
                                                      Orientation="Vertical"
-                                                     ItemsSource="{Binding RightPinnedDockables}"
+                                                     Items="{Binding RightPinnedDockables, Mode=OneWay}"
                                                      Visibility="{Binding RightPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
-                            <local:ToolPinnedControl controls:DockPanel.Dock="Top" 
+                            <local:ToolPinnedControl local:DockPanel.Dock="Top" 
                                                      Orientation="Horizontal"
-                                                     ItemsSource="{Binding TopPinnedDockables}"
+                                                     Items="{Binding TopPinnedDockables, Mode=OneWay}"
                                                      Visibility="{Binding TopPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />
-                            <local:ToolPinnedControl controls:DockPanel.Dock="Bottom" 
+                            <local:ToolPinnedControl local:DockPanel.Dock="Bottom" 
                                                      Orientation="Horizontal"
-                                                     ItemsSource="{Binding BottomPinnedDockables}"
+                                                     Items="{Binding BottomPinnedDockables, Mode=OneWay}"
                                                      Visibility="{Binding BottomPinnedDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}" />-->
 
                             <ContentPresenter/>
                             <local:PinnedDockControl />
-                        </controls:DockPanel>
+                        </local:DockPanel>
                     </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>

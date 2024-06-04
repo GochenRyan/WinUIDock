@@ -15,6 +15,16 @@ namespace Dock.WinUI3.Controls
 {
     public sealed class ProportionalStackPanel : Panel
     {
+        public ProportionalStackPanel() : base()
+        {
+            Loaded += ProportionalStackPanel_Loaded;
+        }
+
+        private void ProportionalStackPanel_Loaded(object sender, RoutedEventArgs e)
+        {
+            _bLoaded = true;
+        }
+
         public static DependencyProperty OrientationProperty = DependencyProperty.Register(
             nameof(Orientation),
             typeof(Orientation),
@@ -188,21 +198,27 @@ namespace Dock.WinUI3.Controls
                 throw new Exception("Proportional StackPanel cannot be inside a control that offers infinite space.");
             }
 
-            bool bLoaded = true;
-            for (var i = 0; i < Children.Count; i++)
+            if (!_bLoaded)
             {
-                var child = Children[i];
-                if (VisualTreeHelper.GetChildrenCount(child) == 0)
-                {
-                    child.Measure(new Size(0.0, 0.0));
-                    bLoaded = false;
-                }
+                var size = base.MeasureOverride(availableSize);
+                return size;
             }
 
-            if (!bLoaded)
-            {
-                return new Size(0.0, 0.0);
-            }
+            //bool bLoaded = true;
+            //for (var i = 0; i < Children.Count; i++)
+            //{
+            //    var child = Children[i];
+            //    if (VisualTreeHelper.GetChildrenCount(child) == 0)
+            //    {
+            //        child.Measure(new Size(20, 20));
+            //        bLoaded = false;
+            //    }
+            //}
+
+            //if (!bLoaded)
+            //{
+            //    return new Size(0.0, 0.0);
+            //}
 
             var usedWidth = 0.0;
             var usedHeight = 0.0;
@@ -213,9 +229,6 @@ namespace Dock.WinUI3.Controls
             AssignProportions(Children);
 
             var needsNextSplitter = false;
-
-
-
 
             for (var i = 0; i < Children.Count; i++)
             {
@@ -247,7 +260,19 @@ namespace Dock.WinUI3.Controls
                             {
                                 var width = Math.Max(0, (availableSize.Width - splitterThickness) * proportion);
                                 var size = new Size(width, availableSize.Height);
-                                child.Measure(size);
+                                if (child is ContentPresenter presenter)
+                                {
+                                    var childControl = VisualTreeHelper.GetChild(presenter, 0);
+                                    if (childControl != null )
+                                    {
+                                        UIElement element = childControl as UIElement;
+                                        element.Measure(size);
+                                    }
+                                }
+                                else
+                                {
+                                    child.Measure(size);
+                                }
                                 break;
                             }
                         case Orientation.Vertical:
@@ -419,5 +444,7 @@ namespace Dock.WinUI3.Controls
 
             return finalSize;
         }
+
+        private bool _bLoaded = false;
     }
 }
