@@ -59,48 +59,50 @@
 
                 <winui3controls:ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Horizontal">
 
-                     <!--Left Pane--> 
-                    <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left">
+                    <!--Left Pane-->
+                    <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left" ActiveDockable="{x:Bind SolutionExplorer, Mode=OneWay}">
                         <winui3controls:Tool x:Name="SolutionExplorer" Id="SolutionExplorer" Title="Solution Explorer">
-                            <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                            <TextBlock Text="{x:Bind SolutionExplorer.Title, Mode=OneWay}"/>
                         </winui3controls:Tool>
                     </winui3controls:ToolDock>
 
                     <winui3controls:ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter" />
 
-                     <!--Right Pane--> 
+                    <!--Top Pane-->
                     <winui3controls:ProportionalDock x:Name="TopPane" Id="TopPane" Orientation="Vertical">
+                        <!-- Right Pane -->
+
                         <winui3controls:ProportionalDock x:Name="RightPane" Id="RightPane" Orientation="Horizontal">
 
-                             <!--Documents Pane--> 
+                            <!--Documents Pane-->
                             <winui3controls:DocumentDock x:Name="DocumentsPane" Id="DocumentsPane" CanCreateDocument="True" ActiveDockable="{x:Bind Document1, Mode=OneWay}">
                                 <winui3controls:Document x:Name="Document1" Id="Document1" Title="Program.cs">
-                                    <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                                    <TextBlock Text="{x:Bind Document1.Title, Mode=OneWay}"/>
                                 </winui3controls:Document>
                                 <winui3controls:Document x:Name="Document2" Id="Document2" Title="App.axaml">
-                                    <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                                    <TextBlock Text="{x:Bind Document2.Title, Mode=OneWay}"/>
                                 </winui3controls:Document>
                             </winui3controls:DocumentDock>
 
                             <winui3controls:ProportionalDockSplitter x:Name="RightSplitter" Id="RightSplitter" />
 
-                             <!--Properties Pane--> 
-                            <winui3controls:ToolDock x:Name="PropertiesPane" Id="PropertiesPane" Proportion="0.3" Alignment="Right">
+                            <!--Properties Pane-->
+                            <winui3controls:ToolDock x:Name="PropertiesPane" Id="PropertiesPane" Proportion="0.3" Alignment="Right" ActiveDockable="{x:Bind Properties, Mode=OneWay}">
                                 <winui3controls:Tool x:Name="Properties" Id="Properties" Title="Properties">
-                                    <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                                    <TextBlock Text="{x:Bind Properties.Title, Mode=OneWay}"/>
                                 </winui3controls:Tool>
                             </winui3controls:ToolDock>
 
                         </winui3controls:ProportionalDock>
 
-                         <!--Bottom Pane--> 
+                        <!--Bottom Pane-->
 
                         <winui3controls:ToolDock x:Name="BottomPane" Id="BottomPane" Proportion="0.3" Alignment="Bottom" ActiveDockable="{x:Bind Output, Mode=OneWay}">
                             <winui3controls:Tool x:Name="ErrorList" Id="ErrorList" Title="Error List">
-                                <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                                <TextBlock Text="{x:Bind ErrorList.Title, Mode=OneWay}"/>
                             </winui3controls:Tool>
                             <winui3controls:Tool x:Name="Output" Id="Output" Title="Output">
-                                <TextBlock Text="{x:Bind Title, Mode=OneWay}"/>
+                                <TextBlock Text="{x:Bind Output.Title, Mode=OneWay}"/>
                             </winui3controls:Tool>
                         </winui3controls:ToolDock>
 

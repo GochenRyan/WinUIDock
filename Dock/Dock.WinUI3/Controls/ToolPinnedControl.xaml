@@ -12,14 +12,12 @@
                     <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Items}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
-                                            Orientation ="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
+                                <StackPanel Orientation="{TemplateBinding Orientation}" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <local:ToolPinItemControl ui:FrameworkElementExtensions.AncestorType="ToolPinnedControl"
-                                                          Orientation="{Binding (ui:FrameworkElementExtensions.Ancestor).Orientation, RelativeSource={RelativeSource Self}}"/>
+                                <local:ToolPinItemControl Orientation="{TemplateBinding Orientation}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

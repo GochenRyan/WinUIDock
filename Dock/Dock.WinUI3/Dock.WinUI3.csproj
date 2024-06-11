@@ -12,6 +12,8 @@
     <None Remove="Controls\DockTemplate.xaml" />
     <None Remove="Controls\DocumentControl.xaml" />
     <None Remove="Controls\DocumentDockControl.xaml" />
+    <None Remove="Controls\DocumentTabStrip.xaml" />
+    <None Remove="Controls\DocumentTabStripItem.xaml" />
     <None Remove="Controls\PinnedDockControl.xaml" />
     <None Remove="Controls\ProportionalDockControl.xaml" />
     <None Remove="Controls\ProportionalStackPanelSplitter.xaml" />
@@ -41,8 +43,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Dock.Model.WinUI3\Dock.Model.WinUI3.csproj" />
     <ProjectReference Include="..\Dock.Model\Dock.Model.csproj" />
     <ProjectReference Include="..\Dock.Settings\Dock.Settings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DocumentTabStripItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DocumentTabStrip.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

@@ -6,18 +6,18 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
     <MenuFlyout x:Key="ToolPinItemControlContextMenu">
-        <MenuFlyoutItem Text="Float"
-                        Command="{Binding Owner.Factory.FloatDockable}"
+        <!--<MenuFlyoutItem Text="Float"
+                        Command="{Binding Owner.Factory.FloatDockableCmd, Mode=OneWay}"
                         CommandParameter="{Binding}"
                         Visibility="{Binding CanFloat}"/>
         <MenuFlyoutItem Text="Show"
-                        Command="{Binding Owner.Factory.PreviewPinnedDockable}"
+                        Command="{Binding Owner.Factory.PreviewPinnedDockableCmd, Mode=OneWay}"
                         CommandParameter="{Binding}"
                         Visibility="{Binding CanPin}"/>
         <MenuFlyoutItem Text="Close"
-                        Command="{Binding Owner.Factory.CloseDockable}"
+                        Command="{Binding Owner.Factory.CloseDockableCmd, Mode=OneWay}"
                         CommandParameter="{Binding}"
-                        Visibility="{Binding CanClose}"/>
+                        Visibility="{Binding CanClose}"/>-->
     </MenuFlyout>
 
     <Style TargetType="local:ToolPinItemControl">
@@ -41,7 +41,7 @@
                                 </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
                             
-                            <Button Command="{Binding Owner.Factory.PreviewPinnedDockable}"
+                            <Button Command="{Binding Owner.Factory.PreviewPinnedDockableCmd}"
                                     CommandParameter="{Binding}"
                                     Visibility="{TemplateBinding CanPin}">
                                 <TextBlock Text="{TemplateBinding Title}"

@@ -16,9 +16,6 @@
         </Setter>
         <Setter Property="ItemTemplateSelector">
             <Setter.Value>
-                <!--<local:ProportionTemplateSelector SplitterTemplate="{StaticResource SplitterTemplate}"
-                                                  DocumentDockTemplate="{StaticResource DocumentDockTemplate}"
-                                                  ProportionalDockTemplate="{StaticResource ProportionDockTemplate}"/>-->
                 <local:ProportionTemplateSelector>
                     <local:ProportionTemplateSelector.SplitterTemplate>
                         <DataTemplate>
@@ -27,23 +24,17 @@
                     </local:ProportionTemplateSelector.SplitterTemplate>
                     <local:ProportionTemplateSelector.DocumentDockTemplate>
                         <DataTemplate>
-                            <DataTemplate>
-                                <local:DocumentDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
-                            </DataTemplate>
+                            <local:DocumentDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
                         </DataTemplate>
                     </local:ProportionTemplateSelector.DocumentDockTemplate>
                     <local:ProportionTemplateSelector.ProportionalDockTemplate>
                         <DataTemplate>
-                            <DataTemplate>
-                                <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>
-                            </DataTemplate>
+                            <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>
                         </DataTemplate>
                     </local:ProportionTemplateSelector.ProportionalDockTemplate>
                     <local:ProportionTemplateSelector.ToolDockTemplate>
                         <DataTemplate>
-                            <DataTemplate>
-                                <local:ToolDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
-                            </DataTemplate>
+                            <local:ToolDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
                         </DataTemplate>
                     </local:ProportionTemplateSelector.ToolDockTemplate>
                 </local:ProportionTemplateSelector>

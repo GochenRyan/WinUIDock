@@ -4,39 +4,53 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls">
 
-    <MenuFlyout x:Key="ToolTabStripItemContextMenu">
+    <MenuFlyout x:Key="DocumentTabStripItemContextMenu">
         <MenuFlyoutItem Text="Float"/>
-        <MenuFlyoutItem Text="Dock"/>
-        <MenuFlyoutItem Text="Auto Hide"/>
         <MenuFlyoutItem Text="Close"/>
+        <MenuFlyoutItem Text="Close other tabs"/>
+        <MenuFlyoutItem Text="Close all tabs"/>
+        <MenuFlyoutItem Text="Close tabs to the left"/>
+        <MenuFlyoutItem Text="Close tabs to the right"/>
     </MenuFlyout>
 
-    <Style TargetType="local:ToolTabStripItem">
+    <Style TargetType="local:DocumentTabStripItem">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinHeight" Value="24" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="BorderThickness" Value="0 1 0 0" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="4 1 4 0" />
+        <Setter Property="Padding" Value="4 0 4 0" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="local:ToolTabStripItem">
+                <ControlTemplate TargetType="local:DocumentTabStripItem">
                     <Border BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Padding="{TemplateBinding Padding}"
-                            ContextFlyout="{StaticResource ToolTabStripItemContextMenu}"
+                            ContextFlyout="{StaticResource DocumentTabStripItemContextMenu}"
                             Width="{Binding ElementName=PART_DragTool, Path=Width, Mode=OneWay}">
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
                                         Spacing="2">
                                 <Button x:Name="PART_TitleItem" 
-                                        Content="{Binding Title, Mode=OneWay}" 
+                                        Margin="0" 
+                                        Content="{Binding Title, Mode=OneWay}"
                                         VerticalAlignment="Center"
                                         BorderThickness="0"
                                         Command="{Binding Owner.Factory.SetActiveDockableCmd}"
                                         CommandParameter="{Binding}"/>
+                                <Button x:Name="PART_CloseButton"
+                                        Command="{Binding Owner.Factory.CloseDockableCmd}"
+                                        CommandParameter="{Binding}"
+                                        Visibility="{Binding CanClose, Mode=OneWay}"
+                                        BorderThickness="0"
+                                        VerticalAlignment="Center"
+                                        Margin="0">
+                                    <FontIcon Glyph="&#xE8BB;" 
+                                              FontSize="8"
+                                              Margin="0 2 0 0"/>
+                                </Button>
                             </StackPanel>
                         </local:DockableControl>
                     </Border>

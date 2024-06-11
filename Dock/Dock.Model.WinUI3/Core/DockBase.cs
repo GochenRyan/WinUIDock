@@ -17,13 +17,22 @@ namespace Dock.Model.WinUI3.Core
             _navigateAdapter = new NavigateAdapter(this);
             GoBack = Command.Create(() => _navigateAdapter.GoBack());
             GoForward = Command.Create(() => _navigateAdapter.GoForward());
-            Navigate = Command.Create<object>(root => _navigateAdapter.Navigate(root, true));
+            Navigate = Command.Create(NavigateTo);
             Close = Command.Create(() => _navigateAdapter.Close());
         }
 
         public virtual IList<IDockable> VisibleDockables { get; set; }
 
-        public IDockable ActiveDockable { get => (IDockable)GetValue(ActiveDockableProperty); set => SetValue(ActiveDockableProperty, value); }
+
+        public void NavigateTo(object root)
+        {
+            _navigateAdapter.Navigate(root, true);
+        }
+        public IDockable ActiveDockable 
+        { 
+            get => (IDockable)GetValue(ActiveDockableProperty); 
+            set => SetValue(ActiveDockableProperty, value); 
+        }
         public IDockable DefaultDockable { get => (IDockable)GetValue(DefaultDockableProperty); set => SetValue(DefaultDockableProperty, value); }
         public IDockable FocusedDockable { get => (IDockable)GetValue(FocusedDockableProperty); set => SetValue(FocusedDockableProperty, value); }
         public double Proportion { get => (double)GetValue(ProportionProperty); set => SetValue(ProportionProperty, value); }

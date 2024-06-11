@@ -9,14 +9,16 @@ namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = DragToolName, Type = typeof(StackPanel))]
     [TemplatePart(Name = TitleItemName, Type = typeof(FrameworkElement))]
-    public sealed class ToolTabStripItem : ContentControl
+    [TemplatePart(Name = CloseButtonName, Type = typeof(FrameworkElement))]
+    public sealed class DocumentTabStripItem : ContentControl
     {
         public const string DragToolName = "PART_DragTool";
         public const string TitleItemName = "PART_TitleItem";
+        public const string CloseButtonName = "PART_CloseButton";
 
-        public ToolTabStripItem()
+        public DocumentTabStripItem()
         {
-            this.DefaultStyleKey = typeof(ToolTabStripItem);
+            this.DefaultStyleKey = typeof(DocumentTabStripItem);
         }
 
         protected override void OnApplyTemplate()
@@ -24,18 +26,20 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
             _dragTool = GetTemplateChild(DragToolName) as StackPanel;
             _titleItem = GetTemplateChild(TitleItemName) as FrameworkElement;
+            _closeButton = GetTemplateChild(CloseButtonName) as FrameworkElement;
         }
 
         protected override Size MeasureOverride(Size availableSize)
         {
             Size finalSize = base.MeasureOverride(availableSize);
 
-            _dragTool.Width = _titleItem.DesiredSize.Width + _dragTool.Spacing;
+            _dragTool.Width = _titleItem.DesiredSize.Width + _closeButton.DesiredSize.Width + _dragTool.Spacing * 2;
 
             return finalSize;
         }
 
         private StackPanel _dragTool;
         private FrameworkElement _titleItem;
+        private FrameworkElement _closeButton;
     }
 }

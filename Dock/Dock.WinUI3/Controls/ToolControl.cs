@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Dock.WinUI3.Controls
 {
-    public sealed class ToolControl : Control
+    public sealed class ToolControl : ContentControl
     {
         public ToolControl()
         {

@@ -9,7 +9,11 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:ProportionalStackPanelSplitter">
                     <Grid>
-                        <Thumb x:Name="InternalThumb"/>
+                        <Thumb x:Name="InternalThumb"
+                               CanDrag="True"
+                               Height="{TemplateBinding Height}"
+                               Width="{TemplateBinding Width}"
+                               Background="Blue"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

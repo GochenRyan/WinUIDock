@@ -2,7 +2,6 @@ using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
-using Windows.Foundation;
 using Orientation = Microsoft.UI.Xaml.Controls.Orientation;
 
 // To learn more about WinUI, the WinUI project structure,

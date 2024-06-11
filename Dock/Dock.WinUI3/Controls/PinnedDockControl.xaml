@@ -14,7 +14,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:PinnedDockControl">
                     <Grid x:Name="PART_PinnedDockGrid"
-                          Visibility="{Binding PinnedDock.IsEmpty, Mode=OneWay, Converter={StaticResource BoolNegationConverter},FallbackValue=Collapsed}">
+                          Visibility="{Binding PinnedDock.IsEmpty, Mode=OneWay, Converter={StaticResource BoolNegationConverter}, FallbackValue=Collapsed}">
                         <local:ToolDockControl ui:FrameworkElementExtensions.AncestorType="Window"
                                                Background="{Binding (ui:FrameworkElementExtensions.Ancestor).Background, RelativeSource={RelativeSource Self}}"/>
                         <controls:GridSplitter x:Name="PART_Splitter"/>

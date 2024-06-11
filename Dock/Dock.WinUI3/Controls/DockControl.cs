@@ -22,6 +22,9 @@ namespace Dock.WinUI3.Controls
         public DockControl()
         {
             this.DefaultStyleKey = typeof(DockControl);
+
+            _dockManager = new DockManager();
+            _dockControlState = new DockControlState(_dockManager);
         }
 
         //public static readonly DependencyProperty LayoutProperty = DependencyProperty.Register(
@@ -58,7 +61,7 @@ namespace Dock.WinUI3.Controls
             nameof(IsDraggingDock),
             typeof(bool),
             typeof(DockControl),
-            new PropertyMetadata(null));
+            new PropertyMetadata(false));
 
         public IDock Layout
         {

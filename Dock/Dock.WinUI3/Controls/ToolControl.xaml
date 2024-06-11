@@ -10,16 +10,17 @@
                 <ControlTemplate TargetType="local:ToolControl">
                     <local:DockPanel x:Name="PART_DockPanel">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
-                                            ItemsSource="{Binding VisibleDockables}"
-                                            SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
+                                            ItemsSource="{Binding VisibleDockables, Mode=OneWay}"
+                                            SelectedItem="{Binding ActiveDockable, Mode=OneWay}"
+                                            MaxHeight="40"
                                             local:DockPanel.Dock="Bottom"/>
-                        <Border x:Name="PART_Border">
-                            <local:DockableControl DataContext="{Binding ActiveDockable}"
+                        <Border x:Name="PART_Border" local:DockPanel.Dock="Top">
+                            <local:DockableControl DataContext="{Binding ActiveDockable, Mode=OneWay}"
                                                    TrackingMode="Visible">
-                                <ContentControl x:Name="PART_ContentPresenter"
-                                                Content="{Binding Content}"
-                                                HorizontalAlignment="Stretch"
-                                                VerticalAlignment="Stretch"/>
+                                <ContentPresenter x:Name="PART_ContentPresenter"
+                                                  Content="{Binding Content, Mode=OneWay}"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch"/>
                             </local:DockableControl>
                         </Border>
                     </local:DockPanel>

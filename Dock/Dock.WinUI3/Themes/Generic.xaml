@@ -18,6 +18,8 @@
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolPinnedControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolTabStrip.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolTabStripItem.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStrip.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStripItem.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

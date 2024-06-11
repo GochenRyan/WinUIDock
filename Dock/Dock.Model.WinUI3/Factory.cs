@@ -2,6 +2,7 @@
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Dock.Model.WinUI3.Core;
+using Dock.Model.WinUI3.Internal;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -16,7 +17,18 @@ namespace Dock.Model.WinUI3
             TabDockableControls = new Dictionary<IDockable, IDockableControl>();
             DockControls = new ObservableCollection<IDockControl>();
             HostWindows = new ObservableCollection<IHostWindow>();
+            FloatDockableCmd = new Command(FloatDockable);
+            PinDockableCmd = new Command(PinDockable);
+            CloseDockableCmd = new Command(CloseDockable);
+            PreviewPinnedDockableCmd = new Command(PreviewPinnedDockable);
+            SetActiveDockableCmd = new Command(SetActiveDockable);
         }
+
+        public Command FloatDockableCmd { get; private set; }
+        public Command PinDockableCmd {  get; private set; }
+        public Command CloseDockableCmd { get; private set; }
+        public Command PreviewPinnedDockableCmd { get; private set; }
+        public Command SetActiveDockableCmd { get; private set; }
 
         public override IDictionary<IDockable, IDockableControl> VisibleDockableControls { get; }
 

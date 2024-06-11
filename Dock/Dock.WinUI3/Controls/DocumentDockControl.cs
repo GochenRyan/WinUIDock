@@ -11,5 +11,7 @@ namespace Dock.WinUI3.Controls
         {
             this.DefaultStyleKey = typeof(DocumentDockControl);
         }
+
+
     }
 }

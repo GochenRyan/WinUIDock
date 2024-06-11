@@ -15,11 +15,15 @@
                     <local:DockableControl Name="PART_DockableControl"
                                            TrackingMode="Visible"
                                            Background="{TemplateBinding Background}">
-                        <local:ToolChromeControl IsActive="{Binding IsActive}" 
-                                                 Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">
-                            <local:ToolControl ui:FrameworkElementExtensions.AncestorType="DockControl"
-                                               IsHitTestVisible="{Binding (ui:FrameworkElementExtensions.Ancestor).IsDraggingDock, RelativeSource={RelativeSource Self}}"/>
+                        <local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 
+                                                 Visibility="Visible">
+                            <!--<local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 
+                                                 Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">-->
+                            <!--<local:ToolControl ui:FrameworkElementExtensions.AncestorType="DockControl"
+                                               IsHitTestVisible="{Binding (ui:FrameworkElementExtensions.Ancestor).IsDraggingDock, RelativeSource={RelativeSource Self}}"/>-->
+                            <local:ToolControl/>
                         </local:ToolChromeControl>
+
                     </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>

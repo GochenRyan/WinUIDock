@@ -8,13 +8,9 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentDockControl">
-                    <local:DocumentControl 
-                        Content="{Binding VisibleDockables}"
-                        ContentTemplate="{TemplateBinding ContentTemplate}"
-                        Margin="{TemplateBinding Padding}"
-                        ContentTransitions="{TemplateBinding ContentTransitions}"
-                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    <local:DockableControl TrackingMode="Visible">
+                        <local:DocumentControl />
+                    </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -16,8 +16,8 @@
         <Setter Property="Padding" Value="3" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Width" Value="18" />
-        <Setter Property="Height" Value="16" />
+        <!--<Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="16" />-->
     </Style>
 
     <Style TargetType="local:ToolChromeControl">
@@ -25,58 +25,45 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolChromeControl">
                     <Grid RowDefinitions="Auto,*">
-                        <ContentPresenter x:Name="PART_ContentPresenter"
-                                          Background="{TemplateBinding Background}"
-                                          BorderBrush="{TemplateBinding BorderBrush}"
-                                          BorderThickness="{TemplateBinding BorderThickness}"
-                                          Content="{TemplateBinding Content}"
-                                          Padding="{TemplateBinding Padding}"
-                                          Grid.Row="1" />
+                        <ContentPresenter Grid.Row="1" />
                         <Border x:Name="PART_Border"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 VerticalAlignment="Top"
-                                ContextFlyout="{StaticResource ToolChromeControlContextMenu}">
+                                ContextFlyout="{StaticResource ToolChromeControlContextMenu}"
+                                Grid.Row="0">
                             <Grid x:Name="PART_Grip">
                                 <local:DockPanel LastChildFill="True" Margin="8 0">
                                     <TextBlock x:Name="PART_Title"
                                                local:DockPanel.Dock="Left"
-                                               Text="{Binding ActiveDockable.Title, FallbackValue=TITLE}" />
+                                               Text="{Binding ActiveDockable.Title, FallbackValue='TITLE', Mode=OneWay}" />
                                     <StackPanel local:DockPanel.Dock="Right"
                                                 Orientation="Horizontal">
                                         <Button x:Name="PART_MenuButton"
                                                 Style="{StaticResource ChromeButton}"
                                                 ContextFlyout="{StaticResource ToolChromeControlContextMenu}">
-                                            <Viewbox>
-                                                <Path x:Name="PART_MenuPath" 
-                                                      Data= "M 352.041,32.0005L 320,0.000162761L 384,0.000162761L 352.041,32.0005 Z "/>
-                                            </Viewbox>
+                                            <FontIcon Glyph="&#xEDD8;"
+                                                      FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_PinButton"
-                                                Command="{Binding Owner.Factory.PinDockable}"
-                                                CommandParameter="{Binding ActiveDockable}"
+                                                Command="{Binding Owner.Factory.PinDockableCmd, Mode=OneWay}"
+                                                CommandParameter="{Binding ActiveDockable, Mode=OneWay}"
                                                 Style="{StaticResource ChromeButton}">
-                                            <!--<Button.Visibility>
-                                            </Button.Visibility>-->
-                                            <Viewbox>
-                                                <Path x:Name="PART_PinPath" 
-                                                      Data="M 352.041,32.0005L 320,0.000162761L 384,0.000162761L 352.041,32.0005 Z "/>
-                                            </Viewbox>
+                                            <FontIcon Glyph="&#xE718;"
+                                                      FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_MaximizeRestoreButton"
-                                                Visibility="{TemplateBinding IsFloating}"
+                                                Visibility="{Binding IsFloating, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Style="{StaticResource ChromeButton}">
-                                            <Viewbox>
-                                                <Path x:Name="PART_MaximizeRestorePath" />
-                                            </Viewbox>
+                                            <FontIcon Glyph="&#xE922;"
+                                                      FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_CloseButton"
-                                                Command="{Binding Owner.Factory.CloseDockable}" 
-                                                CommandParameter="{Binding ActiveDockable}"
-                                                Visibility="{Binding ActiveDockable.CanClose, FallbackValue=False}"
+                                                Command="{Binding Owner.Factory.CloseDockableCmd, Mode=OneWay}" 
+                                                CommandParameter="{Binding ActiveDockable, Mode=OneWay}"
+                                                Visibility= "{Binding ActiveDockable.CanClose, FallbackValue=Collapsed, Mode=OneWay}"
                                                 Style="{StaticResource ChromeButton}">
-                                            <Viewbox>
-                                                <Path x:Name="PART_ClosePath" />
-                                            </Viewbox>
+                                            <FontIcon Glyph="&#xE8BB;" 
+                                                      FontSize="12"/>
                                         </Button>
                                     </StackPanel>
                                     <Grid x:Name="PART_Grid" />

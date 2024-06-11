@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -11,5 +12,19 @@ namespace Dock.WinUI3.Controls
         {
             this.DefaultStyleKey = typeof(DocumentControl);
         }
+
+        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
+            nameof(IsActive),
+            typeof(bool),
+            typeof(DocumentControl),
+            new PropertyMetadata(false));
+
+        public bool IsActive
+        {
+            get => (bool)GetValue(IsActiveProperty);
+            set => SetValue(IsActiveProperty, value);
+        }
+
+
     }
 }

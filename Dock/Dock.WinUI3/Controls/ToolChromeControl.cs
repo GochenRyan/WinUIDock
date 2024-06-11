@@ -72,5 +72,10 @@ namespace Dock.WinUI3.Controls
             get => (bool)GetValue(IsMaximizedProperty);
             set => SetValue(IsMaximizedProperty, value);
         }
+
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+        }
     }
 }

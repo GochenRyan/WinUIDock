@@ -4,25 +4,36 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls">
 
-    <MenuFlyout x:Key="DocumentTabViewItemContextMenu">
+    <!--<MenuFlyout x:Key="DocumentTabViewItemContextMenu">
         <MenuFlyoutItem Text="Float"/>
         <MenuFlyoutItem Text="Close"/>
         <MenuFlyoutItem Text="Close other tabs"/>
-    </MenuFlyout>
+    </MenuFlyout>-->
 
     <Style TargetType="local:DocumentControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentControl">
-                    <TabView TabItemsSource="{Binding VisibleDockables}">
-                        <TabView.TabItemTemplate>
-                            <DataTemplate>
-                                <TabViewItem Header="{Binding Title}" 
-                                             Content="{Binding Content}" 
-                                             ContextFlyout="{StaticResource DocumentTabViewItemContextMenu}"/>
-                            </DataTemplate>
-                        </TabView.TabItemTemplate>
-                    </TabView>
+                    <local:DockPanel x:Name="PART_DockPanel">
+                        <local:DocumentTabStrip x:Name="PART_TabStrip"
+                                                ItemsSource="{Binding VisibleDockables, Mode=OneWay}"
+                                                SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
+                                                CanCreateItem="{Binding CanCreateDocument, Mode=OneWay}"
+                                                IsActive="{TemplateBinding IsActive}"
+                                                local:DockPanel.Dock="Top"
+                                                MaxHeight="40">
+
+                        </local:DocumentTabStrip>
+                        <Border x:Name="PART_Border" local:DockPanel.Dock="Bottom">
+                            <local:DockableControl DataContext="{Binding ActiveDockable, Mode=OneWay}"
+                                             TrackingMode="Visible">
+                                <ContentPresenter x:Name="PART_ContentPresenter"
+                                                  Content="{Binding Content, Mode=OneWay}"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch"/>
+                            </local:DockableControl>
+                        </Border>
+                    </local:DockPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

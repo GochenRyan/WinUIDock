@@ -3,22 +3,18 @@ using System.Windows.Input;
 
 namespace Dock.Model.WinUI3.Internal
 {
-    internal class Command : ICommand
+    public class Command : ICommand
     {
-        public static ICommand Create(Action execute) => new Command(execute);
+        public static ICommand Create(Delegate execute) => new Command(execute);
 
-        public static ICommand Create(Action execute, Func<bool> canExecute) => new Command(execute, canExecute);
+        public static ICommand Create(Delegate execute, Func<bool> canExecute) => new Command(execute, canExecute);
 
-        public static ICommand Create<T>(Action<T> execute) => new Command<T>(execute);
-
-        public static ICommand Create<T>(Action<T> execute, Func<T, bool> canExecute) => new Command<T>(execute, canExecute);
-
-        private readonly Action _execute;
+        private readonly Delegate _execute;
         private readonly Func<bool> _canExecute;
 
         public event EventHandler CanExecuteChanged;
 
-        public Command(Action execute, Func<bool> canExecute = null)
+        public Command(Delegate execute, Func<bool> canExecute = null)
         {
             _execute = execute;
             _canExecute = canExecute ?? (() => true);
@@ -31,9 +27,28 @@ namespace Dock.Model.WinUI3.Internal
 
         public void Execute(object parameter)
         {
-            _execute.Invoke();
+            if (parameter == null)
+            {
+                _execute.DynamicInvoke();
+            }
+            else
+            {
+                _execute.DynamicInvoke(parameter);
+            }
         }
 
-
+        /// <summary>
+        /// Method used to raise the <see cref="CanExecuteChanged"/> event
+        /// to indicate that the return value of the <see cref="CanExecute"/>
+        /// method has changed.
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            var handler = CanExecuteChanged;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
+        }
     }
 }
