@@ -1,3 +1,6 @@
+using Dock.Model.Controls;
+using Dock.Model.WinUI3.Controls;
+using Dock.Model.WinUI3.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -32,30 +35,107 @@ namespace Dock.WinUI3.Controls
 
         public Orientation Orientation { get => (Orientation)GetValue(OrientationProperty); set => SetValue(OrientationProperty, value); }
 
-        public static readonly DependencyProperty ProportionProperty =
-            DependencyProperty.RegisterAttached("Proportion", typeof(double), typeof(ProportionalStackPanel), new PropertyMetadata(double.NaN));
 
         public static double GetProportion(UIElement obj)
         {
-            return (double)obj.GetValue(ProportionProperty);
+            if (obj is ContentPresenter presenter)
+            {
+                if (presenter.Content != null && presenter.Content is DockBase dock)
+                {
+                    return dock.Proportion;
+                }
+            }
+            else if (obj is Control control)
+            {
+                if (control.DataContext != null && control.DataContext is DockBase dock)
+                {
+                    return dock.Proportion;
+                }
+            }
+
+            return double.NaN;
         }
 
         public static void SetProportion(UIElement obj, double value)
         {
-            obj.SetValue(ProportionProperty, value);
+            if (obj is ContentPresenter presenter)
+            {
+                if (presenter.Content != null && presenter.Content is DockBase dock)
+                {
+                    dock.Proportion = value;
+                }
+            }
+            else if (obj is Control control)
+            {
+                if (control.DataContext != null && control.DataContext is DockBase dock)
+                {
+                    dock.Proportion = value;
+                }
+            }
         }
-
-        public static readonly DependencyProperty IsCollapsedProperty =
-            DependencyProperty.RegisterAttached("IsCollapsed", typeof(bool), typeof(ProportionalStackPanel), new PropertyMetadata(false));
 
         public static bool GetIsCollapsed(UIElement obj)
         {
-            return (bool)obj.GetValue(IsCollapsedProperty);
+            if (obj is ContentPresenter presenter)
+            {
+                if (presenter.Content != null && presenter.Content is DockBase dock)
+                {
+                    if (dock.IsCollapsable && dock.IsEmpty)
+                    {
+                        return true;
+                    }
+                }
+            }
+            else if (obj is Control control)
+            {
+                if (control.DataContext != null && control.DataContext is DockBase dock)
+                {
+                    if (dock.IsCollapsable && dock.IsEmpty)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         public static void SetIsCollapsed(UIElement obj, bool value)
         {
-            obj.SetValue(IsCollapsedProperty, value);
+            if (obj is ContentPresenter presenter)
+            {
+                if (presenter.Content != null && presenter.Content is DockBase dock)
+                {
+                    dock.IsCollapsable = value;
+                }
+            }
+            else if (obj is Control control)
+            {
+                if (control.DataContext != null && control.DataContext is DockBase dock)
+                {
+                    dock.IsCollapsable = value;
+                }
+            }
+        }
+
+        public static double GetThickness(UIElement obj)
+        {
+            if (obj is ContentPresenter presenter)
+            {
+                if (presenter.Content != null && presenter.Content is ProportionalDockSplitter proportionalDockSplitter)
+                {
+                    return proportionalDockSplitter.Thickness;
+                }
+            }
+            else if (obj is Control control)
+            {
+                if (control.DataContext != null && control.DataContext is ProportionalDockSplitter proportionalDockSplitter)
+                {
+                    return proportionalDockSplitter.Thickness;
+                }
+            }
+
+            return double.NaN;
         }
 
         private static void OnOrientationChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
@@ -73,11 +153,11 @@ namespace Dock.WinUI3.Controls
             {
                 var element = children[i];
                 var isCollapsed = GetIsCollapsed(element);
-                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(element, out _);
+                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(element);
 
                 if (!isSplitter)
                 {
-                    var proportion = ProportionalStackPanelSplitter.GetProportion(element);
+                    var proportion = GetProportion(element);
 
                     if (isCollapsed)
                     {
@@ -101,13 +181,13 @@ namespace Dock.WinUI3.Controls
                 foreach (var element in children.Where(c =>
                 {
                     var isCollapsed = GetIsCollapsed(c);
-                    return !isCollapsed && double.IsNaN(ProportionalStackPanelSplitter.GetProportion(c));
+                    return !isCollapsed && double.IsNaN(GetProportion(c));
                 }))
                 {
-                    if (!ProportionalStackPanelSplitter.IsSplitter(element, out _))
+                    if (!ProportionalStackPanelSplitter.IsSplitter(element))
                     {
                         var proportion = (1.0 - toAssign) / unassignedProportions;
-                        ProportionalStackPanelSplitter.SetProportion(element, proportion);
+                        SetProportion(element, proportion);
                         assignedProportion += (1.0 - toAssign) / unassignedProportions;
                     }
                 }
@@ -115,34 +195,34 @@ namespace Dock.WinUI3.Controls
 
             if (assignedProportion < 1)
             {
-                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c, out _));
+                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c));
 
                 var toAdd = (1.0 - assignedProportion) / numChildren;
 
                 foreach (var child in children.Where(c =>
                 {
                     var isCollapsed = GetIsCollapsed(c);
-                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c, out _);
+                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c);
                 }))
                 {
-                    var proportion = ProportionalStackPanelSplitter.GetProportion(child) + toAdd;
-                    ProportionalStackPanelSplitter.SetProportion(child, proportion);
+                    var proportion = GetProportion(child) + toAdd;
+                    SetProportion(child, proportion);
                 }
             }
             else if (assignedProportion > 1)
             {
-                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c, out _));
+                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c));
 
                 var toRemove = (assignedProportion - 1.0) / numChildren;
 
                 foreach (var child in children.Where(c =>
                 {
                     var isCollapsed = GetIsCollapsed(c);
-                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c, out _);
+                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c);
                 }))
                 {
-                    var proportion = ProportionalStackPanelSplitter.GetProportion(child) - toRemove;
-                    ProportionalStackPanelSplitter.SetProportion(child, proportion);
+                    var proportion = GetProportion(child) - toRemove;
+                    SetProportion(child, proportion);
                 }
             }
         }
@@ -155,9 +235,9 @@ namespace Dock.WinUI3.Controls
             for (var i = 0; i < children.Count; i++)
             {
                 var c = children[i];
-                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(c, out var proportionalStackPanelSplitter);
+                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(c);
 
-                if (isSplitter && proportionalStackPanelSplitter is not null)
+                if (isSplitter)
                 {
                     if (previousisCollapsed)
                     {
@@ -175,7 +255,7 @@ namespace Dock.WinUI3.Controls
                         }
                     }
 
-                    var thickness = proportionalStackPanelSplitter.Thickness;
+                    var thickness = GetThickness(c);
                     totalThickness += thickness;
                 }
                 else
@@ -197,7 +277,7 @@ namespace Dock.WinUI3.Controls
                 throw new Exception("Proportional StackPanel cannot be inside a control that offers infinite space.");
             }
 
-            GeneratedAllControls(Children);
+            //GeneratedAllControls(Children);
 
             var usedWidth = 0.0;
             var usedHeight = 0.0;
@@ -212,9 +292,9 @@ namespace Dock.WinUI3.Controls
             for (var i = 0; i < Children.Count; i++)
             {
                 var child = Children[i];
-                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(child, out var currentSplitter);
+                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(child);
 
-                var proportion = ProportionalStackPanelSplitter.GetProportion(child);
+                var proportion = GetProportion(child);
 
                 var isCollapsed = !isSplitter && GetIsCollapsed(child);
                 if (isCollapsed)
@@ -261,13 +341,13 @@ namespace Dock.WinUI3.Controls
                     {
                         case Orientation.Horizontal:
                             {
-                                var size = new Size(currentSplitter.Thickness, availableSize.Height);
+                                var size = new Size(GetThickness(child), availableSize.Height);
                                 child.Measure(size);
                                 break;
                             }
                         case Orientation.Vertical:
                             {
-                                var size = new Size(availableSize.Width, currentSplitter.Thickness);
+                                var size = new Size(availableSize.Width, GetThickness(child));
                                 child.Measure(size);
                                 break;
                             }
@@ -317,36 +397,10 @@ namespace Dock.WinUI3.Controls
             maximumHeight = Math.Max(maximumHeight, usedHeight);
 
             return new Size(maximumWidth, maximumHeight);
-
-            //if (double.IsInfinity(availableSize.Width) ||
-            //    double.IsInfinity(availableSize.Height))
-            //{
-            //    throw new Exception("CustomPanel1 cannot be inside a control that offers infinite space.");
-            //}
-
-            //if (Children == null || Children.Count == 0)
-            //{
-            //    base.MeasureOverride(availableSize);
-            //    return availableSize;
-            //}
-
-            //var cnt = Children.Count;
-            //var itemSize = new Size(availableSize.Width / cnt, availableSize.Height);
-
-            //for (var i = 0; i < Children.Count; i++)
-            //{
-            //    var child = Children[i];
-            //    child.Measure(itemSize);
-            //}
-
-            //return availableSize;
         }
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            GeneratedAllControls(Children);
-            
-
             var left = 0.0;
             var top = 0.0;
             var right = 0.0;
@@ -364,7 +418,7 @@ namespace Dock.WinUI3.Controls
             {
                 var child = Children[i];
 
-                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(child, out var currentSplitter);
+                var isSplitter = ProportionalStackPanelSplitter.IsSplitter(child);
 
                 var isCollapsed = !isSplitter && GetIsCollapsed(child);
                 if (isCollapsed)
@@ -399,7 +453,7 @@ namespace Dock.WinUI3.Controls
                 if (index < Children.Count)
                 {
                     var desiredSize = child.DesiredSize;
-                    var proportion = ProportionalStackPanelSplitter.GetProportion(child);
+                    var proportion = GetProportion(child);
 
                     switch (Orientation)
                     {
@@ -444,42 +498,7 @@ namespace Dock.WinUI3.Controls
                 index++;
             }
 
-            //if (Children == null || Children.Count == 0)
-            //{
-            //    return base.ArrangeOverride(finalSize);
-            //}
-
-            //var left = 0.0;
-            //var top = 0.0;
-
-            //var childHeight = finalSize.Height;
-            //var childWidth = finalSize.Width / Children.Count;
-
-            //for (var i = 0; i < Children.Count; i++)
-            //{
-            //    var child = Children[i];
-            //    var rect = new Rect(left, top, childWidth, childHeight);
-            //    child.Arrange(rect);
-            //    left += childWidth;
-            //}
-
             return finalSize;
-        }
-    
-        private void GeneratedAllControls(UIElementCollection Children)
-        {
-            foreach (UIElement child in Children)
-            {
-                if (child is ContentPresenter contentPresenter)
-                {
-                    var control = VisualTreeHelper.GetChild(contentPresenter, 0);
-
-                    if (control == null)
-                    {
-                        contentPresenter.Measure(new Size());
-                    }
-                }
-            }
         }
     }
 }

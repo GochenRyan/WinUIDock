@@ -1,3 +1,4 @@
+using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,6 +14,15 @@ namespace Dock.WinUI3.Controls
         public ProportionalDockControl()
         {
             this.DefaultStyleKey = typeof(ProportionalDockControl);
+            DataContextChanged += ProportionalDockControl_DataContextChanged;
+        }
+
+        private void ProportionalDockControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            if (DataContext is IDock dock)
+            {
+                ItemsSource = dock.VisibleDockables;
+            }
         }
 
         /// <inheritdoc/>

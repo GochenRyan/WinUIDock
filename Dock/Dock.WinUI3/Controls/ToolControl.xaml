@@ -10,7 +10,6 @@
                 <ControlTemplate TargetType="local:ToolControl">
                     <local:DockPanel x:Name="PART_DockPanel">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
-                                            ItemsSource="{Binding VisibleDockables, Mode=OneWay}"
                                             SelectedItem="{Binding ActiveDockable, Mode=OneWay}"
                                             MaxHeight="40"
                                             local:DockPanel.Dock="Bottom"/>

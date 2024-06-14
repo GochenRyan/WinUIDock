@@ -95,6 +95,8 @@
 
                         </winui3controls:ProportionalDock>
 
+                        <winui3controls:ProportionalDockSplitter x:Name="BottomSplitter" Id="BottomSplitter" />
+
                         <!--Bottom Pane-->
 
                         <winui3controls:ToolDock x:Name="BottomPane" Id="BottomPane" Proportion="0.3" Alignment="Bottom" ActiveDockable="{x:Bind Output, Mode=OneWay}">

@@ -21,5 +21,17 @@ namespace Dock.Model.WinUI3.Controls
             get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
+
+        public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
+            nameof(Thickness),
+            typeof(double),
+            typeof(ProportionalDockSplitter),
+            new PropertyMetadata(4.0));
+
+        public double Thickness
+        {
+            get => (double)GetValue(ThicknessProperty);
+            set => SetValue(ThicknessProperty, value);
+        }
     }
 }

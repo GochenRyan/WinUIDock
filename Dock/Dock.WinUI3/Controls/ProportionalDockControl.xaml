@@ -19,7 +19,7 @@
                 <local:ProportionTemplateSelector>
                     <local:ProportionTemplateSelector.SplitterTemplate>
                         <DataTemplate>
-                            <local:ProportionalStackPanelSplitter/>
+                            <local:ProportionalStackPanelSplitter Thickness="{Binding Thickness, Mode=OneWay}"/>
                         </DataTemplate>
                     </local:ProportionTemplateSelector.SplitterTemplate>
                     <local:ProportionTemplateSelector.DocumentDockTemplate>
@@ -29,7 +29,9 @@
                     </local:ProportionTemplateSelector.DocumentDockTemplate>
                     <local:ProportionTemplateSelector.ProportionalDockTemplate>
                         <DataTemplate>
-                            <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>
+                            <!--<local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>-->
+                            <!--bind incorrect data in xaml, so bind in code-->
+                            <local:ProportionalDockControl/>
                         </DataTemplate>
                     </local:ProportionTemplateSelector.ProportionalDockTemplate>
                     <local:ProportionTemplateSelector.ToolDockTemplate>

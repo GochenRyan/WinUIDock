@@ -1,3 +1,4 @@
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Content;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -106,27 +107,24 @@ namespace Dock.WinUI3.Controls
             }
         }
 
-        public static bool IsSplitter(UIElement element, out ProportionalStackPanelSplitter proportionalStackPanelSplitter)
+        public static bool IsSplitter(UIElement element)
         {
             if (element is ContentPresenter contentPresenter)
             {
                 var control = VisualTreeHelper.GetChild(contentPresenter, 0);
 
-                if (control is ProportionalStackPanelSplitter childSplitter)
+                if (control == null && contentPresenter.Content != null && contentPresenter.Content is ProportionalDockSplitter)
                 {
-                    proportionalStackPanelSplitter = childSplitter;
+                    return true;
+                }
+
+                if (control is ProportionalStackPanelSplitter)
+                {
                     return true;
                 }
             }
 
-            if (element is ProportionalStackPanelSplitter splitter)
-            {
-                proportionalStackPanelSplitter = splitter;
-                return true;
-            }
-
-            proportionalStackPanelSplitter = null;
-            return false;
+            return element is ProportionalStackPanelSplitter;
         }
 
         private ProportionalStackPanel GetPanel()
@@ -164,7 +162,7 @@ namespace Dock.WinUI3.Controls
             }
 
             while (siblingIndex >= 0 && siblingIndex < children.Count &&
-                   (ProportionalStackPanel.GetIsCollapsed(children[siblingIndex]) || IsSplitter(children[siblingIndex], out _)))
+                   (ProportionalStackPanel.GetIsCollapsed(children[siblingIndex]) || IsSplitter(children[siblingIndex])))
             {
                 siblingIndex += direction;
             }
@@ -198,8 +196,8 @@ namespace Dock.WinUI3.Controls
 
             var child = FindNextChild(panel);
 
-            var targetElementProportion = GetProportion(target);
-            var neighbourProportion = child is not null ? GetProportion(child) : double.NaN;
+            var targetElementProportion = ProportionalStackPanel.GetProportion(target);
+            var neighbourProportion = child is not null ? ProportionalStackPanel.GetProportion(child) : double.NaN;
 
             var dProportion = dragDelta / (panel.Orientation == Orientation.Vertical ? panel.ActualHeight : panel.ActualWidth);
 
@@ -232,45 +230,17 @@ namespace Dock.WinUI3.Controls
                 targetElementProportion += dProportion;
             }
 
-            SetProportion(target, targetElementProportion);
+            ProportionalStackPanel.SetProportion(target, targetElementProportion);
 
             if (child is not null)
             {
-                SetProportion(child, neighbourProportion);
+                ProportionalStackPanel.SetProportion(child, neighbourProportion);
             }
 
             panel.InvalidateMeasure();
         }
 
-        public static void SetProportion(UIElement element, double proportion)
-        {
-            if (element is ContentPresenter presenter)
-            {
-                UIElement templateElement = VisualTreeHelper.GetChild(presenter, 0) as UIElement;
-                if (templateElement != null)
-                    ProportionalStackPanel.SetProportion(templateElement, proportion);
-            }
-            else
-            {
-                ProportionalStackPanel.SetProportion(element, proportion);
-            }
-        }
 
-        public static double GetProportion(UIElement element)
-        {
-            double proportion = double.NaN;
-            if (element is ContentPresenter presenter)
-            {
-                UIElement templateElement = VisualTreeHelper.GetChild(presenter, 0) as UIElement;
-                if (templateElement != null)
-                    proportion = ProportionalStackPanel.GetProportion(templateElement);
-            }
-            else
-            {
-                proportion = ProportionalStackPanel.GetProportion(element);
-            }
-            return proportion;
-        }
 
         public event DragStartedEventHandler ThumbDragStarted;
         public event DragCompletedEventHandler ThumbDragCompleted;

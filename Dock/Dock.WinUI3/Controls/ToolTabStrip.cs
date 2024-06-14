@@ -12,6 +12,15 @@ namespace Dock.WinUI3.Controls
         public ToolTabStrip()
         {
             this.DefaultStyleKey = typeof(ToolTabStrip);
+            DataContextChanged += ToolTabStrip_DataContextChanged;
+        }
+
+        private void ToolTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            if (DataContext is IDock dock)
+            {
+                ItemsSource = dock.VisibleDockables;
+            }
         }
 
         protected override void PrepareContainerForItemOverride(DependencyObject element, object item)

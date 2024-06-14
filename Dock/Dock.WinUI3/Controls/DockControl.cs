@@ -179,12 +179,12 @@ namespace Dock.WinUI3.Controls
 
             if (InitializeFactory)
             {
-                layout.Factory.ContextLocator = new Dictionary<string, Func<object?>>();
+                layout.Factory.ContextLocator = new Dictionary<string, Func<object>>();
                 //layout.Factory.HostWindowLocator = new Dictionary<string, Func<IHostWindow?>>
                 //{
                 //    [nameof(IDockWindow)] = () => new HostWindow()
                 //};
-                layout.Factory.DockableLocator = new Dictionary<string, Func<IDockable?>>();
+                layout.Factory.DockableLocator = new Dictionary<string, Func<IDockable>>();
                 layout.Factory.DefaultContextLocator = GetContext;
                 //layout.Factory.DefaultHostWindowLocator = GetHostWindow;
 
