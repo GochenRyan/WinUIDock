@@ -14,6 +14,9 @@
     <None Remove="Controls\DocumentDockControl.xaml" />
     <None Remove="Controls\DocumentTabStrip.xaml" />
     <None Remove="Controls\DocumentTabStripItem.xaml" />
+    <None Remove="Controls\HostWindow.xaml" />
+    <None Remove="Controls\HostWindowControl.xaml" />
+    <None Remove="Controls\HostWindowTitleBar.xaml" />
     <None Remove="Controls\PinnedDockControl.xaml" />
     <None Remove="Controls\ProportionalDockControl.xaml" />
     <None Remove="Controls\ProportionalStackPanelSplitter.xaml" />
@@ -36,6 +39,7 @@
       <PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
       <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240428000" />
       <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+      <PackageReference Include="WinUIEx" Version="2.3.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +50,24 @@
     <ProjectReference Include="..\Dock.Model.WinUI3\Dock.Model.WinUI3.csproj" />
     <ProjectReference Include="..\Dock.Model\Dock.Model.csproj" />
     <ProjectReference Include="..\Dock.Settings\Dock.Settings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\HostWindowTitleBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\HostWindowControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\HostWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
