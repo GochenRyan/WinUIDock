@@ -1,5 +1,6 @@
 ﻿using Dock.Model.Controls;
 using Dock.Model.Core;
+using System.Collections.ObjectModel;
 
 namespace Dock.Model;
 
@@ -80,7 +81,7 @@ public class DockManager : IDockManager
         var targetToolDock = factory.CreateToolDock();
         targetToolDock.Title = nameof(IToolDock);
         targetToolDock.Alignment = operation.ToAlignment();
-        targetToolDock.VisibleDockables = factory.CreateList<IDockable>();
+        targetToolDock.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>());
         factory.MoveDockable(sourceDockableOwner, targetToolDock, sourceDockable, null);
         factory.SplitToDock(targetDock, targetToolDock, operation);
     }
@@ -94,7 +95,7 @@ public class DockManager : IDockManager
 
         var targetDocumentDock = factory.CreateDocumentDock();
         targetDocumentDock.Title = nameof(IDocumentDock);
-        targetDocumentDock.VisibleDockables = factory.CreateList<IDockable>();
+        targetDocumentDock.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>());
         if (sourceDockableOwner is IDocumentDock sourceDocumentDock)
         {
             targetDocumentDock.Id = sourceDocumentDock.Id;

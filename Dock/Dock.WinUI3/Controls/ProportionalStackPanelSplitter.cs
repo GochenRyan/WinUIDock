@@ -1,5 +1,4 @@
 using Dock.Model.WinUI3.Controls;
-using Microsoft.UI.Content;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,7 +6,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System.Diagnostics;
-using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -129,7 +127,7 @@ namespace Dock.WinUI3.Controls
 
         private ProportionalStackPanel GetPanel()
         {
-            var parentElement = VisualTreeHelper.GetParent(this); 
+            var parentElement = VisualTreeHelper.GetParent(this);
             if (parentElement is ContentPresenter presenter)
             {
                 if (VisualTreeHelper.GetParent(presenter) is ProportionalStackPanel panel)

@@ -5,6 +5,7 @@ using Dock.Model.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace Dock.Model.WinUI3.Controls
@@ -14,9 +15,9 @@ namespace Dock.Model.WinUI3.Controls
     {
         public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new List<IDockable>()));
+            new PropertyMetadata(new ObservableCollection<IDockable>()));
 
         public static DependencyProperty IsFocusableRootProperty = DependencyProperty.Register(
             nameof(IsFocusableRoot),
@@ -26,31 +27,31 @@ namespace Dock.Model.WinUI3.Controls
 
         public DependencyProperty HiddenDockablesProperty = DependencyProperty.Register(
             nameof(HiddenDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
             new PropertyMetadata(default));
 
         public DependencyProperty LeftPinnedDockablesProperty = DependencyProperty.Register(
             nameof(LeftPinnedDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
             new PropertyMetadata(default));
 
         public DependencyProperty RightPinnedDockablesProperty = DependencyProperty.Register(
             nameof(RightPinnedDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
             new PropertyMetadata(default));
 
         public DependencyProperty TopPinnedDockablesProperty = DependencyProperty.Register(
             nameof(TopPinnedDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
             new PropertyMetadata(default));
 
         public DependencyProperty BottomPinnedDockablesProperty = DependencyProperty.Register(
             nameof(BottomPinnedDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
             new PropertyMetadata(default));
 
@@ -72,18 +73,18 @@ namespace Dock.Model.WinUI3.Controls
             typeof(RootDock),
             new PropertyMetadata(default));
 
-        public override IList<IDockable> VisibleDockables
+        public override ObservableCollection<IDockable> VisibleDockables
         {
-            get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
+            get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
 
         public bool IsFocusableRoot { get => (bool)GetValue(IsFocusableRootProperty); set => SetValue(IsFocusableRootProperty, value); }
-        public IList<IDockable> HiddenDockables { get => (IList<IDockable>)GetValue(HiddenDockablesProperty); set => SetValue(HiddenDockablesProperty, value); }
-        public IList<IDockable> LeftPinnedDockables { get => (IList<IDockable>)GetValue(LeftPinnedDockablesProperty); set => SetValue(LeftPinnedDockablesProperty, value); }
-        public IList<IDockable> RightPinnedDockables { get => (IList<IDockable>)GetValue(RightPinnedDockablesProperty); set => SetValue(RightPinnedDockablesProperty, value); }
-        public IList<IDockable> TopPinnedDockables { get => (IList<IDockable>)GetValue(TopPinnedDockablesProperty); set => SetValue(TopPinnedDockablesProperty, value); }
-        public IList<IDockable> BottomPinnedDockables { get => (IList<IDockable>)GetValue(BottomPinnedDockablesProperty); set => SetValue(BottomPinnedDockablesProperty, value); }
+        public ObservableCollection<IDockable> HiddenDockables { get => (ObservableCollection<IDockable>)GetValue(HiddenDockablesProperty); set => SetValue(HiddenDockablesProperty, value); }
+        public ObservableCollection<IDockable> LeftPinnedDockables { get => (ObservableCollection<IDockable>)GetValue(LeftPinnedDockablesProperty); set => SetValue(LeftPinnedDockablesProperty, value); }
+        public ObservableCollection<IDockable> RightPinnedDockables { get => (ObservableCollection<IDockable>)GetValue(RightPinnedDockablesProperty); set => SetValue(RightPinnedDockablesProperty, value); }
+        public ObservableCollection<IDockable> TopPinnedDockables { get => (ObservableCollection<IDockable>)GetValue(TopPinnedDockablesProperty); set => SetValue(TopPinnedDockablesProperty, value); }
+        public ObservableCollection<IDockable> BottomPinnedDockables { get => (ObservableCollection<IDockable>)GetValue(BottomPinnedDockablesProperty); set => SetValue(BottomPinnedDockablesProperty, value); }
         public IToolDock PinnedDock { get => (IToolDock)GetValue(PinnedDockProperty); set => SetValue(PinnedDockProperty, value); }
         public IDockWindow Window { get => (IDockWindow)GetValue(WindowProperty); set => SetValue(WindowProperty, value); }
         public IList<IDockWindow> Windows { get => (IList<IDockWindow>)GetValue(WindowsProperty); set => SetValue(WindowsProperty, value); }

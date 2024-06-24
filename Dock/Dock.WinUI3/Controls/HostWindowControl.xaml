@@ -2,15 +2,34 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls" xmlns:converters="using:Dock.WinUI3.Converters">
+
+    <converters:IntLessThanConverter x:Key="LessThan2" TrueIfLessThan="2" />
+    <converters:NormalConverter x:Key="DockConverter"/>
 
     <Style TargetType="local:HostWindowControl">
+        <!--<Setter Property="ToolChromeControlsWholeWindow" Value="{Binding OpenedDockablesCount, Mode=OneWay}" />-->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:HostWindowControl">
-                    
+                    <local:DockControl x:Name="PART_DockControl"
+                                       InitializeLayout="True" 
+                                       InitializeFactory="True">
+                    </local:DockControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <!--<Setter Property="ContentTemplateSelector">
+            <Setter.Value>
+                <local:DockTemplateSelector>
+                    <local:DockTemplateSelector.RootDockTemplate>
+                        <DataTemplate>
+                            <local:RootDockControl Content="{Binding ActiveDockable, Mode=OneWay}"/>
+                        </DataTemplate>
+                    </local:DockTemplateSelector.RootDockTemplate>
+                </local:DockTemplateSelector>
+            </Setter.Value>
+        </Setter>-->
     </Style>
+
 </ResourceDictionary>

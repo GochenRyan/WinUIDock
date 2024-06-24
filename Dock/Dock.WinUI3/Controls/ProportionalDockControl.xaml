@@ -10,7 +10,9 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <local:ProportionalStackPanel Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}}"/>
+                    <local:ProportionalStackPanel Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}}"
+                                                  IsCollapsable="{Binding IsCollapsable, Mode=OneWay}"
+                                                  IsEmpty ="{Binding IsEmpty, Mode=OneWay}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>

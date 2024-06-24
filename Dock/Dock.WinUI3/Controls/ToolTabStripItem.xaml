@@ -2,7 +2,8 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls"
+    xmlns:settings="using:Dock.Settings">
 
     <MenuFlyout x:Key="ToolTabStripItemContextMenu">
         <MenuFlyoutItem Text="Float"/>
@@ -30,7 +31,9 @@
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
-                                        Spacing="2">
+                                        Spacing="2"
+                                        settings:DockProperties.IsDragArea="True"
+                                        settings:DockProperties.IsDropArea="True">
                                 <Button x:Name="PART_TitleItem" 
                                         Content="{Binding Title, Mode=OneWay}" 
                                         VerticalAlignment="Center"

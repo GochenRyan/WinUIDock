@@ -5,10 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Foundation;
 
 namespace Dock.WinUI3.Internal
@@ -125,16 +121,16 @@ namespace Dock.WinUI3.Internal
 
             if (layout?.FocusedDockable is { } sourceDockable && _state.TargetDropControl.DataContext is IDockable targetDockable)
             {
-                DockManager.Position = DockHelpers.ToDockPoint(point);
+                GeneralTransform transform = HostWindow.MainWindow.Content.TransformToVisual(relativeTo);
+                var relativePoint = transform.TransformPoint(point);
+                DockManager.Position = DockHelpers.ToDockPoint(relativePoint);
 
                 if (relativeTo.XamlRoot is null)
                 {
                     return false;
                 }
 
-                GeneralTransform transform = relativeTo.TransformToVisual(Window.Current.Content);
-                var screenPoint = transform.TransformPoint(point);
-                DockManager.ScreenPosition = DockHelpers.ToDockPoint(screenPoint);
+                DockManager.ScreenPosition = DockHelpers.ToDockPoint(point);
 
                 return DockManager.ValidateDockable(sourceDockable, targetDockable, dragAction, operation, bExecute: false);
             }
@@ -153,16 +149,16 @@ namespace Dock.WinUI3.Internal
 
             if (layout?.ActiveDockable is { } sourceDockable && _state.TargetDropControl.DataContext is IDockable targetDockable)
             {
-                DockManager.Position = DockHelpers.ToDockPoint(point);
+                GeneralTransform transform = HostWindow.MainWindow.Content.TransformToVisual(relativeTo);
+                var relativePoint = transform.TransformPoint(point);
+                DockManager.Position = DockHelpers.ToDockPoint(relativePoint);
 
                 if (relativeTo.XamlRoot is null)
                 {
                     return;
                 }
-                GeneralTransform transform = relativeTo.TransformToVisual(Window.Current.Content);
-                var screenPoint = transform.TransformPoint(point);
-                DockManager.ScreenPosition = DockHelpers.ToDockPoint(screenPoint);
 
+                DockManager.ScreenPosition = DockHelpers.ToDockPoint(point);
                 DockManager.ValidateDockable(sourceDockable, targetDockable, dragAction, operation, bExecute: true);
             }
         }
@@ -251,9 +247,7 @@ namespace Dock.WinUI3.Internal
                                 continue;
                             }
 
-                            GeneralTransform t = Window.Current.Content.TransformToVisual(dockControl);
-                            var dockControlPoint = t.TransformPoint(screenPoint);
-                            var dropControl = DockHelpers.GetControl(dockControl, dockControlPoint, DockProperties.IsDropAreaProperty);
+                            var dropControl = DockHelpers.GetControl(dockControl, screenPoint, DockProperties.IsDropAreaProperty);
                             if (dropControl is { })
                             {
                                 var isDropEnabled = (bool)dockControl.GetValue(DockProperties.IsDropEnabledProperty);
@@ -269,7 +263,7 @@ namespace Dock.WinUI3.Internal
                                     if (_state.TargetDropControl == dropControl)
                                     {
                                         _state.TargetDockControl = dockControl;
-                                        _state.TargetPoint = dockControlPoint;
+                                        _state.TargetPoint = screenPoint;
                                         _state.TargetDropControl = dropControl;
                                         _state.DragAction = DragAction.Move;
                                         Over(_state.TargetPoint, _state.DragAction, _state.TargetDockControl);
@@ -283,7 +277,7 @@ namespace Dock.WinUI3.Internal
                                     }
 
                                     _state.TargetDockControl = dockControl;
-                                    _state.TargetPoint = dockControlPoint;
+                                    _state.TargetPoint = screenPoint;
                                     _state.TargetDropControl = dropControl;
                                     _state.DragAction = DragAction.Move;
                                     Enter(_state.TargetPoint, _state.DragAction, _state.TargetDockControl);

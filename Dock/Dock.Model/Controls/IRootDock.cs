@@ -1,4 +1,5 @@
 ﻿using Dock.Model.Core;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace Dock.Model.Controls;
@@ -16,27 +17,27 @@ public interface IRootDock : IDock
     /// <summary>
     /// Gets or sets hidden dockables.
     /// </summary>
-    IList<IDockable>? HiddenDockables { get; set; }
+    ObservableCollection<IDockable>? HiddenDockables { get; set; }
 
     /// <summary>
     /// Gets or sets left pinned dockables.
     /// </summary>
-    IList<IDockable>? LeftPinnedDockables { get; set; }
+    ObservableCollection<IDockable>? LeftPinnedDockables { get; set; }
 
     /// <summary>
     /// Gets or sets right pinned dockables.
     /// </summary>
-    IList<IDockable>? RightPinnedDockables { get; set; }
+    ObservableCollection<IDockable>? RightPinnedDockables { get; set; }
 
     /// <summary>
     /// Gets or sets top pinned dockables.
     /// </summary>
-    IList<IDockable>? TopPinnedDockables { get; set; }
+    ObservableCollection<IDockable>? TopPinnedDockables { get; set; }
 
     /// <summary>
     /// Gets or sets bottom pinned dockables.
     /// </summary>
-    IList<IDockable>? BottomPinnedDockables { get; set; }
+    ObservableCollection<IDockable>? BottomPinnedDockables { get; set; }
 
     /// <summary>
     /// Gets or sets pinned tool dock.

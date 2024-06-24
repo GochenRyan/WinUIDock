@@ -3,6 +3,7 @@ using Dock.Model.Core;
 using Dock.Model.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -21,7 +22,7 @@ namespace Dock.Model.WinUI3.Core
             Close = Command.Create(() => _navigateAdapter.Close());
         }
 
-        public virtual IList<IDockable> VisibleDockables { get; set; }
+        public virtual ObservableCollection<IDockable> VisibleDockables { get; set; }
 
 
         public void NavigateTo(object root)

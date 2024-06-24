@@ -113,10 +113,10 @@ namespace Dock.WinUI3.Controls
 
             var position = e.GetCurrentPoint(this).Position;
 
-            //var screenPoint = DockHelpers.ToDockPoint(this.PointToScreen(position).ToPoint(1.0));
+            var screenPoint = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
 
             dockable.SetPointerPosition(position.X, position.Y);
-            //dockable.SetPointerScreenPosition(screenPoint.X, screenPoint.Y);
+            dockable.SetPointerScreenPosition(screenPoint.X, screenPoint.Y);
         }
 
         public static readonly DependencyProperty TrackingModeProperty =
@@ -130,11 +130,6 @@ namespace Dock.WinUI3.Controls
         {
             get { return (TrackingMode)GetValue(TrackingModeProperty); }
             set { SetValue(TrackingModeProperty, value); }
-        }
-
-        private static void OnTrackingModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-
         }
 
         protected override Size MeasureOverride(Size availableSize)

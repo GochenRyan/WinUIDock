@@ -5,6 +5,7 @@ using Dock.Model.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace Dock.Model.WinUI3.Controls
@@ -14,9 +15,9 @@ namespace Dock.Model.WinUI3.Controls
     {
         public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(DocumentDock),
-            new PropertyMetadata(new List<IDockable>()));
+            new PropertyMetadata(new ObservableCollection<IDockable>()));
 
         public static DependencyProperty CanCreateDocumentProperty = DependencyProperty.Register(
             nameof(CanCreateDocument),
@@ -30,9 +31,9 @@ namespace Dock.Model.WinUI3.Controls
             typeof(DocumentDock),
             new PropertyMetadata(default));
 
-        public override IList<IDockable> VisibleDockables
+        public override ObservableCollection<IDockable> VisibleDockables
         {
-            get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
+            get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
 

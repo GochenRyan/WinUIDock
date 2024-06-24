@@ -1,5 +1,6 @@
 ﻿using Dock.Model.Controls;
 using Dock.Model.Core;
+using System.Collections.ObjectModel;
 
 namespace Dock.Model;
 
@@ -8,7 +9,7 @@ namespace Dock.Model;
 /// </summary>
 public abstract partial class FactoryBase : IFactory
 {
-    private bool IsDockPinned(IList<IDockable>? pinnedDockables, IDock dock)
+    private bool IsDockPinned(ObservableCollection<IDockable>? pinnedDockables, IDock dock)
     {
         if (pinnedDockables is not null && pinnedDockables.Count != 0)
         {
@@ -120,7 +121,7 @@ public abstract partial class FactoryBase : IFactory
         {
             split = CreateProportionalDock();
             split.Title = nameof(IProportionalDock);
-            split.VisibleDockables = CreateList<IDockable>();
+            split.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
             if (split.VisibleDockables is not null)
             {
                 AddVisibleDockable(split, dockable);
@@ -134,7 +135,7 @@ public abstract partial class FactoryBase : IFactory
 
         var layout = CreateProportionalDock();
         layout.Title = nameof(IProportionalDock);
-        layout.VisibleDockables = CreateList<IDockable>();
+        layout.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         layout.Proportion = containerProportion;
 
         var splitter = CreateProportionalDockSplitter();
@@ -262,7 +263,7 @@ public abstract partial class FactoryBase : IFactory
                     target.Title = nameof(IToolDock);
                     if (target is IDock dock)
                     {
-                        dock.VisibleDockables = CreateList<IDockable>();
+                        dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
                         if (dock.VisibleDockables is not null)
                         {
                             AddVisibleDockable(dock, dockable);
@@ -278,7 +279,7 @@ public abstract partial class FactoryBase : IFactory
                     target.Title = nameof(IDocumentDock);
                     if (target is IDock dock)
                     {
-                        dock.VisibleDockables = CreateList<IDockable>();
+                        dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
                         if (dockable.Owner is IDocumentDock sourceDocumentDock)
                         {
                             if (target is IDocumentDock targetDocumentDock)
@@ -336,13 +337,16 @@ public abstract partial class FactoryBase : IFactory
 
         var root = CreateRootDock();
         root.Title = nameof(IRootDock);
-        root.VisibleDockables = CreateList<IDockable>();
+        root.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         if (root.VisibleDockables is not null && target is not null)
         {
-            AddVisibleDockable(root, target);
+            var proportionDock = CreateProportionalDock();
+            AddVisibleDockable(root, proportionDock);
+            OnDockableAdded(proportionDock);
+            AddVisibleDockable(proportionDock, target);
             OnDockableAdded(target);
-            root.ActiveDockable = target;
-            root.DefaultDockable = target;
+            root.ActiveDockable = proportionDock;
+            root.DefaultDockable = proportionDock;
         }
         root.Owner = null;
 

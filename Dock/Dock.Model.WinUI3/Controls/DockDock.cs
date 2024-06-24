@@ -4,6 +4,7 @@ using Dock.Model.WinUI3.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Dock.Model.WinUI3.Controls
 {
@@ -12,9 +13,9 @@ namespace Dock.Model.WinUI3.Controls
     {
         public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(DockDock),
-            new PropertyMetadata(new List<IDockable>()));
+            new PropertyMetadata(new ObservableCollection<IDockable>()));
 
         public static DependencyProperty LastChildFillProperty = DependencyProperty.Register(
             nameof(LastChildFill),
@@ -23,9 +24,9 @@ namespace Dock.Model.WinUI3.Controls
             new PropertyMetadata(true));
 
         public bool LastChildFill { get => (bool)GetValue(LastChildFillProperty); set => SetValue(LastChildFillProperty, value); }
-        public override IList<IDockable> VisibleDockables
+        public override ObservableCollection<IDockable> VisibleDockables
         {
-            get => (IList<IDockable>)GetValue(VisibleDockablesProperty);
+            get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
     }

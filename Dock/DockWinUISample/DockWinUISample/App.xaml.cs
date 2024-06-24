@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Dock.WinUI3.Controls;
+using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -27,6 +28,7 @@ namespace DockWinUISample
         {
             m_window = new MainWindow();
             m_window.Activate();
+            HostWindow.MainWindow = m_window;
         }
 
         private Window m_window;

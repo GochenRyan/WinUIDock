@@ -1,5 +1,6 @@
 ﻿using Dock.Model.Controls;
 using Dock.Model.Core;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace Dock.Model;
@@ -13,7 +14,7 @@ public abstract partial class FactoryBase
     public virtual void AddDockable(IDock dock, IDockable dockable)
     {
         InitDockable(dockable, dock);
-        dock.VisibleDockables ??= CreateList<IDockable>();
+        dock.VisibleDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
         AddVisibleDockable(dock, dockable);
         OnDockableAdded(dockable);
     }
@@ -24,7 +25,7 @@ public abstract partial class FactoryBase
         if (index >= 0)
         {
             InitDockable(dockable, dock);
-            dock.VisibleDockables ??= CreateList<IDockable>();
+            dock.VisibleDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
             InsertVisibleDockable(dock, index, dockable);
             OnDockableAdded(dockable);
         }
@@ -119,7 +120,7 @@ public abstract partial class FactoryBase
 
         if (targetDock.VisibleDockables is null)
         {
-            targetDock.VisibleDockables = CreateList<IDockable>();
+            targetDock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
             if (targetDock.VisibleDockables is null)
             {
                 return;
@@ -393,22 +394,22 @@ public abstract partial class FactoryBase
                             case Alignment.Unset:
                             case Alignment.Left:
                                 {
-                                    rootDock.LeftPinnedDockables ??= CreateList<IDockable>();
+                                    rootDock.LeftPinnedDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
                                     break;
                                 }
                             case Alignment.Right:
                                 {
-                                    rootDock.RightPinnedDockables ??= CreateList<IDockable>();
+                                    rootDock.RightPinnedDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
                                     break;
                                 }
                             case Alignment.Top:
                                 {
-                                    rootDock.TopPinnedDockables ??= CreateList<IDockable>();
+                                    rootDock.TopPinnedDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
                                     break;
                                 }
                             case Alignment.Bottom:
                                 {
-                                    rootDock.BottomPinnedDockables ??= CreateList<IDockable>();
+                                    rootDock.BottomPinnedDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
                                     break;
                                 }
                         }
@@ -472,7 +473,7 @@ public abstract partial class FactoryBase
                     {
                         // Unpin dockable.
 
-                        toolDock.VisibleDockables ??= CreateList<IDockable>();
+                        toolDock.VisibleDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
 
                         switch (alignment)
                         {
@@ -548,7 +549,7 @@ public abstract partial class FactoryBase
     }
 
     /// <inheritdoc/>
-    public void UnpinDockable(IDockable dockable)
+    public virtual void UnpinDockable(IDockable dockable)
     {
         if (IsDockablePinned(dockable))
         {
@@ -690,7 +691,7 @@ public abstract partial class FactoryBase
     {
         if (dock.VisibleDockables == null)
         {
-            dock.VisibleDockables = CreateList<IDockable>();
+            dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         }
         dock.VisibleDockables.Add(dockable);
         UpdateIsEmpty(dock);
@@ -703,7 +704,7 @@ public abstract partial class FactoryBase
     {
         if (dock.VisibleDockables == null)
         {
-            dock.VisibleDockables = CreateList<IDockable>();
+            dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         }
         dock.VisibleDockables.Insert(index, dockable);
         UpdateIsEmpty(dock);

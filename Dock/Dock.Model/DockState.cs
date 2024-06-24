@@ -1,5 +1,6 @@
 using Dock.Model.Controls;
 using Dock.Model.Core;
+using System.Collections.ObjectModel;
 
 namespace Dock.Model;
 
@@ -128,7 +129,7 @@ public class DockState : IDockState
         }
     }
 
-    private void SaveDockables(IList<IDockable> dockables)
+    private void SaveDockables(ObservableCollection<IDockable> dockables)
     {
         foreach (var dockable in dockables)
         {
@@ -141,7 +142,7 @@ public class DockState : IDockState
         }
     }
 
-    private void RestoreDockables(IList<IDockable> dockables)
+    private void RestoreDockables(ObservableCollection<IDockable> dockables)
     {
         foreach (var dockable in dockables)
         {

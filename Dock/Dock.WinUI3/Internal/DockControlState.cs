@@ -109,16 +109,16 @@ namespace Dock.WinUI3.Internal
 
             if (_state.DragControl.DataContext is IDockable sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
             {
-                DockManager.Position = DockHelpers.ToDockPoint(point);
+                GeneralTransform transform = HostWindow.MainWindow.Content.TransformToVisual(relativeTo);
+                var relativePoint = transform.TransformPoint(point);
+                DockManager.Position = DockHelpers.ToDockPoint(relativePoint);
 
                 if (relativeTo.XamlRoot is null)
                 {
                     return false;
                 }
 
-                GeneralTransform transform = relativeTo.TransformToVisual(Window.Current.Content);
-                var screenPoint = transform.TransformPoint(point);
-                DockManager.ScreenPosition = DockHelpers.ToDockPoint(screenPoint);
+                DockManager.ScreenPosition = DockHelpers.ToDockPoint(point);
 
                 return DockManager.ValidateDockable(sourceDockable, targetDockable, dragAction, operation, bExecute: false);
             }
@@ -145,17 +145,16 @@ namespace Dock.WinUI3.Internal
                     return;
                 }
 
-                DockManager.Position = DockHelpers.ToDockPoint(point);
+                GeneralTransform t = HostWindow.MainWindow.Content.TransformToVisual(relativeTo);
+                Point relativePoint = t.TransformPoint(point);
+                DockManager.Position = DockHelpers.ToDockPoint(relativePoint);
 
                 if (relativeTo.XamlRoot is null)
                 {
                     return;
                 }
 
-                GeneralTransform t = relativeTo.TransformToVisual(Window.Current.Content);
-                Point relativePoint = t.TransformPoint(point);
-                DockManager.ScreenPosition = DockHelpers.ToDockPoint(relativePoint);
-
+                DockManager.ScreenPosition = DockHelpers.ToDockPoint(point);
                 DockManager.ValidateDockable(sourceDockable, targetDockable, dragAction, operation, true);
             }
         }
@@ -257,20 +256,15 @@ namespace Dock.WinUI3.Internal
                                     continue;
                                 }
 
-                                GeneralTransform t1 = inputActiveDockControl.TransformToVisual(Window.Current.Content);
-                                Point screenPoint = t1.TransformPoint(point);
-
                                 if (inputDockControl.XamlRoot is null)
                                 {
                                     continue;
                                 }
-                                GeneralTransform t2 = Window.Current.Content.TransformToVisual(inputDockControl);
-                                var dockControlPoint = t2.TransformPoint(screenPoint);
 
-                                dropControl = DockHelpers.GetControl(inputDockControl, dockControlPoint, DockProperties.IsDropAreaProperty);
+                                dropControl = DockHelpers.GetControl(inputDockControl, point, DockProperties.IsDropAreaProperty);
                                 if (dropControl is { })
                                 {
-                                    targetPoint = dockControlPoint;
+                                    targetPoint = point;
                                     targetDockControl = inputDockControl;
                                     break;
                                 }

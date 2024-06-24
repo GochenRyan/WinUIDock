@@ -1,14 +1,11 @@
-using Dock.Model.Controls;
 using Dock.Model.WinUI3.Controls;
 using Dock.Model.WinUI3.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Xml.Linq;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -34,6 +31,42 @@ namespace Dock.WinUI3.Controls
             new PropertyMetadata(Orientation.Vertical, OnOrientationChanged));
 
         public Orientation Orientation { get => (Orientation)GetValue(OrientationProperty); set => SetValue(OrientationProperty, value); }
+
+        public static DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
+            nameof(IsCollapsable),
+            typeof(bool),
+            typeof(ProportionalStackPanel),
+            new PropertyMetadata(false, OnIsCollapsableChanged));
+
+        public bool IsCollapsable
+        {
+            get => (bool)GetValue(IsCollapsableProperty);
+            set => SetValue(IsCollapsableProperty, value);
+        }
+        private static void OnIsCollapsableChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        {
+            var control = ob as ProportionalStackPanel;
+
+            control.Visibility = (control.IsCollapsable && control.IsEmpty) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        public static DependencyProperty IsEmptyProperty = DependencyProperty.Register(
+        nameof(IsEmpty),
+            typeof(bool),
+            typeof(ProportionalStackPanel),
+            new PropertyMetadata(false, OnIsEmptyChanged));
+
+        public bool IsEmpty
+        {
+            get => (bool)GetValue(IsEmptyProperty);
+            set => SetValue(IsEmptyProperty, value);
+        }
+        private static void OnIsEmptyChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        {
+            var control = ob as ProportionalStackPanel;
+
+            control.Visibility = (control.IsCollapsable && control.IsEmpty) ? Visibility.Collapsed : Visibility.Visible;
+        }
 
 
         public static double GetProportion(UIElement obj)

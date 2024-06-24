@@ -2,13 +2,16 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls"
+    xmlns:settings="using:Dock.Settings">
 
     <Style TargetType="local:ToolControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolControl">
-                    <local:DockPanel x:Name="PART_DockPanel">
+                    <local:DockPanel x:Name="PART_DockPanel"
+                                     settings:DockProperties.IsDropArea="True"
+                                     settings:DockProperties.IsDockTarget="True">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
                                             SelectedItem="{Binding ActiveDockable, Mode=OneWay}"
                                             MaxHeight="40"

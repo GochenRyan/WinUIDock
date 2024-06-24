@@ -2,6 +2,7 @@ using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Orientation = Microsoft.UI.Xaml.Controls.Orientation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -30,13 +31,13 @@ namespace Dock.WinUI3.Controls
 
         public DependencyProperty ItemsProperty = DependencyProperty.Register(
             nameof(Items),
-            typeof(IList<IDockable>),
+            typeof(ObservableCollection<IDockable>),
             typeof(ToolPinnedControl),
             new PropertyMetadata(new List<IDockable>()));
 
-        public IList<IDockable> Items
+        public ObservableCollection<IDockable> Items
         {
-            get => (IList<IDockable>)GetValue(ItemsProperty);
+            get => (ObservableCollection<IDockable>)GetValue(ItemsProperty);
             set => SetValue(ItemsProperty, value);
         }
     }

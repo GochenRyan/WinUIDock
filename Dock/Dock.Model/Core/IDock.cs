@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace Dock.Model.Core;
 
@@ -85,5 +86,5 @@ public interface IDock : IDockable
     /// <summary>
     /// Gets or Sets visible dockables.
     /// </summary>
-    IList<IDockable> VisibleDockables { get; set; }
+    ObservableCollection<IDockable> VisibleDockables { get; set; }
 }

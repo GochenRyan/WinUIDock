@@ -6,22 +6,22 @@ namespace Dock.Settings
     public class DockProperties : DependencyObject
     {
         public static readonly DependencyProperty ControlRecyclingProperty =
-            DependencyProperty.RegisterAttached("ControlRecycling", typeof(IControlRecycling), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("ControlRecycling", typeof(IControlRecycling), typeof(DockProperties), new PropertyMetadata(true));
 
         public static readonly DependencyProperty IsDockTargetProperty =
-            DependencyProperty.RegisterAttached("IsDockTarget", typeof(bool), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("IsDockTarget", typeof(bool), typeof(DockProperties), new PropertyMetadata(false));
 
         public static readonly DependencyProperty IsDragAreaProperty =
-            DependencyProperty.RegisterAttached("IsDragArea", typeof(bool), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("IsDragArea", typeof(bool), typeof(DockProperties), new PropertyMetadata(false));
 
         public static readonly DependencyProperty IsDropAreaProperty =
-            DependencyProperty.RegisterAttached("IsDropArea", typeof(bool), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("IsDropArea", typeof(bool), typeof(DockProperties), new PropertyMetadata(false));
 
         public static readonly DependencyProperty IsDragEnabledProperty =
-            DependencyProperty.RegisterAttached("IsDragEnabled", typeof(bool), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("IsDragEnabled", typeof(bool), typeof(DockProperties), new PropertyMetadata(true));
 
         public static readonly DependencyProperty IsDropEnabledProperty =
-            DependencyProperty.RegisterAttached("IsDropEnabled", typeof(bool), typeof(DockProperties), new PropertyMetadata(default));
+            DependencyProperty.RegisterAttached("IsDropEnabled", typeof(bool), typeof(DockProperties), new PropertyMetadata(true));
 
         public static IControlRecycling GetControlRecycling(DependencyObject control)
         {

@@ -6,11 +6,33 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Dock.WinUI3.Controls
 {
+    [TemplatePart(Name = GripPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = CloseButtonPartName, Type = typeof(Button))]
     public sealed class ToolChromeControl : ContentControl
     {
+        public const string GripPartName = "PART_Grip";
+        public const string CloseButtonPartName = "PART_CloseButton";
+
         public ToolChromeControl()
         {
             this.DefaultStyleKey = typeof(ToolChromeControl);
+            Loaded += ToolChromeControl_Loaded;
+            Unloaded += ToolChromeControl_Unloaded;
+        }
+
+        private void ToolChromeControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (_attachedWindow != null)
+            {
+                HostWindowControl hostWindowControl = _attachedWindow.WindowContent as HostWindowControl;
+                hostWindowControl.DetachGrip(this);
+                _attachedWindow = null;
+            }
+        }
+
+        private void ToolChromeControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            AttachToWindow();
         }
 
         public static DependencyProperty TitleProprty = DependencyProperty.Register(
@@ -76,6 +98,32 @@ namespace Dock.WinUI3.Controls
         protected override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+
+            Grip = GetTemplateChild(GripPartName) as Grid;
+            CloseButton = GetTemplateChild(CloseButtonPartName) as Button;
+
+            AttachToWindow();
         }
+
+        private void AttachToWindow()
+        {
+            if (Grip == null)
+                return;
+
+            if (HostWindow.GetWindowForElement(this) is HostWindow window)
+            {
+                HostWindowControl hostWindowControl = window.WindowContent as HostWindowControl;
+                hostWindowControl.AttachGrip(this);
+                _attachedWindow = window;
+
+                IsFloating = true;
+            }
+        }
+
+        public Grid Grip { get; private set; }
+
+        public Button CloseButton { get; private set; }
+
+        private HostWindow _attachedWindow;
     }
 }

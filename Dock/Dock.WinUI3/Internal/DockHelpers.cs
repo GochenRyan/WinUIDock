@@ -34,7 +34,7 @@ namespace Dock.WinUI3.Internal
 
         public static Control GetControl(UIElement input, Point point, DependencyProperty property)
         {
-            IEnumerable<UIElement> inputElements = inputElements = GetVisualsAt(point, input);
+            IEnumerable<UIElement> inputElements = GetVisualsAt(point, input);
 
 
             var controls = inputElements?.OfType<Control>().ToList();

@@ -27,12 +27,6 @@ namespace Dock.WinUI3.Controls
             _dockControlState = new DockControlState(_dockManager);
         }
 
-        //public static readonly DependencyProperty LayoutProperty = DependencyProperty.Register(
-        //    nameof(Layout),
-        //    typeof(IDock),
-        //    typeof(DockControl),
-        //    new PropertyMetadata(null, OnLayoutChanged));
-
         public static readonly DependencyProperty DefaultContextProperty = DependencyProperty.Register(
             nameof(DefaultContext),
             typeof(object),
@@ -55,7 +49,7 @@ namespace Dock.WinUI3.Controls
             nameof(Factory),
             typeof(IFactory),
             typeof(DockControl),
-            new PropertyMetadata(null));
+            new PropertyMetadata(null, OnFactoryChanged));
 
         public static readonly DependencyProperty IsDraggingDockProperty = DependencyProperty.Register(
             nameof(IsDraggingDock),
@@ -90,7 +84,10 @@ namespace Dock.WinUI3.Controls
         public IFactory Factory
         {
             get { return (IFactory)GetValue(FactoryProperty); }
-            set { SetValue(FactoryProperty, value); }
+            set
+            {
+                SetValue(FactoryProperty, value);
+            }
         }
 
         public bool IsDraggingDock
@@ -103,16 +100,11 @@ namespace Dock.WinUI3.Controls
 
         public IDockControlState DockControlState => _dockControlState;
 
-        //private static void OnLayoutChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
-        //{
-        //    var control = ob as DockControl;
-        //    if (control._isInitialized)
-        //    {
-        //        control.DeInitialize((IDock)args.OldValue);
-        //    }
-
-        //    control.Initialize((IDock)args.NewValue);
-        //}
+        private static void OnFactoryChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        {
+            var factory = args.NewValue as IFactory;
+            WinUIDockManager.SetFactory(factory);
+        }
 
         protected override void OnApplyTemplate()
         {
@@ -180,15 +172,15 @@ namespace Dock.WinUI3.Controls
             if (InitializeFactory)
             {
                 layout.Factory.ContextLocator = new Dictionary<string, Func<object>>();
-                //layout.Factory.HostWindowLocator = new Dictionary<string, Func<IHostWindow?>>
-                //{
-                //    [nameof(IDockWindow)] = () => new HostWindow()
-                //};
+                layout.Factory.HostWindowLocator = new Dictionary<string, Func<IHostWindow>>
+                {
+                    [nameof(IDockWindow)] = () => new HostWindowControl(new HostWindow())
+                };
                 layout.Factory.DockableLocator = new Dictionary<string, Func<IDockable>>();
                 layout.Factory.DefaultContextLocator = GetContext;
-                //layout.Factory.DefaultHostWindowLocator = GetHostWindow;
+                layout.Factory.DefaultHostWindowLocator = GetHostWindow;
 
-                //IHostWindow GetHostWindow() => new HostWindow();
+                IHostWindow GetHostWindow() => new HostWindowControl(new HostWindow());
 
                 object GetContext() => DefaultContext;
             }
@@ -217,9 +209,10 @@ namespace Dock.WinUI3.Controls
             base.OnPointerPressed(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
+
                 _dockControlState.Process(position, delta, EventType.Pressed, action, this, Layout.Factory.DockControls);
             }
         }
@@ -230,9 +223,10 @@ namespace Dock.WinUI3.Controls
             base.OnPointerReleased(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
+
                 _dockControlState.Process(position, delta, EventType.Released, action, this, Layout.Factory.DockControls);
             }
         }
@@ -243,9 +237,10 @@ namespace Dock.WinUI3.Controls
             base.OnPointerMoved(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
+
                 _dockControlState.Process(position, delta, EventType.Moved, action, this, Layout.Factory.DockControls);
             }
         }
@@ -256,9 +251,10 @@ namespace Dock.WinUI3.Controls
             base.OnPointerEntered(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
+
                 _dockControlState.Process(position, delta, EventType.Enter, action, this, Layout.Factory.DockControls);
             }
         }
@@ -269,9 +265,10 @@ namespace Dock.WinUI3.Controls
             base.OnPointerExited(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
+
                 _dockControlState.Process(position, delta, EventType.Leave, action, this, Layout.Factory.DockControls);
             }
         }
@@ -285,6 +282,7 @@ namespace Dock.WinUI3.Controls
                 var position = new Point();
                 var delta = new Vector();
                 var action = DragAction.None;
+
                 _dockControlState.Process(position, delta, EventType.CaptureLost, action, this, Layout.Factory.DockControls);
             }
         }
@@ -294,7 +292,7 @@ namespace Dock.WinUI3.Controls
             base.OnPointerWheelChanged(e);
             if (Layout?.Factory?.DockControls is { })
             {
-                var position = e.GetCurrentPoint(this).Position;
+                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
                 var delta = new Vector(0, e.GetCurrentPoint(this).Properties.MouseWheelDelta);
                 var action = ToDragAction(e);
                 _dockControlState.Process(position, delta, EventType.WheelChanged, action, this, Layout.Factory.DockControls);

@@ -8,9 +8,26 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:HostWindowTitleBar">
-
+                    <Border x:Name="PART_AppTitleBar"
+                            Height="{Binding ElementName=NavigationViewControl}"
+                            Margin="48,0,0,0"
+                            VerticalAlignment="Stretch"
+                            AutomationProperties.AutomationId="AppTitleBar"
+                            Canvas.ZIndex="1"
+                            IsHitTestVisible="True">
+                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                            <!--<Image Width="18" Source="ms-appx:///Assets/Tiles/TitlebarLogo.png" />-->
+                            <TextBlock x:Name="PART_AppTitle"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Window" />
+                            <TextBox x:Name="PART_AppTitleBarTextBox" MinWidth="300" Height="40" Margin="16,0,0,0" Visibility="Collapsed"  PlaceholderText="Enter any text" />
+                        </StackPanel>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
 </ResourceDictionary>
