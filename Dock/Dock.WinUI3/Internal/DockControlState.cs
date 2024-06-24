@@ -57,7 +57,7 @@ namespace Dock.WinUI3.Internal
         private void Enter(Point point, DragAction dragAction, FrameworkElement relativeTo)
         {
             var isValid = Validate(point, DockOperation.Fill, dragAction, relativeTo);
-            if (isValid && _state.DropControl is { } control && control.GetValue(DockProperties.IsDockTargetProperty) != null)
+            if (isValid && _state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
                 _adornerHelper.AddAdorner(control);
             }

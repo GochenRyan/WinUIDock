@@ -21,7 +21,6 @@ namespace Dock.WinUI3.Internal
             {
                 Width = element.ActualSize.X,
                 Height = element.ActualSize.Y,
-                Background = new SolidColorBrush(Colors.Brown)
             };
             Adorner = new DockTarget();
             grid.Children.Add(Adorner);

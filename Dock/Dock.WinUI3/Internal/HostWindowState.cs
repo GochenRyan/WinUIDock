@@ -61,7 +61,7 @@ namespace Dock.WinUI3.Internal
         {
             var isValid = Validate(point, DockOperation.Fill, dragAction, relativeTo);
 
-            if (isValid && _state.TargetDropControl is { } control && (bool)control.GetValue(DockProperties.IsDockTargetProperty))
+            if (isValid && _state.TargetDropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
                 _adornerHelper.AddAdorner(control);
             }
@@ -91,7 +91,7 @@ namespace Dock.WinUI3.Internal
                 operation = target.GetDockOperation(point, relativeTo, dragAction, Validate);
             }
 
-            if (_state.TargetDropControl is { } control && (bool)control.GetValue(DockProperties.IsDockTargetProperty))
+            if (_state.TargetDropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
                 _adornerHelper.RemoveAdorner(control);
             }
@@ -104,7 +104,7 @@ namespace Dock.WinUI3.Internal
 
         private void Leave()
         {
-            if (_state.TargetDropControl is { } control && (bool)control.GetValue(DockProperties.IsDockTargetProperty))
+            if (_state.TargetDropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
                 _adornerHelper.RemoveAdorner(control);
             }
@@ -180,7 +180,7 @@ namespace Dock.WinUI3.Internal
             {
                 case EventType.Pressed:
                     {
-                        var isDragEnabled = (bool)_hostWindow.GetValue(DockProperties.IsDragEnabledProperty);
+                        var isDragEnabled = DockProperties.GetIsDragEnabled(_hostWindow);
                         if (isDragEnabled != true)
                         {
                             break;
@@ -198,7 +198,7 @@ namespace Dock.WinUI3.Internal
 
                                 if (_state.TargetDockControl is Control targetControl)
                                 {
-                                    isDropEnabled = (bool)targetControl.GetValue(DockProperties.IsDropEnabledProperty);
+                                    isDropEnabled = DockProperties.GetIsDropEnabled(targetControl);
                                 }
 
                                 if (isDropEnabled)
@@ -250,7 +250,7 @@ namespace Dock.WinUI3.Internal
                             var dropControl = DockHelpers.GetControl(dockControl, screenPoint, DockProperties.IsDropAreaProperty);
                             if (dropControl is { })
                             {
-                                var isDropEnabled = (bool)dockControl.GetValue(DockProperties.IsDropEnabledProperty);
+                                var isDropEnabled = DockProperties.GetIsDropEnabled(dockControl);
                                 if (!isDropEnabled)
                                 {
                                     Leave();

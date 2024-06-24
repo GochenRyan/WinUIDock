@@ -1,6 +1,7 @@
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Linq;
@@ -11,16 +12,16 @@ using Windows.Foundation;
 
 namespace Dock.WinUI3.Controls
 {
-    [TemplatePart(Name = TopIndicatorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = BottomIndicatorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = LeftIndicatorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = RightIndicatorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = CenterIndicatorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = TopSelectorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = BottomSelectorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = LeftSelectorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = RightSelectorPartName, Type = typeof(FrameworkElement))]
-    [TemplatePart(Name = CenterSelectorPartName, Type = typeof(FrameworkElement))]
+    [TemplatePart(Name = TopIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = BottomIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = LeftIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = RightIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = CenterIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = TopSelectorPartName, Type = typeof(Image))]
+    [TemplatePart(Name = BottomSelectorPartName, Type = typeof(Image))]
+    [TemplatePart(Name = LeftSelectorPartName, Type = typeof(Image))]
+    [TemplatePart(Name = RightSelectorPartName, Type = typeof(Image))]
+    [TemplatePart(Name = CenterSelectorPartName, Type = typeof(Image))]
     public sealed class DockTarget : Control
     {
         public const string TopIndicatorPartName = "PART_TopIndicator";
@@ -42,17 +43,17 @@ namespace Dock.WinUI3.Controls
         protected override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            _topIndicator = GetTemplateChild(TopIndicatorPartName) as FrameworkElement;
-            _bottomIndicator = GetTemplateChild(BottomIndicatorPartName) as FrameworkElement;
-            _leftIndicator = GetTemplateChild(LeftIndicatorPartName) as FrameworkElement;
-            _rightIndicator = GetTemplateChild(RightIndicatorPartName) as FrameworkElement;
-            _centerIndicator = GetTemplateChild(CenterIndicatorPartName) as FrameworkElement;
+            _topIndicator = GetTemplateChild(TopIndicatorPartName) as Grid;
+            _bottomIndicator = GetTemplateChild(BottomIndicatorPartName) as Grid;
+            _leftIndicator = GetTemplateChild(LeftIndicatorPartName) as Grid;
+            _rightIndicator = GetTemplateChild(RightIndicatorPartName) as Grid;
+            _centerIndicator = GetTemplateChild(CenterIndicatorPartName) as Grid;
 
-            _topSelector = GetTemplateChild(TopSelectorPartName) as FrameworkElement;
-            _bottomSelector = GetTemplateChild(BottomSelectorPartName) as FrameworkElement;
-            _leftSelector = GetTemplateChild(LeftSelectorPartName) as FrameworkElement;
-            _rightSelector = GetTemplateChild(RightSelectorPartName) as FrameworkElement;
-            _centerSelector = GetTemplateChild(CenterSelectorPartName) as FrameworkElement;
+            _topSelector = GetTemplateChild(TopSelectorPartName) as Image;
+            _bottomSelector = GetTemplateChild(BottomSelectorPartName) as Image;
+            _leftSelector = GetTemplateChild(LeftSelectorPartName) as Image;
+            _rightSelector = GetTemplateChild(RightSelectorPartName) as Image;
+            _centerSelector = GetTemplateChild(CenterSelectorPartName) as Image;
         }
 
         internal DockOperation GetDockOperation(Point point, FrameworkElement relativeTo, DragAction dragAction, Func<Point, DockOperation, DragAction, FrameworkElement, bool> validate)
@@ -113,16 +114,16 @@ namespace Dock.WinUI3.Controls
             return false;
         }
 
-        private FrameworkElement _topIndicator;
-        private FrameworkElement _bottomIndicator;
-        private FrameworkElement _leftIndicator;
-        private FrameworkElement _rightIndicator;
-        private FrameworkElement _centerIndicator;
+        private Grid _topIndicator;
+        private Grid _bottomIndicator;
+        private Grid _leftIndicator;
+        private Grid _rightIndicator;
+        private Grid _centerIndicator;
 
-        private FrameworkElement _topSelector;
-        private FrameworkElement _bottomSelector;
-        private FrameworkElement _leftSelector;
-        private FrameworkElement _rightSelector;
-        private FrameworkElement _centerSelector;
+        private Image _topSelector;
+        private Image _bottomSelector;
+        private Image _leftSelector;
+        private Image _rightSelector;
+        private Image _centerSelector;
     }
 }
