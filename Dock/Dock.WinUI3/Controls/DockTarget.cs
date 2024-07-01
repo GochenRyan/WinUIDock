@@ -1,7 +1,6 @@
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Linq;
@@ -95,18 +94,13 @@ namespace Dock.WinUI3.Controls
                 return false;
             }
 
-            GeneralTransform transform = relativeTo.TransformToVisual(selector);
-            Point selectorPoint = transform.TransformPoint(point);
 
-            if (selectorPoint is { })
+            if (VisualTreeHelper.FindElementsInHostCoordinates(point, this) is { } inputElements && inputElements.Contains(selector))
             {
-                if (VisualTreeHelper.FindElementsInHostCoordinates(selectorPoint, selector) is { } inputElements && inputElements.Contains(selector))
+                if (validate(point, operation, dragAction, relativeTo))
                 {
-                    if (validate(point, operation, dragAction, relativeTo))
-                    {
-                        indicator.Opacity = 0.5;
-                        return true;
-                    }
+                    indicator.Opacity = 0.5;
+                    return true;
                 }
             }
 

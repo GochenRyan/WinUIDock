@@ -23,9 +23,9 @@ namespace Dock.WinUI3.Controls
             }
         }
 
-        protected override void OnItemsChanged(object e)
+        protected override void OnApplyTemplate()
         {
-            base.OnItemsChanged(e);
+            base.OnApplyTemplate();
         }
     }
 }

@@ -26,7 +26,7 @@
                     </local:ProportionTemplateSelector.SplitterTemplate>
                     <local:ProportionTemplateSelector.DocumentDockTemplate>
                         <DataTemplate>
-                            <local:DocumentDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
+                            <local:DocumentDockControl />
                         </DataTemplate>
                     </local:ProportionTemplateSelector.DocumentDockTemplate>
                     <local:ProportionTemplateSelector.ProportionalDockTemplate>

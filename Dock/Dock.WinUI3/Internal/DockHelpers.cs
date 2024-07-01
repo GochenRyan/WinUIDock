@@ -36,18 +36,65 @@ namespace Dock.WinUI3.Internal
         {
             IEnumerable<UIElement> inputElements = GetVisualsAt(point, input);
 
+            var panels = inputElements?.OfType<Panel>().ToList();
+            Panel selectedPanel = null;
+            if (panels is { })
+            {
+                foreach (var panel in panels)
+                {
+                    if ((bool)panel.GetValue(property))
+                    {
+                        selectedPanel = panel;
+                        break;
+                    }
+                }
+            }
 
             var controls = inputElements?.OfType<Control>().ToList();
             if (controls is { })
             {
                 foreach (var control in controls)
                 {
-                    if (control.GetValue(property) != null)
+                    if (selectedPanel != null && ContainsPanel(control, selectedPanel))
+                    {
+                        return control;
+                    }
+
+                    if ((bool)control.GetValue(property))
                     {
                         return control;
                     }
                 }
             }
+            return null;
+        }
+
+        private static bool ContainsPanel(Control parentControl, Panel panelToFind)
+        {
+            return FindChildPanel(parentControl, panelToFind) != null;
+        }
+
+        private static Panel FindChildPanel(DependencyObject parent, Panel panelToFind)
+        {
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+
+            for (int i = 0; i < childCount; i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child == panelToFind)
+                {
+                    return panelToFind;
+                }
+
+                Panel foundPanel = FindChildPanel(child, panelToFind);
+
+                if (foundPanel != null)
+                {
+                    return foundPanel;
+                }
+            }
+
             return null;
         }
 

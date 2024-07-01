@@ -25,6 +25,129 @@ namespace Dock.WinUI3.Controls
 
             _dockManager = new DockManager();
             _dockControlState = new DockControlState(_dockManager);
+
+            Unloaded += DockControl_Unloaded;
+
+            PointerPressed += DockControl_PointerPressed;
+            PointerEntered += DockControl_PointerEntered;
+            PointerReleased += DockControl_PointerReleased;
+            PointerExited += DockControl_PointerExited;
+            PointerCanceled += DockControl_PointerCanceled;
+            PointerCaptureLost += DockControl_PointerCaptureLost;
+            PointerMoved += DockControl_PointerMoved;
+            PointerWheelChanged += DockControl_PointerWheelChanged;
+        }
+
+        private void DockControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (_isInitialized)
+            {
+                DeInitialize(Layout);
+            }
+        }
+
+        private void DockControl_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector(0, e.GetCurrentPoint(this).Properties.MouseWheelDelta);
+                var action = ToDragAction(e);
+                _dockControlState.Process(position, delta, EventType.WheelChanged, action, this, Layout.Factory.DockControls);
+            }
+        }
+
+        private void DockControl_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector();
+                var action = ToDragAction(e);
+
+                _dockControlState.Process(position, delta, EventType.Moved, action, this, Layout.Factory.DockControls);
+            }
+        }
+
+        private void DockControl_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                var position = new Point();
+                var delta = new Vector();
+                var action = DragAction.None;
+
+                _dockControlState.Process(position, delta, EventType.CaptureLost, action, this, Layout.Factory.DockControls);
+            }
+        }
+
+        private void DockControl_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+        }
+
+        private void DockControl_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector();
+                var action = ToDragAction(e);
+
+                _dockControlState.Process(position, delta, EventType.Leave, action, this, Layout.Factory.DockControls);
+            }
+        }
+
+        private void DockControl_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector();
+                var action = ToDragAction(e);
+
+                _dockControlState.Process(position, delta, EventType.Released, action, this, Layout.Factory.DockControls);
+                this.ReleasePointerCapture(e.Pointer);
+            }
+        }
+
+        private void DockControl_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+
+
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector();
+                var action = ToDragAction(e);
+
+                _dockControlState.Process(position, delta, EventType.Enter, action, this, Layout.Factory.DockControls);
+            }
+        }
+
+        private void DockControl_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (Layout?.Factory?.DockControls is { })
+            {
+                this.CapturePointer(e.Pointer);
+
+                UIElement element = sender as UIElement;
+                var ownerWindow = HostWindow.GetWindowForElement(element);
+                var position = e.GetCurrentPoint(ownerWindow.Content).Position;
+                var delta = new Vector();
+                var action = ToDragAction(e);
+
+                _dockControlState.Process(position, delta, EventType.Pressed, action, this, Layout.Factory.DockControls);
+            }
         }
 
         public static readonly DependencyProperty DefaultContextProperty = DependencyProperty.Register(
@@ -201,102 +324,6 @@ namespace Dock.WinUI3.Controls
         protected override void OnContentTemplateSelectorChanged(DataTemplateSelector oldContentTemplateSelector, DataTemplateSelector newContentTemplateSelector)
         {
             base.OnContentTemplateSelectorChanged(oldContentTemplateSelector, newContentTemplateSelector);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerPressed(PointerRoutedEventArgs e)
-        {
-            base.OnPointerPressed(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector();
-                var action = ToDragAction(e);
-
-                _dockControlState.Process(position, delta, EventType.Pressed, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerReleased(PointerRoutedEventArgs e)
-        {
-            base.OnPointerReleased(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector();
-                var action = ToDragAction(e);
-
-                _dockControlState.Process(position, delta, EventType.Released, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerMoved(PointerRoutedEventArgs e)
-        {
-            base.OnPointerMoved(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector();
-                var action = ToDragAction(e);
-
-                _dockControlState.Process(position, delta, EventType.Moved, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerEntered(PointerRoutedEventArgs e)
-        {
-            base.OnPointerEntered(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector();
-                var action = ToDragAction(e);
-
-                _dockControlState.Process(position, delta, EventType.Enter, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerExited(PointerRoutedEventArgs e)
-        {
-            base.OnPointerExited(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector();
-                var action = ToDragAction(e);
-
-                _dockControlState.Process(position, delta, EventType.Leave, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override void OnPointerCaptureLost(PointerRoutedEventArgs e)
-        {
-            base.OnPointerCaptureLost(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = new Point();
-                var delta = new Vector();
-                var action = DragAction.None;
-
-                _dockControlState.Process(position, delta, EventType.CaptureLost, action, this, Layout.Factory.DockControls);
-            }
-        }
-
-        protected override void OnPointerWheelChanged(PointerRoutedEventArgs e)
-        {
-            base.OnPointerWheelChanged(e);
-            if (Layout?.Factory?.DockControls is { })
-            {
-                var position = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
-                var delta = new Vector(0, e.GetCurrentPoint(this).Properties.MouseWheelDelta);
-                var action = ToDragAction(e);
-                _dockControlState.Process(position, delta, EventType.WheelChanged, action, this, Layout.Factory.DockControls);
-            }
         }
 
         private static DragAction ToDragAction(PointerRoutedEventArgs e)

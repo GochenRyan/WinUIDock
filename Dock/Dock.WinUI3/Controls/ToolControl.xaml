@@ -6,12 +6,12 @@
     xmlns:settings="using:Dock.Settings">
 
     <Style TargetType="local:ToolControl">
+        <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
+        <Setter Property="settings:DockProperties.IsDockTarget" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolControl">
-                    <local:DockPanel x:Name="PART_DockPanel"
-                                     settings:DockProperties.IsDropArea="True"
-                                     settings:DockProperties.IsDockTarget="True">
+                    <local:DockPanel x:Name="PART_DockPanel">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
                                             SelectedItem="{Binding ActiveDockable, Mode=OneWay}"
                                             MaxHeight="40"

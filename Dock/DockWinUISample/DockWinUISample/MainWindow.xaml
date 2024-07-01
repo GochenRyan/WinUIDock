@@ -79,8 +79,11 @@
                                 <winui3controls:Document x:Name="Document1" Id="Document1" Title="Program.cs">
                                     <TextBlock Text="{x:Bind Document1.Title, Mode=OneWay}"/>
                                 </winui3controls:Document>
-                                <winui3controls:Document x:Name="Document2" Id="Document2" Title="App.axaml">
+                                <winui3controls:Document x:Name="Document2" Id="Document2" Title="App.xaml">
                                     <TextBlock Text="{x:Bind Document2.Title, Mode=OneWay}"/>
+                                </winui3controls:Document>
+                                <winui3controls:Document x:Name="Document3" Id="Document3" Title="Game.xaml">
+                                    <TextBlock Text="{x:Bind Document3.Title, Mode=OneWay}"/>
                                 </winui3controls:Document>
                             </winui3controls:DocumentDock>
 

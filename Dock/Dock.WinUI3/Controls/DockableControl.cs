@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 
 namespace Dock.WinUI3.Controls
@@ -23,6 +24,12 @@ namespace Dock.WinUI3.Controls
 
         private void DockableControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (_currentDockable is not null)
+            {
+                UnRegister(_currentDockable);
+                _currentDockable = null;
+            }
+
             RemoveHandler(PointerPressedEvent, PressedHandler);
             RemoveHandler(PointerMovedEvent, MovedHandler);
         }
@@ -36,6 +43,31 @@ namespace Dock.WinUI3.Controls
 
         private void DockableControl_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            if (DataContext is not IDockable dockable)
+            {
+                return;
+            }
+
+            GeneralTransform transform = TransformToVisual(null);
+            Rect bounds = transform.TransformBounds(new Rect(0, 0, ActualWidth, ActualHeight));
+
+            var x = bounds.X;
+            var y = bounds.Y;
+            var width = bounds.Width;
+            var height = bounds.Height;
+
+            switch (TrackingMode)
+            {
+                case TrackingMode.Visible:
+                    dockable.SetVisibleBounds(x, y, width, height);
+                    break;
+                case TrackingMode.Pinned:
+                    dockable.SetPinnedBounds(x, y, width, height);
+                    break;
+                case TrackingMode.Tab:
+                    dockable.SetTabBounds(x, y, width, height);
+                    break;
+            }
         }
 
         private void DockableControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -112,8 +144,8 @@ namespace Dock.WinUI3.Controls
             }
 
             var position = e.GetCurrentPoint(this).Position;
-
-            var screenPoint = e.GetCurrentPoint(HostWindow.MainWindow.Content).Position;
+            var window = HostWindow.GetWindowForElement(this);
+            var screenPoint = e.GetCurrentPoint(window.Content).Position;
 
             dockable.SetPointerPosition(position.X, position.Y);
             dockable.SetPointerScreenPosition(screenPoint.X, screenPoint.Y);

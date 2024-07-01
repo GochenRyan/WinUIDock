@@ -8,28 +8,26 @@
     <converters:NormalConverter x:Key="DockConverter"/>
 
     <Style TargetType="local:HostWindowControl">
-        <!--<Setter Property="ToolChromeControlsWholeWindow" Value="{Binding OpenedDockablesCount, Mode=OneWay}" />-->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:HostWindowControl">
-                    <local:DockControl x:Name="PART_DockControl"
-                                       InitializeLayout="True" 
-                                       InitializeFactory="True">
-                    </local:DockControl>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <local:HostWindowTitleBar x:Name="PART_TitleBar" />
+
+                        <local:DockControl x:Name="PART_DockControl"
+                                           InitializeLayout="True" 
+                                           InitializeFactory="True"
+                                           Grid.Row="1">
+                        </local:DockControl>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <!--<Setter Property="ContentTemplateSelector">
-            <Setter.Value>
-                <local:DockTemplateSelector>
-                    <local:DockTemplateSelector.RootDockTemplate>
-                        <DataTemplate>
-                            <local:RootDockControl Content="{Binding ActiveDockable, Mode=OneWay}"/>
-                        </DataTemplate>
-                    </local:DockTemplateSelector.RootDockTemplate>
-                </local:DockTemplateSelector>
-            </Setter.Value>
-        </Setter>-->
     </Style>
 
 </ResourceDictionary>

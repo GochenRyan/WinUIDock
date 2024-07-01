@@ -12,26 +12,22 @@
     </MenuFlyout>-->
 
     <Style TargetType="local:DocumentControl">
+        <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
+        <Setter Property="settings:DockProperties.IsDockTarget" Value="True"/>
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentControl">
-                    <local:DockPanel x:Name="PART_DockPanel"
-                                     settings:DockProperties.IsDropArea="True"
-                                     settings:DockProperties.IsDockTarget="True">
+                    <local:DockPanel x:Name="PART_DockPanel">
                         <local:DocumentTabStrip x:Name="PART_TabStrip"
-                                                ItemsSource="{Binding VisibleDockables, Mode=OneWay}"
-                                                SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
-                                                CanCreateItem="{Binding CanCreateDocument, Mode=OneWay}"
-                                                IsActive="{TemplateBinding IsActive}"
                                                 local:DockPanel.Dock="Top"
                                                 MaxHeight="40">
 
                         </local:DocumentTabStrip>
                         <Border x:Name="PART_Border" local:DockPanel.Dock="Bottom">
-                            <local:DockableControl DataContext="{Binding ActiveDockable, Mode=OneWay}"
-                                             TrackingMode="Visible">
+                            <local:DockableControl x:Name="PART_DockableControl"
+                                                   TrackingMode="Visible">
                                 <ContentPresenter x:Name="PART_ContentPresenter"
-                                                  Content="{Binding Content, Mode=OneWay}"
                                                   HorizontalAlignment="Stretch"
                                                   VerticalAlignment="Stretch"/>
                             </local:DockableControl>

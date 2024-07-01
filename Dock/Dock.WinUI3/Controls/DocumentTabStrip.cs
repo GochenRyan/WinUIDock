@@ -1,17 +1,35 @@
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Dock.WinUI3.Controls
 {
+    [TemplatePart(Name = WrapPanelName, Type = typeof(WrapPanel))]
     public sealed class DocumentTabStrip : ItemsControl
     {
+        public const string WrapPanelName = "HorizontalWrapPanel";
+
         public DocumentTabStrip()
         {
             this.DefaultStyleKey = typeof(DocumentTabStrip);
+            DataContextChanged += DocumentTabStrip_DataContextChanged;
+        }
+
+        private void DocumentTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            if (DataContext is IDock dock)
+            {
+                ItemsSource = dock.VisibleDockables;
+            }
+        }
+
+        protected override void OnItemsChanged(object e)
+        {
+            base.OnItemsChanged(e);
         }
 
         public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
@@ -51,6 +69,16 @@ namespace Dock.WinUI3.Controls
         {
             var control = ob as DocumentTabStrip;
             IDockable item = (IDockable)args.NewValue;
+        }
+
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+        }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            return base.MeasureOverride(availableSize);
         }
     }
 }

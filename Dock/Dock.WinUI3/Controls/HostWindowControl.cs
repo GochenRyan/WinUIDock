@@ -1,11 +1,11 @@
 using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
-using Dock.WinUI3.Internal;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Windows.Foundation;
@@ -17,30 +17,58 @@ using WinUIEx;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = DockControlName, Type = typeof(DockControl))]
+    [TemplatePart(Name = TitleBarName, Type = typeof(HostWindowTitleBar))]
     public class HostWindowControl : ContentControl, IHostWindow
     {
         public const string DockControlName = "PART_DockControl";
+        public const string TitleBarName = "PART_TitleBar";
 
         public HostWindowControl(HostWindow hostWindow)
         {
             this.DefaultStyleKey = typeof(HostWindowControl);
             _ownerWindow = hostWindow;
             _ownerWindow.WindowContent = this;
+            _ownerWindow.ExtendsContentIntoTitleBar = true;
+
+            _ownerWindow.PositionChanged += _ownerWindow_PositionChanged;
+            _ownerWindow.SizeChanged += _ownerWindow_SizeChanged;
 
             LayoutUpdated += HostWindowControl_LayoutUpdated;
 
             _dockManager = new DockManager();
-            _hostWindowState = new HostWindowState(_dockManager, this);
 
             DataContextChanged += HostWindowControl_DataContextChanged;
         }
 
+        private void _ownerWindow_SizeChanged(object sender, WindowSizeChangedEventArgs args)
+        {
+            _ownerWindowWidth = args.Size.Width;
+            _ownerWindowHeight = args.Size.Height;
+        }
+
+        private void _ownerWindow_PositionChanged(object sender, Windows.Graphics.PointInt32 e)
+        {
+            _ownerWindowX = e.X;
+            _ownerWindowY = e.Y;
+        }
+
         private void HostWindowControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
+            UpdateTemplateChilren();
+        }
+
+        private void UpdateTemplateChilren()
+        {
+            IDock dock = DataContext as IDock;
             if (_dockControl != null)
             {
-                _dockControl.Layout = DataContext as IDock;
+                _dockControl.Layout = dock;
             }
+
+            //if (_titleBar != null)
+            //{
+            //    _titleBar.TitleText = (dock != null ? dock.Title : "");
+            //}
         }
 
         private void HostWindowControl_LayoutUpdated(object sender, object e)
@@ -79,101 +107,21 @@ namespace Dock.WinUI3.Controls
         {
             base.OnApplyTemplate();
 
-            _hostWindowTitleBar = new HostWindowTitleBar();
-            _hostWindowTitleBar.ApplyTemplate();
-
-            _hostWindowTitleBar.PointerPressed += _hostWindowTitleBar_PointerPressed;
-            _ownerWindow.SetTitleBar(_hostWindowTitleBar);
-
             _dockControl = GetTemplateChild(DockControlName) as DockControl;
             _dockControl.Layout = DataContext as IDock;
-        }
 
-        private void _hostWindowTitleBar_PointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            MoveDrag(e);
-        }
-
-        protected override void OnPointerPressed(PointerRoutedEventArgs e)
-        {
-            base.OnPointerPressed(e);
-            if (_chromeGrips.Any(grip => grip.CapturePointer(e.Pointer)))
-            {
-                if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-                {
-                    MoveDrag(e);
-                }
-            }
-        }
-
-        protected override void OnPointerMoved(PointerRoutedEventArgs e)
-        {
-            base.OnPointerMoved(e);
-
-            if (Window is { } && IsTracked)
-            {
-                Window.Save();
-
-                if (_mouseDown)
-                {
-                    Window.Factory?.OnWindowMoveDrag(Window);
-                    _hostWindowState.Process(e.GetCurrentPoint(this).Position, EventType.Moved);
-                }
-            }
-        }
-
-        protected override void OnPointerReleased(PointerRoutedEventArgs e)
-        {
-            base.OnPointerReleased(e);
-
-            if (_draggingWindow)
-            {
-                EndDrag(e);
-            }
-        }
-
-        private void EndDrag(PointerRoutedEventArgs e)
-        {
-            Window?.Factory?.OnWindowMoveDragEnd(Window);
-            _hostWindowState.Process(ClientPointToScreenRelativeToWindow(e.GetCurrentPoint(this).Position), EventType.Released);
-            _mouseDown = false;
-            _draggingWindow = false;
-        }
-
-        private void MoveDrag(PointerRoutedEventArgs e)
-        {
-            if (!ToolChromeControlsWholeWindow)
-                return;
-
-            if (Window?.Factory?.OnWindowMoveDragBegin(Window) != true)
-            {
-                return;
-            }
-
-            _mouseDown = true;
-            _hostWindowState.Process(ClientPointToScreenRelativeToWindow(e.GetCurrentPoint(this).Position), EventType.Pressed);
-            _draggingWindow = true;
-        }
-
-        private Point ClientPointToScreenRelativeToWindow(Point clientPoint)
-        {
-            GeneralTransform t = TransformToVisual(HostWindow.MainWindow.Content);
-
-            var absScreenPoint = t.TransformPoint(clientPoint);
-            var absScreenWindowPoint = t.TransformPoint(new Point(0, 0));
-            var relativeScreenDiff = new Point(absScreenPoint.X - absScreenWindowPoint.X, absScreenPoint.Y - absScreenWindowPoint.Y);
-            return relativeScreenDiff;
+            _titleBar = GetTemplateChild(TitleBarName) as HostWindowTitleBar;
+            _ownerWindow.SetTitleBar(_titleBar);
+            UpdateTemplateChilren();
         }
 
         private readonly DockManager _dockManager;
-        private readonly HostWindowState _hostWindowState;
         private List<Grid> _chromeGrips = new();
-        private HostWindowTitleBar _hostWindowTitleBar;
         private bool _mouseDown, _draggingWindow;
 
         public IDockManager DockManager => _dockManager;
 
-        public IHostWindowState HostWindowState => _hostWindowState;
+        public IHostWindowState HostWindowState => null;
 
         public bool IsTracked { get; set; }
         public IDockWindow Window { get; set; }
@@ -293,8 +241,8 @@ namespace Dock.WinUI3.Controls
 
         public void GetPosition(out double x, out double y)
         {
-            x = _ownerWindow.AppWindow.Position.X;
-            y = _ownerWindow.AppWindow.Position.Y;
+            x = _ownerWindowX;
+            y = _ownerWindowY;
         }
 
         public void SetSize(double width, double height)
@@ -312,8 +260,8 @@ namespace Dock.WinUI3.Controls
 
         public void GetSize(out double width, out double height)
         {
-            width = _ownerWindow.Width;
-            height = _ownerWindow.Height;
+            width = _ownerWindowWidth;
+            height = _ownerWindowHeight;
         }
 
         public void SetTitle(string title)
@@ -328,7 +276,43 @@ namespace Dock.WinUI3.Controls
             ToolChromeControlsWholeWindow = layout.OpenedDockablesCount < 2;
         }
 
-        WindowEx _ownerWindow;
+        private void SetRegionsForCustomTitleBar()
+        {
+            // Specify the interactive regions of the title bar.
+
+            double scaleAdjustment = _titleBar.XamlRoot.RasterizationScale;
+
+            GeneralTransform transform = _titleBar.TransformToVisual(null);
+            Rect bounds = transform.TransformBounds(new Rect(0, 0,
+                                                             _titleBar.PointerArea.ActualWidth,
+                                                             _titleBar.PointerArea.ActualHeight));
+            Windows.Graphics.RectInt32 PointerRect = GetRect(bounds, scaleAdjustment);
+
+            var rectArray = new Windows.Graphics.RectInt32[] { PointerRect };
+
+            InputNonClientPointerSource nonClientInputSrc =
+                InputNonClientPointerSource.GetForWindowId(_ownerWindow.AppWindow.Id);
+            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, rectArray);
+        }
+
+        private Windows.Graphics.RectInt32 GetRect(Rect bounds, double scale)
+        {
+            return new Windows.Graphics.RectInt32(
+                _X: (int)Math.Round(bounds.X * scale),
+                _Y: (int)Math.Round(bounds.Y * scale),
+                _Width: (int)Math.Round(bounds.Width * scale),
+                _Height: (int)Math.Round(bounds.Height * scale)
+            );
+        }
+
+
+        private WindowEx _ownerWindow;
         private DockControl _dockControl;
+        private HostWindowTitleBar _titleBar;
+
+        private double _ownerWindowX;
+        private double _ownerWindowY;
+        private double _ownerWindowWidth;
+        private double _ownerWindowHeight;
     }
 }

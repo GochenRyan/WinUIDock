@@ -1,9 +1,7 @@
 ﻿using Dock.WinUI3.Controls;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 
 namespace Dock.WinUI3.Internal
@@ -25,8 +23,7 @@ namespace Dock.WinUI3.Internal
             Adorner = new DockTarget();
             grid.Children.Add(Adorner);
 
-            var currentWindow = HostWindow.GetWindowForElement(element);
-            var t = element.TransformToVisual(currentWindow.Content);
+            var t = element.TransformToVisual(null);
             var windowPoint = t.TransformPoint(new Point());
 
             _popup = new Popup();
@@ -43,6 +40,7 @@ namespace Dock.WinUI3.Internal
 
             if (_popup is { })
             {
+                _popup.IsOpen = false;
                 Adorner = null;
                 _popup = null;
             }

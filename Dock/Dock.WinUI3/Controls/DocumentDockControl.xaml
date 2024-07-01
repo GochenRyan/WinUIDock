@@ -9,16 +9,11 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentDockControl">
                     <local:DockableControl TrackingMode="Visible">
-                        <local:DocumentControl />
+                        <local:DocumentControl x:Name="PART_DocumentControl"/>
                     </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <!--<Setter Property="ContentTemplateSelector">
-            <Setter.Value>
-                <local:DocumentDockSelector DocumentTemplate="{StaticResource DocumentTemplate}"/>
-            </Setter.Value>
-        </Setter>-->
     </Style>
     
 </ResourceDictionary>

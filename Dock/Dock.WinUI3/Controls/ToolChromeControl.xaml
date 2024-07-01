@@ -22,6 +22,7 @@
     </Style>
 
     <Style TargetType="local:ToolChromeControl">
+        <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolChromeControl">
@@ -32,13 +33,12 @@
                                 VerticalAlignment="Top"
                                 ContextFlyout="{StaticResource ToolChromeControlContextMenu}"
                                 Grid.Row="0">
-                            <Grid x:Name="PART_Grip" 
-                                  settings:DockProperties.IsDragArea="True"
-                                  settings:DockProperties.IsDropArea="True">
+                            <Grid x:Name="PART_Grip"
+                                  settings:DockProperties.IsDragArea="True">
                                 <local:DockPanel LastChildFill="True" Margin="8 0">
                                     <TextBlock x:Name="PART_Title"
                                                local:DockPanel.Dock="Left"
-                                               Text="{Binding ActiveDockable.Title, FallbackValue='TITLE', Mode=OneWay}" />
+                                               Text="{Binding ActiveDockable.Title, FallbackValue='TITLE', Mode=OneWay}"/>
                                     <StackPanel local:DockPanel.Dock="Right"
                                                 Orientation="Horizontal">
                                         <Button x:Name="PART_MenuButton"

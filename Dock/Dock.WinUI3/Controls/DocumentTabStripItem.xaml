@@ -22,31 +22,24 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="4 0 4 0" />
+        <Setter Property="settings:DockProperties.IsDragArea" Value="True"/>
+        <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentTabStripItem">
-                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                    <Border x:Name="PART_Border"
+                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Padding="{TemplateBinding Padding}"
-                            ContextFlyout="{StaticResource DocumentTabStripItemContextMenu}"
-                            Width="{Binding ElementName=PART_DragTool, Path=Width, Mode=OneWay}">
+                            ContextFlyout="{StaticResource DocumentTabStripItemContextMenu}">
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
-                                        Spacing="2"
-                                        settings:DockProperties.IsDragArea="True"
-                                        settings:DockProperties.IsDropArea="True">
-                                <Button x:Name="PART_TitleItem" 
-                                        Margin="0" 
-                                        Content="{Binding Title, Mode=OneWay}"
-                                        VerticalAlignment="Center"
-                                        BorderThickness="0"
-                                        Command="{Binding Owner.Factory.SetActiveDockableCmd}"
-                                        CommandParameter="{Binding}"/>
+                                        Spacing="2">
+                                <TextBlock x:Name="PART_TitleItem"
+                                           Margin="0"
+                                           VerticalAlignment="Center"/>
                                 <Button x:Name="PART_CloseButton"
-                                        Command="{Binding Owner.Factory.CloseDockableCmd}"
-                                        CommandParameter="{Binding}"
-                                        Visibility="{Binding CanClose, Mode=OneWay}"
                                         BorderThickness="0"
                                         VerticalAlignment="Center"
                                         Margin="0">
