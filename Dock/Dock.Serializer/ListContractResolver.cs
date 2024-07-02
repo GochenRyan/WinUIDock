@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.ObjectModel;
 using System.Reflection;
 
 namespace Dock.Serializer;
@@ -23,9 +24,10 @@ public class ListContractResolver : DefaultContractResolver
     /// <inheritdoc/>
     public override JsonContract ResolveContract(Type type)
     {
-        if (type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>))
+        if (type.GetTypeInfo().IsGenericType)
         {
-            return base.ResolveContract(_type.MakeGenericType(type.GenericTypeArguments[0]));
+            if (type.GetGenericTypeDefinition() == typeof(IList<>) || type.GetGenericTypeDefinition() == typeof(ObservableCollection<>))
+                return base.ResolveContract(_type.MakeGenericType(type.GenericTypeArguments[0]));
         }
         return base.ResolveContract(type);
     }

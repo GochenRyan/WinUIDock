@@ -33,7 +33,7 @@ namespace Dock.WinUI3.Controls
             nameof(Items),
             typeof(ObservableCollection<IDockable>),
             typeof(ToolPinnedControl),
-            new PropertyMetadata(new List<IDockable>()));
+            new PropertyMetadata(new ObservableCollection<IDockable>()));
 
         public ObservableCollection<IDockable> Items
         {

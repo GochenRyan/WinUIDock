@@ -1,7 +1,9 @@
 using CommunityToolkit.WinUI.Controls;
+using CommunityToolkit.WinUI.Converters;
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using System;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -147,7 +149,23 @@ namespace Dock.WinUI3.Controls
             _pinnedDockGrid = GetTemplateChild(PinnedDockGridName) as Grid;
             _pinnedDock = GetTemplateChild(PinnedDockName) as ContentControl;
             _splitter = GetTemplateChild(SplitterName) as GridSplitter;
+
+            BindData();
             UpdateGrid();
+        }
+
+        // The Windows Runtime doesn't support a Binding usage for Setter.Value.
+        // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
+        private void BindData()
+        {
+            _pinnedDockGrid.SetBinding(Grid.VisibilityProperty, new Binding
+            {
+                Source = DataContext,
+                Path = new PropertyPath("PinnedDock.IsEmpty"),
+                Mode = BindingMode.OneWay,
+                Converter = new BoolNegationConverter(),
+                FallbackValue = Visibility.Collapsed
+            });
         }
 
         private Grid _pinnedDockGrid;

@@ -3,11 +3,13 @@ using Dock.Model.Core;
 using Dock.Model.WinUI3.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Dock.Model.WinUI3.Controls
 {
+    [DataContract(IsReference = true)]
     [ContentProperty(Name = "VisibleDockables")]
     public class ToolDock : DockBase, IToolDock
     {
@@ -39,17 +41,30 @@ namespace Dock.Model.WinUI3.Controls
             nameof(GripMode),
             typeof(GripMode),
             typeof(ToolDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(GripMode.Visible));
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("VisibleDockables")]
         public override ObservableCollection<IDockable> VisibleDockables
         {
             get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Alignment")]
         public Alignment Alignment { get => (Alignment)GetValue(AlignmentProperty); set => SetValue(AlignmentProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("IsExpanded")]
         public bool IsExpanded { get => (bool)GetValue(IsExpandedProperty); set => SetValue(IsExpandedProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("AutoHide")]
         public bool AutoHide { get => (bool)GetValue(AutoHideProperty); set => SetValue(AutoHideProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("GripMode")]
         public GripMode GripMode { get => (GripMode)GetValue(GripModeProperty); set => SetValue(GripModeProperty, value); }
     }
 }

@@ -52,7 +52,7 @@ public interface IRootDock : IDock
     /// <summary>
     /// Gets or sets windows.
     /// </summary>
-    IList<IDockWindow>? Windows { get; set; }
+    ObservableCollection<IDockWindow>? Windows { get; set; }
 
     /// <summary>
     /// Show windows.

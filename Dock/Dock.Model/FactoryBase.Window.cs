@@ -1,5 +1,6 @@
 ﻿using Dock.Model.Controls;
 using Dock.Model.Core;
+using System.Collections.ObjectModel;
 
 namespace Dock.Model;
 
@@ -11,7 +12,7 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public virtual void AddWindow(IRootDock rootDock, IDockWindow window)
     {
-        rootDock.Windows ??= CreateList<IDockWindow>();
+        rootDock.Windows ??= new ObservableCollection<IDockWindow>(CreateList<IDockWindow>());
         rootDock.Windows.Add(window);
         OnWindowAdded(window);
         InitDockWindow(window, rootDock);
@@ -22,7 +23,7 @@ public abstract partial class FactoryBase
     {
         if (index >= 0)
         {
-            rootDock.Windows ??= CreateList<IDockWindow>();
+            rootDock.Windows ??= new ObservableCollection<IDockWindow>(CreateList<IDockWindow>());
             rootDock.Windows.Insert(index, window);
             OnWindowAdded(window);
             InitDockWindow(window, rootDock);

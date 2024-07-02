@@ -3,11 +3,13 @@ using Dock.Model.Core;
 using Dock.Model.WinUI3.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Dock.Model.WinUI3.Controls
 {
+    [DataContract(IsReference = true)]
     [ContentProperty(Name = "VisibleDockables")]
     public class DockDock : DockBase, IDockDock
     {
@@ -23,7 +25,12 @@ namespace Dock.Model.WinUI3.Controls
             typeof(DockDock),
             new PropertyMetadata(true));
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("LastChildFill")]
         public bool LastChildFill { get => (bool)GetValue(LastChildFillProperty); set => SetValue(LastChildFillProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("VisibleDockables")]
         public override ObservableCollection<IDockable> VisibleDockables
         {
             get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);

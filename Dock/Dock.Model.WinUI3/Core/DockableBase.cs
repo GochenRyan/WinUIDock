@@ -1,12 +1,26 @@
 using Dock.Model.Adapters;
 using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Dock.Model.WinUI3.Core
 {
+    [DataContract(IsReference = true)]
+    [JsonPolymorphic]
+    [JsonDerivedType(typeof(DockDock), typeDiscriminator: "DockDock")]
+    [JsonDerivedType(typeof(Document), typeDiscriminator: "Document")]
+    [JsonDerivedType(typeof(DocumentDock), typeDiscriminator: "DocumentDock")]
+    [JsonDerivedType(typeof(ProportionalDock), typeDiscriminator: "ProportionalDock")]
+    [JsonDerivedType(typeof(ProportionalDockSplitter), typeDiscriminator: "ProportionalDockSplitter")]
+    [JsonDerivedType(typeof(RootDock), typeDiscriminator: "RootDock")]
+    [JsonDerivedType(typeof(Tool), typeDiscriminator: "Tool")]
+    [JsonDerivedType(typeof(ToolDock), typeDiscriminator: "ToolDock")]
+    [JsonDerivedType(typeof(DockBase), typeDiscriminator: "DockBase")]
     public abstract class DockableBase : DependencyObject, IDockable
     {
         public DockableBase()
@@ -14,14 +28,40 @@ namespace Dock.Model.WinUI3.Core
             _trackingAdapter = new TrackingAdapter();
         }
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Id")]
         public string Id { get => (string)GetValue(IDProperty); set => SetValue(IDProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Title")]
         public string Title { get => (string)GetValue(TitleProperty); set => SetValue(TitleProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Context")]
         public object Context { get => GetValue(ContextProperty); set => SetValue(ContextProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
         public IDockable Owner { get => (IDockable)GetValue(OwnerProperty); set => SetValue(OwnerProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
         public IDockable OriginalOwner { get => (IDockable)GetValue(OriginalOwnerProperty); set => SetValue(OriginalOwnerProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
         public IFactory Factory { get => (IFactory)GetValue(FactoryProperty); set => SetValue(FactoryProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("CanClose")]
         public bool CanClose { get => (bool)GetValue(CanCloseProperty); set => SetValue(CanCloseProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("CanPin")]
         public bool CanPin { get => (bool)GetValue(CanPinProperty); set => SetValue(CanPinProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("CanFloat")]
         public bool CanFloat { get => (bool)GetValue(CanFloatProperty); set => SetValue(CanFloatProperty, value); }
 
         public static DependencyProperty IDProperty = DependencyProperty.Register(

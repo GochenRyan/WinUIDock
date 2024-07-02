@@ -9,12 +9,10 @@ namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = BorderName, Type = typeof(DocumentControl))]
     [TemplatePart(Name = AppTitleName, Type = typeof(TextBlock))]
-    [TemplatePart(Name = PointerAreaName, Type = typeof(FontIcon))]
     public sealed class HostWindowTitleBar : Control
     {
         public const string BorderName = "PART_Border";
         public const string AppTitleName = "PART_AppTitle";
-        public const string PointerAreaName = "PART_PointerArea";
 
         public HostWindowTitleBar()
         {
@@ -27,8 +25,6 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
             _border = GetTemplateChild(BorderName) as Border;
             _title = GetTemplateChild(AppTitleName) as TextBlock;
-            _icon = GetTemplateChild(PointerAreaName) as FontIcon;
-
 
             _title.Text = TitleText;
         }
@@ -59,10 +55,7 @@ namespace Dock.WinUI3.Controls
             }
         }
 
-        public FontIcon PointerArea => _icon;
-
         private Border _border;
-        private FontIcon _icon;
         private TextBlock _title;
         private string _text;
     }

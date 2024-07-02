@@ -1,14 +1,10 @@
 using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Windows.Foundation;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -275,36 +271,6 @@ namespace Dock.WinUI3.Controls
             Content = layout;
             ToolChromeControlsWholeWindow = layout.OpenedDockablesCount < 2;
         }
-
-        private void SetRegionsForCustomTitleBar()
-        {
-            // Specify the interactive regions of the title bar.
-
-            double scaleAdjustment = _titleBar.XamlRoot.RasterizationScale;
-
-            GeneralTransform transform = _titleBar.TransformToVisual(null);
-            Rect bounds = transform.TransformBounds(new Rect(0, 0,
-                                                             _titleBar.PointerArea.ActualWidth,
-                                                             _titleBar.PointerArea.ActualHeight));
-            Windows.Graphics.RectInt32 PointerRect = GetRect(bounds, scaleAdjustment);
-
-            var rectArray = new Windows.Graphics.RectInt32[] { PointerRect };
-
-            InputNonClientPointerSource nonClientInputSrc =
-                InputNonClientPointerSource.GetForWindowId(_ownerWindow.AppWindow.Id);
-            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, rectArray);
-        }
-
-        private Windows.Graphics.RectInt32 GetRect(Rect bounds, double scale)
-        {
-            return new Windows.Graphics.RectInt32(
-                _X: (int)Math.Round(bounds.X * scale),
-                _Y: (int)Math.Round(bounds.Y * scale),
-                _Width: (int)Math.Round(bounds.Width * scale),
-                _Height: (int)Math.Round(bounds.Height * scale)
-            );
-        }
-
 
         private WindowEx _ownerWindow;
         private DockControl _dockControl;

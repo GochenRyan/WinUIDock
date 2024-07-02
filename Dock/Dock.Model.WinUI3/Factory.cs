@@ -5,6 +5,7 @@ using Dock.Model.WinUI3.Core;
 using Dock.Model.WinUI3.Internal;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 
 namespace Dock.Model.WinUI3
 {
@@ -24,20 +25,34 @@ namespace Dock.Model.WinUI3
             SetActiveDockableCmd = new Command(SetActiveDockable);
         }
 
+        [JsonIgnore]
         public Command FloatDockableCmd { get; private set; }
-        public Command PinDockableCmd {  get; private set; }
+
+        [JsonIgnore]
+        public Command PinDockableCmd { get; private set; }
+
+        [JsonIgnore]
         public Command CloseDockableCmd { get; private set; }
+
+        [JsonIgnore]
         public Command PreviewPinnedDockableCmd { get; private set; }
+
+        [JsonIgnore]
         public Command SetActiveDockableCmd { get; private set; }
 
+        [JsonIgnore]
         public override IDictionary<IDockable, IDockableControl> VisibleDockableControls { get; }
 
+        [JsonIgnore]
         public override IDictionary<IDockable, IDockableControl> PinnedDockableControls { get; }
 
+        [JsonIgnore]
         public override IDictionary<IDockable, IDockableControl> TabDockableControls { get; }
 
+        [JsonIgnore]
         public override IList<IDockControl> DockControls { get; }
 
+        [JsonIgnore]
         public override IList<IHostWindow> HostWindows { get; }
 
         public override IDockDock CreateDockDock() => new DockDock();

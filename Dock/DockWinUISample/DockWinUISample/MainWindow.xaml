@@ -19,8 +19,8 @@
                     <MenuFlyoutItem Text="Rich Text Document"/>
                     <MenuFlyoutItem Text="Other Formats..."/>
                 </MenuFlyoutSubItem>
-                <MenuFlyoutItem Text="Open..."/>
-                <MenuFlyoutItem Text="Save"/>
+                <MenuFlyoutItem Text="Open..." Click="Open_Click"/>
+                <MenuFlyoutItem Text="Save" Click="Save_Click"/>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Exit"/>
             </MenuBarItem>

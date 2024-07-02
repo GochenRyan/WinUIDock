@@ -4,12 +4,14 @@ using Dock.Model.WinUI3.Core;
 using Dock.Model.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 
 namespace Dock.Model.WinUI3.Controls
 {
+    [DataContract(IsReference = true)]
     [ContentProperty(Name = "VisibleDockables")]
     public class DocumentDock : DockBase, IDocumentDock, IDocumentDockContent
     {
@@ -31,14 +33,24 @@ namespace Dock.Model.WinUI3.Controls
             typeof(DocumentDock),
             new PropertyMetadata(default));
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("VisibleDockables")]
         public override ObservableCollection<IDockable> VisibleDockables
         {
             get => (ObservableCollection<IDockable>)GetValue(VisibleDockablesProperty);
             set => SetValue(VisibleDockablesProperty, value);
         }
 
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("CanCreateDocument")]
         public bool CanCreateDocument { get => (bool)GetValue(CanCreateDocumentProperty); set => SetValue(CanCreateDocumentProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
         public ICommand CreateDocument { get; set; }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
         public IDocumentTemplate DocumentTemplate { get => (IDocumentTemplate)GetValue(DocumentTemplateProperty); set => SetValue(DocumentTemplateProperty, value); }
 
         public DocumentDock() : base()
