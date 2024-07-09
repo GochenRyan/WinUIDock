@@ -1,4 +1,4 @@
-using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -17,7 +17,7 @@ namespace Dock.WinUI3.Controls
 
         private void ProportionalDockControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is IDock dock)
+            if (DataContext is ProportionalDock dock)
             {
                 ItemsSource = dock.VisibleDockables;
             }
@@ -26,6 +26,8 @@ namespace Dock.WinUI3.Controls
         protected override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+
+            var panel = ItemsPanel;
         }
     }
 }

@@ -52,6 +52,9 @@ namespace Dock.WinUI3.Controls
             {
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
+                if (ownerWindow == null)
+                    return;
+
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector(0, e.GetCurrentPoint(this).Properties.MouseWheelDelta);
                 var action = ToDragAction(e);
@@ -65,6 +68,9 @@ namespace Dock.WinUI3.Controls
             {
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
+                if (ownerWindow == null)
+                    return;
+
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
@@ -95,6 +101,9 @@ namespace Dock.WinUI3.Controls
             {
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
+                if (ownerWindow == null)
+                    return;
+
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
@@ -109,6 +118,9 @@ namespace Dock.WinUI3.Controls
             {
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
+                if (ownerWindow == null)
+                    return;
+
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);
@@ -124,7 +136,8 @@ namespace Dock.WinUI3.Controls
             {
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
-
+                if (ownerWindow == null)
+                    return;
 
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector();
@@ -142,6 +155,9 @@ namespace Dock.WinUI3.Controls
 
                 UIElement element = sender as UIElement;
                 var ownerWindow = HostWindow.GetWindowForElement(element);
+                if (ownerWindow == null)
+                    return;
+
                 var position = e.GetCurrentPoint(ownerWindow.Content).Position;
                 var delta = new Vector();
                 var action = ToDragAction(e);

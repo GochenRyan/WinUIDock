@@ -10,7 +10,7 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <local:ProportionalStackPanel Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}}"
+                    <local:ProportionalStackPanel x:Name ="ProportionalStackPanel" Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}}"
                                                   IsCollapsable="{Binding IsCollapsable, Mode=OneWay}"
                                                   IsEmpty ="{Binding IsEmpty, Mode=OneWay}"/>
                 </ItemsPanelTemplate>
@@ -38,7 +38,7 @@
                     </local:ProportionTemplateSelector.ProportionalDockTemplate>
                     <local:ProportionTemplateSelector.ToolDockTemplate>
                         <DataTemplate>
-                            <local:ToolDockControl Content="{Binding VisibleDockables, Mode=OneWay}"/>
+                            <local:ToolDockControl />
                         </DataTemplate>
                     </local:ProportionTemplateSelector.ToolDockTemplate>
                 </local:ProportionTemplateSelector>

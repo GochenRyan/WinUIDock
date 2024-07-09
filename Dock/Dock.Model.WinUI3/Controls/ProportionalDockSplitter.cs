@@ -13,7 +13,12 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class ProportionalDockSplitter : DockBase, IProportionalDockSplitter
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public ProportionalDockSplitter() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(ProportionalDockSplitter),

@@ -13,31 +13,36 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class ToolDock : DockBase, IToolDock
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public ToolDock() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(ToolDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty AlignmentProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty AlignmentProperty = DependencyProperty.Register(
             nameof(Alignment),
             typeof(Alignment),
             typeof(ToolDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(Alignment.Unset));
 
-        public static DependencyProperty IsExpandedProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsExpandedProperty = DependencyProperty.Register(
             nameof(IsExpanded),
             typeof(bool),
             typeof(ToolDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(true));
 
-        public static DependencyProperty AutoHideProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty AutoHideProperty = DependencyProperty.Register(
             nameof(AutoHide),
             typeof(bool),
             typeof(ToolDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(true));
 
-        public static DependencyProperty GripModeProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty GripModeProperty = DependencyProperty.Register(
             nameof(GripMode),
             typeof(GripMode),
             typeof(ToolDock),

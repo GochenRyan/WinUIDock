@@ -15,23 +15,29 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class DocumentDock : DockBase, IDocumentDock, IDocumentDockContent
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public DocumentDock() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+            CreateDocument = new Command(() => CreateDocumentFromTemplate());
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(DocumentDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty CanCreateDocumentProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanCreateDocumentProperty = DependencyProperty.Register(
             nameof(CanCreateDocument),
             typeof(bool),
             typeof(DocumentDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(false));
 
-        public static DependencyProperty DocumentTemplateProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty DocumentTemplateProperty = DependencyProperty.Register(
             nameof(DocumentTemplate),
             typeof(IDocumentTemplate),
             typeof(DocumentDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("VisibleDockables")]
@@ -52,11 +58,6 @@ namespace Dock.Model.WinUI3.Controls
         [IgnoreDataMember]
         [JsonIgnore]
         public IDocumentTemplate DocumentTemplate { get => (IDocumentTemplate)GetValue(DocumentTemplateProperty); set => SetValue(DocumentTemplateProperty, value); }
-
-        public DocumentDock() : base()
-        {
-            CreateDocument = new Command(() => CreateDocumentFromTemplate());
-        }
 
         public object CreateDocumentFromTemplate()
         {

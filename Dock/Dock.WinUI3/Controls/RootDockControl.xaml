@@ -10,42 +10,25 @@
                 <ControlTemplate TargetType="local:RootDockControl">
                     <local:DockableControl TrackingMode="Visible">
                         <local:DockPanel>
-                            <local:ToolPinnedControl local:DockPanel.Dock="Left" 
-                                                     Orientation="Vertical"
-                                                     Items="{Binding LeftPinnedDockables, Mode=OneWay}"
-                                                     Visibility="{Binding LeftPinnedDockables.Count, Mode=OneWay}" />
-                            <local:ToolPinnedControl local:DockPanel.Dock="Right" 
-                                                     Orientation="Vertical"
-                                                     Items="{Binding RightPinnedDockables, Mode=OneWay}"
-                                                     Visibility="{Binding RightPinnedDockables.Count, Mode=OneWay}" />
-                            <local:ToolPinnedControl local:DockPanel.Dock="Top" 
-                                                     Orientation="Horizontal"
-                                                     Items="{Binding TopPinnedDockables, Mode=OneWay}"
-                                                     Visibility="{Binding TopPinnedDockables.Count, Mode=OneWay}" />
-                            <local:ToolPinnedControl local:DockPanel.Dock="Bottom" 
-                                                     Orientation="Horizontal"
-                                                     Items="{Binding BottomPinnedDockables, Mode=OneWay}"
-                                                     Visibility="{Binding BottomPinnedDockables.Count, Mode=OneWay}" />
-
-                            <!--<ContentPresenter DataContext="{Binding ActiveDockable, Mode=OneWay}"/>-->
-                            <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}" DataContext="{Binding DefaultDockable, Mode=OneWay}"/>
+                            <local:ToolPinnedControl x:Name ="PART_LeftPinnedControl" 
+                                                     local:DockPanel.Dock="Left" 
+                                                     Orientation="Vertical"/>
+                            <local:ToolPinnedControl x:Name ="PART_RightPinnedControl" 
+                                                     local:DockPanel.Dock="Right" 
+                                                     Orientation="Vertical"/>
+                            <local:ToolPinnedControl x:Name ="PART_TopPinnedControl" 
+                                                     local:DockPanel.Dock="Top" 
+                                                     Orientation="Horizontal"/>
+                            <local:ToolPinnedControl x:Name ="PART_BottomPinnedControl" 
+                                                     local:DockPanel.Dock="Bottom" 
+                                                     Orientation="Horizontal"/>
+                            <local:ProportionalDockControl x:Name ="PART_ProportionalDockControl"/>
                             <local:PinnedDockControl />
                         </local:DockPanel>
                     </local:DockableControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <!--<Setter Property="ContentTemplateSelector">
-            <Setter.Value>
-                <local:RootTemplateSelector>
-                    <local:RootTemplateSelector.ProportionalDockTemplate>
-                        <DataTemplate>
-                            <local:ProportionalDockControl ItemsSource="{Binding VisibleDockables, Mode=OneWay}"/>
-                        </DataTemplate>
-                    </local:RootTemplateSelector.ProportionalDockTemplate>
-                </local:RootTemplateSelector>
-            </Setter.Value>
-        </Setter>-->
     </Style>
     
 </ResourceDictionary>

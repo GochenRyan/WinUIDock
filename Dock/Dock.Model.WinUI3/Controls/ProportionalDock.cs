@@ -13,17 +13,22 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class ProportionalDock : DockBase, IProportionalDock
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public ProportionalDock() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(ProportionalDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
         public static readonly DependencyProperty OrientationProperty = DependencyProperty.Register(
             nameof(Orientation),
             typeof(Orientation),
             typeof(ProportionalDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(Orientation.Horizontal));
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Orientation")]

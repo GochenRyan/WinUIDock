@@ -20,8 +20,6 @@
                         <local:HostWindowTitleBar x:Name="PART_TitleBar" />
 
                         <local:DockControl x:Name="PART_DockControl"
-                                           InitializeLayout="True" 
-                                           InitializeFactory="True"
                                            Grid.Row="1">
                         </local:DockControl>
                     </Grid>

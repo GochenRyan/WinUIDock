@@ -114,19 +114,19 @@ namespace Dock.Model.WinUI3.Core
             nameof(ActiveDockable),
             typeof(IDockable),
             typeof(DockBase),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
             nameof(DefaultDockable),
             typeof(IDockable),
             typeof(DockBase),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
             nameof(FocusedDockable),
             typeof(IDockable),
             typeof(DockBase),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty ProportionProperty = DependencyProperty.Register(
             nameof(Proportion),
@@ -144,13 +144,13 @@ namespace Dock.Model.WinUI3.Core
             nameof(IsActive),
             typeof(bool),
             typeof(DockBase),
-            new PropertyMetadata(default(bool)));
+            new PropertyMetadata(false));
 
         public static DependencyProperty IsEmptyProperty = DependencyProperty.Register(
             nameof(IsEmpty),
             typeof(bool),
             typeof(DockBase),
-            new PropertyMetadata(default(bool)));
+            new PropertyMetadata(true));
 
         public static DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
             nameof(IsCollapsable),
@@ -162,19 +162,19 @@ namespace Dock.Model.WinUI3.Core
             nameof(OpenedDockablesCount),
             typeof(int),
             typeof(DockBase),
-            new PropertyMetadata(default(int)));
+            new PropertyMetadata(0));
 
         public static DependencyProperty CanGoBackProperty = DependencyProperty.Register(
             nameof(CanGoBack),
             typeof(bool),
             typeof(DockBase),
-            new PropertyMetadata(default(bool)));
+            new PropertyMetadata(false));
 
         public static DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
             nameof(CanGoForward),
             typeof(bool),
             typeof(DockBase),
-            new PropertyMetadata(default(bool)));
+            new PropertyMetadata(false));
 
         internal INavigateAdapter _navigateAdapter;
     }

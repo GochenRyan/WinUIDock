@@ -1,7 +1,6 @@
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Orientation = Microsoft.UI.Xaml.Controls.Orientation;
 
@@ -29,7 +28,7 @@ namespace Dock.WinUI3.Controls
             set => SetValue(OrientationProperty, value);
         }
 
-        public DependencyProperty ItemsProperty = DependencyProperty.Register(
+        public static DependencyProperty ItemsProperty = DependencyProperty.Register(
             nameof(Items),
             typeof(ObservableCollection<IDockable>),
             typeof(ToolPinnedControl),

@@ -4,7 +4,6 @@ using Dock.Model.WinUI3.Core;
 using Dock.Model.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -16,65 +15,79 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class RootDock : DockBase, IRootDock
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public RootDock() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+            HiddenDockables = new ObservableCollection<IDockable>();
+            LeftPinnedDockables = new ObservableCollection<IDockable>();
+            RightPinnedDockables = new ObservableCollection<IDockable>();
+            TopPinnedDockables = new ObservableCollection<IDockable>();
+            BottomPinnedDockables = new ObservableCollection<IDockable>();
+            Windows = new ObservableCollection<IDockWindow>();
+
+            ShowWindows = Command.Create(() => _navigateAdapter.ShowWindows());
+            ExitWindows = Command.Create(() => _navigateAdapter.ExitWindows());
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty IsFocusableRootProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsFocusableRootProperty = DependencyProperty.Register(
             nameof(IsFocusableRoot),
             typeof(bool),
             typeof(RootDock),
             new PropertyMetadata(true));
 
-        public DependencyProperty HiddenDockablesProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty HiddenDockablesProperty = DependencyProperty.Register(
             nameof(HiddenDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public DependencyProperty LeftPinnedDockablesProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty LeftPinnedDockablesProperty = DependencyProperty.Register(
             nameof(LeftPinnedDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public DependencyProperty RightPinnedDockablesProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty RightPinnedDockablesProperty = DependencyProperty.Register(
             nameof(RightPinnedDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public DependencyProperty TopPinnedDockablesProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty TopPinnedDockablesProperty = DependencyProperty.Register(
             nameof(TopPinnedDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public DependencyProperty BottomPinnedDockablesProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty BottomPinnedDockablesProperty = DependencyProperty.Register(
             nameof(BottomPinnedDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty PinnedDockProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty PinnedDockProperty = DependencyProperty.Register(
             nameof(PinnedDock),
             typeof(IToolDock),
             typeof(RootDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty WindowProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty WindowProperty = DependencyProperty.Register(
             nameof(Window),
             typeof(IDockWindow),
             typeof(RootDock),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
-        public DependencyProperty WindowsProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty WindowsProperty = DependencyProperty.Register(
             nameof(Windows),
             typeof(ObservableCollection<IDockWindow>),
             typeof(RootDock),
-            new PropertyMetadata(new ObservableCollection<IDockWindow>()));
+            new PropertyMetadata(null));
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("VisibleDockables")]
@@ -126,11 +139,5 @@ namespace Dock.Model.WinUI3.Controls
         [IgnoreDataMember]
         [JsonIgnore]
         public ICommand ExitWindows { get; }
-
-        public RootDock()
-        {
-            ShowWindows = Command.Create(() => _navigateAdapter.ShowWindows());
-            ExitWindows = Command.Create(() => _navigateAdapter.ExitWindows());
-        }
     }
 }

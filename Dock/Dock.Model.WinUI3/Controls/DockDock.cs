@@ -13,13 +13,18 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "VisibleDockables")]
     public class DockDock : DockBase, IDockDock
     {
-        public DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
+        public DockDock() : base()
+        {
+            VisibleDockables = new ObservableCollection<IDockable>();
+        }
+
+        public static readonly DependencyProperty VisibleDockablesProperty = DependencyProperty.Register(
             nameof(VisibleDockables),
             typeof(ObservableCollection<IDockable>),
             typeof(DockDock),
-            new PropertyMetadata(new ObservableCollection<IDockable>()));
+            new PropertyMetadata(null));
 
-        public static DependencyProperty LastChildFillProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty LastChildFillProperty = DependencyProperty.Register(
             nameof(LastChildFill),
             typeof(bool),
             typeof(DockDock),

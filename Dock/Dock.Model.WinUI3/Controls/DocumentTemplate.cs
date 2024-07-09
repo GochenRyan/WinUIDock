@@ -15,7 +15,7 @@ namespace Dock.Model.WinUI3.Controls
             nameof(Content),
             typeof(object),
             typeof(DocumentTemplate),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
         [IgnoreDataMember]
         [JsonIgnore]

@@ -1,10 +1,8 @@
-using CommunityToolkit.WinUI.Controls;
 using Dock.Model;
 using Dock.Model.Core;
 using Dock.Serializer;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -132,7 +130,7 @@ namespace DockWinUISample
                 }
             }
         }
-        
+
         private readonly IDockSerializer _serializer;
         private readonly IDockState _dockState;
     }

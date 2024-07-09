@@ -1,6 +1,8 @@
 using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,7 +19,7 @@ namespace Dock.WinUI3.Controls
 
         private void ToolTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is IDock dock)
+            if (DataContext is ToolDock dock)
             {
                 ItemsSource = dock.VisibleDockables;
             }
@@ -33,40 +35,15 @@ namespace Dock.WinUI3.Controls
             base.OnItemsChanged(e);
         }
 
-        //protected override Size MeasureOverride(Size availableSize)
-        //{
-        //    Size itemSize = new(100.0, 20.0);
-        //    foreach (var item in Items)
-        //    {
-        //        ToolTabStripItem toolTabStripItem = item as ToolTabStripItem;
-        //        toolTabStripItem?.Measure(itemSize);
-        //    }
-        //    return availableSize;
-        //}
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            return base.MeasureOverride(availableSize);
+        }
 
-        //protected override Size ArrangeOverride(Size finalSize)
-        //{
-        //    if (Items == null || Items.Count == 0)
-        //    {
-        //        return base.ArrangeOverride(finalSize);
-        //    }
-
-        //    var left = 0.0;
-        //    var top = 0.0;
-
-        //    var childHeight = 20.0;
-        //    var childWidth = 100.0;
-
-        //    for (var i = 0; i < Items.Count; i++)
-        //    {
-        //        var child = Items[i] as ToolTabStripItem;
-        //        var rect = new Rect(left, top, childWidth, childHeight);
-        //        child?.Arrange(rect);
-        //        left += childWidth;
-        //    }
-
-        //    return finalSize;
-        //}
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            return base.ArrangeOverride(finalSize);
+        }
 
         public static DependencyProperty SelectedItemProperty = DependencyProperty.Register(
             nameof(SelectedItem),

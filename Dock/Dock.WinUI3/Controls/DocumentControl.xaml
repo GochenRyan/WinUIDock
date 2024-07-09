@@ -5,12 +5,6 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:settings="using:Dock.Settings">
 
-    <!--<MenuFlyout x:Key="DocumentTabViewItemContextMenu">
-        <MenuFlyoutItem Text="Float"/>
-        <MenuFlyoutItem Text="Close"/>
-        <MenuFlyoutItem Text="Close other tabs"/>
-    </MenuFlyout>-->
-
     <Style TargetType="local:DocumentControl">
         <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="settings:DockProperties.IsDockTarget" Value="True"/>

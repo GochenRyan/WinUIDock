@@ -39,9 +39,15 @@ namespace Dock.WinUI3.Controls
             AddHandler(PointerPressedEvent, PressedHandler, true);
             AddHandler(PointerMovedEvent, MovedHandler, true);
 
+            RecordSize();
         }
 
         private void DockableControl_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            RecordSize();
+        }
+
+        private void RecordSize()
         {
             if (DataContext is not IDockable dockable)
             {

@@ -5,13 +5,6 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:settings="using:Dock.Settings">
 
-    <MenuFlyout x:Key="ToolChromeControlContextMenu">
-        <MenuFlyoutItem Text="Float"/>
-        <MenuFlyoutItem Text="Dock"/>
-        <MenuFlyoutItem Text="Auto Hide"/>
-        <MenuFlyoutItem Text="Close"/>
-    </MenuFlyout>
-
     <Style x:Key="ChromeButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}" >
         <Setter Property="Margin" Value="2 0 0 0" />
         <Setter Property="Padding" Value="3" />
@@ -31,39 +24,30 @@
                         <Border x:Name="PART_Border"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 VerticalAlignment="Top"
-                                ContextFlyout="{StaticResource ToolChromeControlContextMenu}"
                                 Grid.Row="0">
                             <Grid x:Name="PART_Grip"
                                   settings:DockProperties.IsDragArea="True">
                                 <local:DockPanel LastChildFill="True" Margin="8 0">
                                     <TextBlock x:Name="PART_Title"
-                                               local:DockPanel.Dock="Left"
-                                               Text="{Binding ActiveDockable.Title, FallbackValue='TITLE', Mode=OneWay}"/>
+                                               local:DockPanel.Dock="Left"/>
                                     <StackPanel local:DockPanel.Dock="Right"
                                                 Orientation="Horizontal">
                                         <Button x:Name="PART_MenuButton"
-                                                Style="{StaticResource ChromeButton}"
-                                                ContextFlyout="{StaticResource ToolChromeControlContextMenu}">
+                                                Style="{StaticResource ChromeButton}">
                                             <FontIcon Glyph="&#xEDD8;"
                                                       FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_PinButton"
-                                                Command="{Binding Owner.Factory.PinDockableCmd, Mode=OneWay}"
-                                                CommandParameter="{Binding ActiveDockable, Mode=OneWay}"
                                                 Style="{StaticResource ChromeButton}">
                                             <FontIcon Glyph="&#xE718;"
                                                       FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_MaximizeRestoreButton"
-                                                Visibility="{Binding IsFloating, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Style="{StaticResource ChromeButton}">
                                             <FontIcon Glyph="&#xE922;"
                                                       FontSize="12"/>
                                         </Button>
                                         <Button x:Name="PART_CloseButton"
-                                                Command="{Binding Owner.Factory.CloseDockableCmd, Mode=OneWay}" 
-                                                CommandParameter="{Binding ActiveDockable, Mode=OneWay}"
-                                                Visibility= "{Binding ActiveDockable.CanClose, FallbackValue=Collapsed, Mode=OneWay}"
                                                 Style="{StaticResource ChromeButton}">
                                             <FontIcon Glyph="&#xE8BB;" 
                                                       FontSize="12"/>

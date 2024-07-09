@@ -21,6 +21,10 @@ namespace Dock.Model.WinUI3
             FloatDockableCmd = new Command(FloatDockable);
             PinDockableCmd = new Command(PinDockable);
             CloseDockableCmd = new Command(CloseDockable);
+            CloseOtherDockablesCmd = new Command(CloseOtherDockables);
+            CloseAllDockablesCmd = new Command(CloseAllDockables);
+            CloseLeftDockablesCmd = new Command(CloseLeftDockables);
+            CloseRightDockablesCmd = new Command(CloseRightDockables);
             PreviewPinnedDockableCmd = new Command(PreviewPinnedDockable);
             SetActiveDockableCmd = new Command(SetActiveDockable);
         }
@@ -33,6 +37,18 @@ namespace Dock.Model.WinUI3
 
         [JsonIgnore]
         public Command CloseDockableCmd { get; private set; }
+
+        [JsonIgnore]
+        public Command CloseOtherDockablesCmd { get; private set; }
+
+        [JsonIgnore]
+        public Command CloseAllDockablesCmd { get; private set; }
+
+        [JsonIgnore]
+        public Command CloseLeftDockablesCmd { get; private set; }
+
+        [JsonIgnore]
+        public Command CloseRightDockablesCmd { get; private set; }
 
         [JsonIgnore]
         public Command PreviewPinnedDockableCmd { get; private set; }

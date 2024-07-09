@@ -20,7 +20,7 @@ namespace Dock.Model.WinUI3.Controls
             nameof(Content),
             typeof(object),
             typeof(Tool),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
         public Tool()
         {

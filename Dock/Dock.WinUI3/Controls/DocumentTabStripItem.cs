@@ -21,6 +21,13 @@ namespace Dock.WinUI3.Controls
         public const string TitleItemName = "PART_TitleItem";
         public const string CloseButtonName = "PART_CloseButton";
 
+        public const string FloatItemName = "PART_FloatItem";
+        public const string CloseSelfItemName = "PART_CloseSelfItem";
+        public const string CloseOtherItemName = "PART_CloseOtherItem";
+        public const string CloseAllItemName = "PART_CloseAllItem";
+        public const string CloseLeftItemName = "PART_CloseLeftItem";
+        public const string CloseRightItemName = "PART_CloseRightItem";
+
         public DocumentTabStripItem()
         {
             this.DefaultStyleKey = typeof(DocumentTabStripItem);
@@ -77,6 +84,53 @@ namespace Dock.WinUI3.Controls
                 Path = new PropertyPath("CanClose"),
                 Mode = BindingMode.OneWay
             });
+
+            var menuFlyout = new MenuFlyout();
+            menuFlyout.XamlRoot = this.XamlRoot;
+            var floatItem = CreateMenuFlyoutItem(FloatItemName, "Float", "Owner.Factory.FloatDockableCmd", "CanFloat");
+            var closeSelfItem = CreateMenuFlyoutItem(CloseSelfItemName, "Close", "Owner.Factory.CloseDockableCmd", "CanClose");
+            var closeOtherItem = CreateMenuFlyoutItem(CloseOtherItemName, "Close other tabs", "Owner.Factory.CloseOtherDockablesCmd", "CanClose");
+            var closeAllItem = CreateMenuFlyoutItem(CloseAllItemName, "Close all tabs", "Owner.Factory.CloseAllDockablesCmd", "CanClose");
+            var closeLeftItem = CreateMenuFlyoutItem(CloseLeftItemName, "Close tabs to the left", "Owner.Factory.CloseLeftDockablesCmd", "CanClose");
+            var closeRightItem = CreateMenuFlyoutItem(CloseRightItemName, "Close tabs to the right", "Owner.Factory.CloseRightDockablesCmd", "CanClose");
+
+            menuFlyout.Items.Add(floatItem);
+            menuFlyout.Items.Add(closeSelfItem);
+            menuFlyout.Items.Add(closeOtherItem);
+            menuFlyout.Items.Add(closeAllItem);
+            menuFlyout.Items.Add(closeLeftItem);
+            menuFlyout.Items.Add(closeRightItem);
+
+            _border.ContextFlyout = menuFlyout;
+        }
+
+        private MenuFlyoutItem CreateMenuFlyoutItem(string name, string text, string cmdPath, string visibilityPath)
+        {
+            var item = new MenuFlyoutItem
+            {
+                Name = name,
+                Text = text
+            };
+            item.SetBinding(MenuFlyoutItem.CommandProperty, new Binding
+            {
+                Source = DataContext,
+                Path = new PropertyPath(cmdPath),
+                Mode = BindingMode.OneWay
+            });
+            item.SetBinding(MenuFlyoutItem.CommandParameterProperty, new Binding
+            {
+                Source = DataContext,
+                Path = new PropertyPath(""),
+                Mode = BindingMode.OneWay
+            });
+            item.SetBinding(MenuFlyoutItem.VisibilityProperty, new Binding
+            {
+                Source = DataContext,
+                Path = new PropertyPath("CanClose"),
+                Mode = BindingMode.OneWay
+            });
+
+            return item;
         }
 
         private void _titleItem_PointerPressed(object sender, PointerRoutedEventArgs e)

@@ -80,25 +80,25 @@ namespace Dock.Model.WinUI3.Core
             nameof(Context),
             typeof(object),
             typeof(DockableBase),
-            new PropertyMetadata(default));
+            new PropertyMetadata(null));
 
         public static DependencyProperty OwnerProperty = DependencyProperty.Register(
             nameof(Owner),
             typeof(IDockable),
             typeof(DockableBase),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty OriginalOwnerProperty = DependencyProperty.Register(
             nameof(OriginalOwner),
             typeof(IDockable),
             typeof(DockableBase),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty FactoryProperty = DependencyProperty.Register(
             nameof(Factory),
             typeof(IFactory),
             typeof(DockableBase),
-            new PropertyMetadata(default(IFactory)));
+            new PropertyMetadata(null));
 
         public static DependencyProperty CanCloseProperty = DependencyProperty.Register(
             nameof(CanClose),

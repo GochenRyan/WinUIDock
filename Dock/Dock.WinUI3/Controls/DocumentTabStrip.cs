@@ -1,4 +1,5 @@
 using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Foundation;
@@ -21,7 +22,7 @@ namespace Dock.WinUI3.Controls
 
         private void DocumentTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is IDock dock)
+            if (DataContext is DocumentDock dock)
             {
                 ItemsSource = dock.VisibleDockables;
             }

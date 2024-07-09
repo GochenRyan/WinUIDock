@@ -380,6 +380,8 @@ public abstract partial class FactoryBase : IFactory
             window.X = x;
             window.Y = y;
             window.WindowWidth = width;
+
+            //TODO: fix height reduction after multiple splits
             window.WindowHeight = height;
             window.Present(false);
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Dock.WinUI3": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -5,24 +5,6 @@
     xmlns:local="using:Dock.WinUI3.Controls" xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
     <Style TargetType="local:ToolTabStrip">
-        <!--<Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="local:ToolTabStrip">
-                    <local:DockPanel>
-                        <Border Name="PART_Border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{TemplateBinding CornerRadius}"
-                                Padding="{TemplateBinding Padding}"
-                                local:DockPanel.Dock="Left">
-                            <ItemsPresenter Name="PART_ItemsPresenter"/>
-                        </Border>
-                        <Border Name="PART_BorderFill" />
-                    </local:DockPanel>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>-->
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>

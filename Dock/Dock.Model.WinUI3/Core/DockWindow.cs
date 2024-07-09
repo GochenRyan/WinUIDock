@@ -70,67 +70,67 @@ namespace Dock.Model.WinUI3.Core
             nameof(Id),
             typeof(string),
             typeof(DockWindow),
-            new PropertyMetadata(default(string)));
+            new PropertyMetadata(string.Empty));
 
         DependencyProperty XProperty = DependencyProperty.Register(
             nameof(X),
             typeof(double),
             typeof(DockWindow),
-            new PropertyMetadata(default(double)));
+            new PropertyMetadata(0.0));
 
         DependencyProperty YProperty = DependencyProperty.Register(
             nameof(Y),
             typeof(double),
             typeof(DockWindow),
-            new PropertyMetadata(default(double)));
+            new PropertyMetadata(0.0));
 
         DependencyProperty TopmostProperty = DependencyProperty.Register(
             nameof(Topmost),
             typeof(bool),
             typeof(DockWindow),
-            new PropertyMetadata(default(bool)));
+            new PropertyMetadata(true));
 
         DependencyProperty TitleProperty = DependencyProperty.Register(
             nameof(Title),
             typeof(string),
             typeof(DockWindow),
-            new PropertyMetadata(default(string)));
+            new PropertyMetadata(string.Empty));
 
         DependencyProperty OwnerProperty = DependencyProperty.Register(
             nameof(Owner),
             typeof(IDockable),
             typeof(DockWindow),
-            new PropertyMetadata(default(IDockable)));
+            new PropertyMetadata(null));
 
         DependencyProperty FactoryProperty = DependencyProperty.Register(
             nameof(Factory),
             typeof(IFactory),
             typeof(DockWindow),
-            new PropertyMetadata(default(IFactory)));
+            new PropertyMetadata(null));
 
         DependencyProperty LayoutProperty = DependencyProperty.Register(
             nameof(Layout),
             typeof(IRootDock),
             typeof(DockWindow),
-            new PropertyMetadata(default(IRootDock)));
+            new PropertyMetadata(null));
 
         DependencyProperty HostProperty = DependencyProperty.Register(
             nameof(Host),
             typeof(IHostWindow),
             typeof(DockWindow),
-            new PropertyMetadata(default(IHostWindow)));
+            new PropertyMetadata(null));
 
         DependencyProperty WindowWidthProperty = DependencyProperty.Register(
             nameof(WindowWidth),
             typeof(double),
             typeof(DockWindow),
-            new PropertyMetadata(default(double)));
+            new PropertyMetadata(0.0));
 
         DependencyProperty WindowHeightProperty = DependencyProperty.Register(
             nameof(WindowHeight),
             typeof(double),
             typeof(DockWindow),
-            new PropertyMetadata(default(double)));
+            new PropertyMetadata(0.0));
 
         public void Exit()
         {
