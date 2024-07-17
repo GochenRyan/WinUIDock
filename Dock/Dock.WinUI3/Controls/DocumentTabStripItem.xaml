@@ -21,8 +21,7 @@
                     <Border x:Name="PART_Border"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            Padding="{TemplateBinding Padding}"
-                            Background="AliceBlue">
+                            Padding="{TemplateBinding Padding}">
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"

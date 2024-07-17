@@ -626,6 +626,8 @@ public abstract partial class FactoryBase
                 CloseDockable(dock.VisibleDockables[i]);
             }
         }
+
+        UpdateActiveAfterDeleted(dock);
     }
 
     /// <inheritdoc/>
@@ -693,7 +695,13 @@ public abstract partial class FactoryBase
         {
             dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         }
+
         dock.VisibleDockables.Add(dockable);
+
+        if (dock.VisibleDockables.Count == 1)
+        {
+            dock.ActiveDockable = dockable;
+        }
         UpdateIsEmpty(dock);
     }
 
@@ -706,7 +714,13 @@ public abstract partial class FactoryBase
         {
             dock.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         }
+
         dock.VisibleDockables.Insert(index, dockable);
+
+        if (dock.VisibleDockables.Count == 1)
+        {
+            dock.ActiveDockable = dockable;
+        }
         UpdateIsEmpty(dock);
     }
 
@@ -718,6 +732,7 @@ public abstract partial class FactoryBase
         if (dock.VisibleDockables != null)
         {
             dock.VisibleDockables.Remove(dockable);
+            UpdateActiveAfterDeleted(dock);
             UpdateIsEmpty(dock);
         }
     }
@@ -732,6 +747,7 @@ public abstract partial class FactoryBase
             if (dock.VisibleDockables.Count > 0)
             {
                 dock.VisibleDockables.Clear();
+                dock.ActiveDockable = null;
                 UpdateIsEmpty(dock);
             }
         }
@@ -745,6 +761,7 @@ public abstract partial class FactoryBase
         if (dock.VisibleDockables != null)
         {
             dock.VisibleDockables.RemoveAt(index);
+            UpdateActiveAfterDeleted(dock);
             UpdateIsEmpty(dock);
         }
     }
@@ -786,5 +803,18 @@ public abstract partial class FactoryBase
 
         if (dockable.Owner != null)
             UpdateOpenedDockablesCount(dockable.Owner);
+    }
+
+    private void UpdateActiveAfterDeleted(IDock dock)
+    {
+        var cnt = dock.VisibleDockables.Count;
+        if (cnt == 0)
+        {
+            dock.ActiveDockable = null;
+        }
+        else if (dock.ActiveDockable == null || !dock.VisibleDockables.Contains(dock.ActiveDockable))
+        {
+            dock.ActiveDockable = dock.VisibleDockables[cnt - 1];
+        }
     }
 }

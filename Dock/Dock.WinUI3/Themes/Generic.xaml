@@ -13,6 +13,7 @@
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/RootDockControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolChromeControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolControl.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolContentControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolDockControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolPinItemControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolPinnedControl.xaml" />
@@ -20,8 +21,10 @@
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/ToolTabStripItem.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStrip.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStripItem.xaml" />
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentContentControl.xaml" />
         <!--<ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindow.xaml" />-->
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowTitleBar.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowControl.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
 </ResourceDictionary>

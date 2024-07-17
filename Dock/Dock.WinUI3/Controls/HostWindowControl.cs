@@ -75,7 +75,7 @@ namespace Dock.WinUI3.Controls
             }
         }
 
-        public static DependencyProperty IsToolWindowProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsToolWindowProperty = DependencyProperty.Register(
             nameof(IsToolWindow),
             typeof(bool),
             typeof(HostWindowControl),
@@ -87,7 +87,7 @@ namespace Dock.WinUI3.Controls
             set => SetValue(IsToolWindowProperty, value);
         }
 
-        public static DependencyProperty ToolChromeControlsWholeWindowProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ToolChromeControlsWholeWindowProperty = DependencyProperty.Register(
             nameof(ToolChromeControlsWholeWindow),
             typeof(bool),
             typeof(HostWindowControl),

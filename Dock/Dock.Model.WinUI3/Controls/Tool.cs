@@ -16,7 +16,7 @@ namespace Dock.Model.WinUI3.Controls
         [JsonIgnore]
         public object Content { get => GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
-        public static DependencyProperty ContentProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ContentProperty = DependencyProperty.Register(
             nameof(Content),
             typeof(object),
             typeof(Tool),

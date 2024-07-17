@@ -12,8 +12,7 @@
                         <Thumb x:Name="InternalThumb"
                                CanDrag="True"
                                Height="{TemplateBinding Height}"
-                               Width="{TemplateBinding Width}"
-                               Background="Blue"/>
+                               Width="{TemplateBinding Width}"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

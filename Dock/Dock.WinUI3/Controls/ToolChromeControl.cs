@@ -1,7 +1,14 @@
+using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
+using Dock.WinUI3.Converters;
+using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
+using System.Collections.ObjectModel;
 using Windows.Foundation;
+using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,38 +52,49 @@ namespace Dock.WinUI3.Controls
                 hostWindowControl.DetachGrip(this);
                 _attachedWindow = null;
             }
+
+            if (DataContext is ToolDock toolDock)
+            {
+                toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
+            }
         }
 
         private void ToolChromeControl_Loaded(object sender, RoutedEventArgs e)
         {
+            DataContextChanged += ToolChromeControl_DataContextChanged;
             AttachToWindow();
         }
 
-        public static DependencyProperty TitleProprty = DependencyProperty.Register(
+        private void ToolChromeControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            BindData();
+        }
+
+        public static readonly DependencyProperty TitleProprty = DependencyProperty.Register(
             nameof(Title),
             typeof(string),
             typeof(ToolChromeControl),
             new PropertyMetadata(string.Empty));
 
-        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsActiveProperty = DependencyProperty.Register(
             nameof(IsActive),
             typeof(bool),
             typeof(ToolChromeControl),
             new PropertyMetadata(false));
 
-        public static DependencyProperty IsPinnedProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsPinnedProperty = DependencyProperty.Register(
             nameof(IsPinned),
             typeof(bool),
             typeof(ToolChromeControl),
             new PropertyMetadata(false));
 
-        public static DependencyProperty IsFloatingProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsFloatingProperty = DependencyProperty.Register(
             nameof(IsFloating),
             typeof(bool),
             typeof(ToolChromeControl),
-            new PropertyMetadata(false));
+            new PropertyMetadata(false, OnIsFloatingChanged));
 
-        public static DependencyProperty IsMaximizedProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsMaximizedProperty = DependencyProperty.Register(
             nameof(IsMaximized),
             typeof(bool),
             typeof(ToolChromeControl),
@@ -130,61 +148,130 @@ namespace Dock.WinUI3.Controls
             AttachToWindow();
         }
 
+
         // The Windows Runtime doesn't support a Binding usage for Setter.Value.
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            _title.SetBinding(TextBlock.TextProperty, new Binding
+            if (DataContext is ToolDock toolDock)
             {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable.Title"),
-                Mode = BindingMode.OneWay,
-                FallbackValue = "TITLE"
-            });
+                toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
+                toolDock.VisibleDockables.CollectionChanged += VisibleDockables_CollectionChanged;
 
-            _pinButton.SetBinding(Button.CommandProperty, new Binding
+                _title.ClearValue(TextBlock.TextProperty);
+                _title.SetBinding(TextBlock.TextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable.Title"),
+                    Mode = BindingMode.OneWay,
+                    FallbackValue = "TITLE"
+                });
+
+                _pinButton.ClearValue(Button.CommandProperty);
+                _pinButton.SetBinding(Button.CommandProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("Owner.Factory.PinDockableCmd"),
+                    Mode = BindingMode.OneWay
+                });
+
+                _pinButton.ClearValue(Button.CommandParameterProperty);
+                _pinButton.SetBinding(Button.CommandParameterProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.OneWay
+                });
+
+                _maximizeRestoreButton.ClearValue(Button.VisibilityProperty);
+                _maximizeRestoreButton.SetBinding(Button.VisibilityProperty, new Binding
+                {
+                    Source = this,
+                    Path = new PropertyPath("IsFloating"),
+                    Converter = DockConverters.DockBoolToVisibilityConverter,
+                    Mode = BindingMode.OneWay
+                });
+
+                CloseButton.ClearValue(Button.CommandProperty);
+                CloseButton.SetBinding(Button.CommandProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
+                    Mode = BindingMode.OneWay
+                });
+
+                CloseButton.ClearValue(Button.CommandParameterProperty);
+                CloseButton.SetBinding(Button.CommandParameterProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.OneWay
+                });
+
+                CloseButton.ClearValue(Button.VisibilityProperty);
+                CloseButton.SetBinding(Button.VisibilityProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable.CanClose"),
+                    Converter = DockConverters.DockBoolToVisibilityConverter,
+                    Mode = BindingMode.OneWay,
+                    FallbackValue = Visibility.Collapsed
+                });
+
+                AddFlyout();
+                _menuButton.Click += _menuButton_Click;
+                _maximizeRestoreButton.Click += _maximizeRestoreButton_Click;
+            }
+        }
+
+        private void VisibleDockables_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (sender is ObservableCollection<IDockable> visibleDockables)
             {
-                Source = DataContext,
-                Path = new PropertyPath("Owner.Factory.PinDockableCmd"),
-                Mode = BindingMode.OneWay
-            });
-            _pinButton.SetBinding(Button.CommandParameterProperty, new Binding
+                if (visibleDockables.Count > 0)
+                {
+                    Visibility = Visibility.Visible;
+                    return;
+                }
+            }
+
+            Visibility = Visibility.Collapsed;
+        }
+
+        private void _menuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_menuButton.ContextFlyout != null)
             {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.OneWay
-            });
+                _menuButton.ContextFlyout.Placement = FlyoutPlacementMode.Bottom;
+                _menuButton.ContextFlyout.ShowAt(_menuButton);
+            }
+        }
 
-            _maximizeRestoreButton.SetBinding(Button.VisibilityProperty, new Binding
+        private void _maximizeRestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (HostWindow.GetWindowForElement(this) is WindowEx window)
             {
-                Source = this,
-                Path = new PropertyPath("IsFloating"),
-                Mode = BindingMode.OneWay
-            });
+                if (window.WindowState == WindowState.Maximized)
+                {
+                    window.WindowState = WindowState.Normal;
+                }
+                else
+                {
+                    window.WindowState = WindowState.Maximized;
+                }
+            }
+        }
 
-            CloseButton.SetBinding(Button.CommandProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
-                Mode = BindingMode.OneWay
-            });
+        private static void OnIsFloatingChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        {
+            var control = ob as ToolChromeControl;
 
-            CloseButton.SetBinding(Button.CommandParameterProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.OneWay
-            });
+            control.RefreshAutoHideItem();
+            control.RefreshPinBtn();
+        }
 
-            CloseButton.SetBinding(Button.VisibilityProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable.CanClose"),
-                Mode = BindingMode.OneWay,
-                FallbackValue = Visibility.Collapsed
-            });
-
-
+        private void AddFlyout()
+        {
             var menuFlyout = new MenuFlyout();
             menuFlyout.XamlRoot = this.XamlRoot;
 
@@ -193,22 +280,26 @@ namespace Dock.WinUI3.Controls
                 Name = FloatItemName,
                 Text = "Float"
             };
+
             floatItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("Owner.Factory.FloatDockableCmd"),
                 Mode = BindingMode.OneWay
             });
+
             floatItem.SetBinding(MenuFlyoutItem.CommandParameterProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable"),
                 Mode = BindingMode.OneWay
             });
+
             floatItem.SetBinding(MenuFlyoutItem.VisibilityProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.CanFloat"),
+                Converter = DockConverters.DockBoolToVisibilityConverter,
                 Mode = BindingMode.OneWay,
                 FallbackValue = Visibility.Collapsed
             });
@@ -219,30 +310,36 @@ namespace Dock.WinUI3.Controls
                 Name = DockItemName,
                 Text = "Dock"
             };
+
             dockItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("Owner.Factory.PinDockableCmd"),
                 Mode = BindingMode.OneWay
             });
+
             dockItem.SetBinding(MenuFlyoutItem.CommandParameterProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable"),
                 Mode = BindingMode.OneWay
             });
+
             dockItem.SetBinding(MenuFlyoutItem.VisibilityProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.CanPin"),
+                Converter = DockConverters.DockBoolToVisibilityConverter,
                 Mode = BindingMode.OneWay,
                 FallbackValue = Visibility.Collapsed
             });
+
             dockItem.SetBinding(MenuFlyoutItem.IsEnabledProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.OriginalOwner"),
                 Mode = BindingMode.OneWay,
+                Converter = _objectToBoolConverter,
                 FallbackValue = false
             });
             menuFlyout.Items.Add(dockItem);
@@ -252,25 +349,31 @@ namespace Dock.WinUI3.Controls
                 Name = AutoHideItemName,
                 Text = "Auto Hide"
             };
+
             autoHideItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("Owner.Factory.PinDockableCmd"),
                 Mode = BindingMode.OneWay
             });
+
             autoHideItem.SetBinding(MenuFlyoutItem.CommandParameterProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable"),
                 Mode = BindingMode.OneWay
             });
+
             autoHideItem.SetBinding(MenuFlyoutItem.IsEnabledProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.OriginalOwner"),
                 Mode = BindingMode.OneWay,
+                Converter = _objectToBoolConverter,
+                ConverterParameter = true,
                 FallbackValue = false
             });
+            _autoHideItem = autoHideItem;
             menuFlyout.Items.Add(autoHideItem);
 
             var closeItem = new MenuFlyoutItem
@@ -278,22 +381,26 @@ namespace Dock.WinUI3.Controls
                 Name = CloseItemName,
                 Text = "Close"
             };
+
             closeItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
                 Mode = BindingMode.OneWay
             });
+
             closeItem.SetBinding(MenuFlyoutItem.CommandParameterProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable"),
                 Mode = BindingMode.OneWay
             });
+
             closeItem.SetBinding(MenuFlyoutItem.VisibilityProperty, new Binding
             {
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.CanClose"),
+                Converter = DockConverters.DockBoolToVisibilityConverter,
                 Mode = BindingMode.OneWay,
                 FallbackValue = Visibility.Collapsed
             });
@@ -302,7 +409,38 @@ namespace Dock.WinUI3.Controls
             _border.ContextFlyout = menuFlyout;
             _menuButton.ContextFlyout = menuFlyout;
 
-            //TODO: Set 'Visibility' of menuFlyout
+            RefreshAutoHideItem();
+            RefreshPinBtn();
+        }
+
+        public void RefreshAutoHideItem()
+        {
+            if (_autoHideItem == null)
+                return;
+
+            if (IsFloating || (DataContext is ToolDock dock && (dock.ActiveDockable == null || !dock.ActiveDockable.CanPin)))
+            {
+                _autoHideItem.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                _autoHideItem.Visibility = Visibility.Visible;
+            }
+        }
+
+        public void RefreshPinBtn()
+        {
+            if (_pinButton == null)
+                return;
+
+            if (DataContext is ToolDock dock && dock.ActiveDockable != null && dock.ActiveDockable.CanPin && !IsFloating)
+            {
+                _pinButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                _pinButton.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void AttachToWindow()
@@ -322,7 +460,8 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            return base.MeasureOverride(availableSize);
+            var size = base.MeasureOverride(availableSize);
+            return size;
         }
 
         public Grid Grip { get; private set; }
@@ -335,5 +474,8 @@ namespace Dock.WinUI3.Controls
         private Button _maximizeRestoreButton;
         private Border _border;
         private Button _menuButton;
+
+        private static ObjectToBoolConverter _objectToBoolConverter = new();
+        private MenuFlyoutItem _autoHideItem;
     }
 }

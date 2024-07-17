@@ -14,6 +14,17 @@ namespace Dock.WinUI3.Controls
         public DocumentDockControl()
         {
             this.DefaultStyleKey = typeof(DocumentDockControl);
+            Loaded += DocumentDockControl_Loaded;
+        }
+
+        private void DocumentDockControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            DataContextChanged += DocumentDockControl_DataContextChanged;
+        }
+
+        private void DocumentDockControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            BindData();
         }
 
         protected override void OnApplyTemplate()

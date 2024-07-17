@@ -96,5 +96,81 @@ namespace Dock.WinUI3.Internal
 
             return screenBounds;
         }
+
+        public static Size GetInfinitySize(UIElement element, Size availableSize)
+        {
+            var width = availableSize.Width;
+            var height = availableSize.Height;
+
+            if (double.IsInfinity(width))
+            {
+                var parent = VisualTreeHelper.GetParent(element) as UIElement;
+                while (parent != null && parent != element.XamlRoot.Content)
+                {
+                    if (!double.IsInfinity(parent.DesiredSize.Width))
+                    {
+                        width = parent.DesiredSize.Width;
+                        break;
+                    }
+                }
+
+                if (double.IsInfinity(width))
+                {
+                    if (parent == element.XamlRoot.Content)
+                    {
+                        if (element.XamlRoot != null)
+                        {
+                            width = element.XamlRoot.Size.Width;
+                        }
+                        else
+                        {
+                            width = 0;
+                        }
+                    }
+                    else
+                    {
+                        width = 0;
+                    }
+                }
+            }
+
+            if (double.IsInfinity(height))
+            {
+                var parent = VisualTreeHelper.GetParent(element) as UIElement;
+                while (parent != null && parent != element.XamlRoot.Content)
+                {
+                    if (!double.IsInfinity(parent.DesiredSize.Height))
+                    {
+                        height = parent.DesiredSize.Height;
+                        break;
+                    }
+                }
+
+                if (double.IsInfinity(height))
+                {
+                    if (parent == element.XamlRoot.Content)
+                    {
+                        if (element.XamlRoot != null)
+                        {
+                            height = element.XamlRoot.Size.Height;
+                        }
+                        else
+                        {
+                            height = 0;
+                        }
+                    }
+                    else
+                    {
+                        height = 0;
+                    }
+                }
+            }
+
+            var finalSize = new Size(width, height);
+
+            return finalSize;
+        }
+
+
     }
 }

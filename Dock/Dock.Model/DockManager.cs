@@ -384,7 +384,7 @@ public class DockManager : IDockManager
     }
 
     /// <inheritdoc/>
-    public bool ValidateTool(ITool sourceTool, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
+    public virtual bool ValidateTool(ITool sourceTool, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
         return targetDockable switch
         {
@@ -402,6 +402,7 @@ public class DockManager : IDockManager
     {
         return targetDockable switch
         {
+            ITool => false,
             IRootDock _ => DockDockableIntoWindow(sourceDocument, targetDockable, bExecute),
             IDocumentDock documentDock => DockDockableIntoDock(sourceDocument, documentDock, action, operation, bExecute),
             IDocument document => DockDockableIntoDockable(sourceDocument, document, action, bExecute),

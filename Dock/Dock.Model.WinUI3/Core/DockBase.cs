@@ -76,7 +76,11 @@ namespace Dock.Model.WinUI3.Core
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("IsEmpty")]
-        public bool IsEmpty { get => (bool)GetValue(IsEmptyProperty); set => SetValue(IsEmptyProperty, value); }
+        public bool IsEmpty
+        {
+            get => (bool)GetValue(IsEmptyProperty);
+            set => SetValue(IsEmptyProperty, value);
+        }
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("IsCollapsable")]
@@ -110,67 +114,67 @@ namespace Dock.Model.WinUI3.Core
         [JsonIgnore]
         public ICommand Close { get; }
 
-        public static DependencyProperty ActiveDockableProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ActiveDockableProperty = DependencyProperty.Register(
             nameof(ActiveDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty DefaultDockableProperty = DependencyProperty.Register(
             nameof(DefaultDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty FocusedDockableProperty = DependencyProperty.Register(
             nameof(FocusedDockable),
             typeof(IDockable),
             typeof(DockBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty ProportionProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ProportionProperty = DependencyProperty.Register(
             nameof(Proportion),
             typeof(double),
             typeof(DockBase),
             new PropertyMetadata(double.NaN));
 
-        public static DependencyProperty DockProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty DockProperty = DependencyProperty.Register(
             nameof(Dock),
             typeof(DockMode),
             typeof(DockBase),
             new PropertyMetadata(DockMode.Center));
 
-        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsActiveProperty = DependencyProperty.Register(
             nameof(IsActive),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(false));
 
-        public static DependencyProperty IsEmptyProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsEmptyProperty = DependencyProperty.Register(
             nameof(IsEmpty),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(true));
 
-        public static DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
             nameof(IsCollapsable),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(true));
 
-        public static DependencyProperty OpenedDockablesCountProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty OpenedDockablesCountProperty = DependencyProperty.Register(
             nameof(OpenedDockablesCount),
             typeof(int),
             typeof(DockBase),
             new PropertyMetadata(0));
 
-        public static DependencyProperty CanGoBackProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanGoBackProperty = DependencyProperty.Register(
             nameof(CanGoBack),
             typeof(bool),
             typeof(DockBase),
             new PropertyMetadata(false));
 
-        public static DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanGoForwardProperty = DependencyProperty.Register(
             nameof(CanGoForward),
             typeof(bool),
             typeof(DockBase),

@@ -362,6 +362,11 @@ namespace Dock.WinUI3.Controls
             return DragAction.Move;
         }
 
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            return base.MeasureOverride(availableSize);
+        }
+
         private readonly DockManager _dockManager;
         private readonly DockControlState _dockControlState;
         private bool _isInitialized;

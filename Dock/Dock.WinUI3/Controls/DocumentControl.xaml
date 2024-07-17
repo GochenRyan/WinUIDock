@@ -21,7 +21,7 @@
                         <Border x:Name="PART_Border" local:DockPanel.Dock="Bottom">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
-                                <ContentPresenter x:Name="PART_ContentPresenter"
+                                <local:DocumentContentControl x:Name="PART_DocumentContentControl"
                                                   HorizontalAlignment="Stretch"
                                                   VerticalAlignment="Stretch"/>
                             </local:DockableControl>

@@ -6,22 +6,18 @@
     xmlns:ui="using:CommunityToolkit.WinUI.UI">
 
     <Style TargetType="local:ToolPinnedControl">
-        <Setter Property="Template">
+        <Setter Property="ItemsPanel">
             <Setter.Value>
-                <ControlTemplate TargetType="local:ToolPinnedControl">
-                    <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Items}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="{TemplateBinding Orientation}" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <local:ToolPinItemControl Orientation="{TemplateBinding Orientation}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ControlTemplate>
+                <ItemsPanelTemplate>
+                    <local:WrapPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <local:ToolPinItemControl Orientation="{TemplateBinding Orientation}"/>
+                </DataTemplate>
             </Setter.Value>
         </Setter>
     </Style>

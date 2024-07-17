@@ -16,7 +16,7 @@
                     <Grid x:Name="PART_PinnedDockGrid">
                         <!--<local:ToolDockControl ui:FrameworkElementExtensions.AncestorType="Window"
                                                Background="{Binding (ui:FrameworkElementExtensions.Ancestor).Background, RelativeSource={RelativeSource Self}}"/>-->
-                        <local:ToolDockControl Background="AliceBlue"/>
+                        <local:ToolDockControl x:Name="PART_ToolDockControl" Background="AliceBlue"/>
                         <controls:GridSplitter x:Name="PART_Splitter"/>
                     </Grid>
                 </ControlTemplate>

@@ -64,55 +64,55 @@ namespace Dock.Model.WinUI3.Core
         [JsonPropertyName("CanFloat")]
         public bool CanFloat { get => (bool)GetValue(CanFloatProperty); set => SetValue(CanFloatProperty, value); }
 
-        public static DependencyProperty IDProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IDProperty = DependencyProperty.Register(
             nameof(Id),
             typeof(string),
             typeof(DockableBase),
             new PropertyMetadata(string.Empty));
 
-        public static DependencyProperty TitleProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
             nameof(Title),
             typeof(string),
             typeof(DockableBase),
             new PropertyMetadata(string.Empty));
 
-        public static DependencyProperty ContextProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ContextProperty = DependencyProperty.Register(
             nameof(Context),
             typeof(object),
             typeof(DockableBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty OwnerProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty OwnerProperty = DependencyProperty.Register(
             nameof(Owner),
             typeof(IDockable),
             typeof(DockableBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty OriginalOwnerProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty OriginalOwnerProperty = DependencyProperty.Register(
             nameof(OriginalOwner),
             typeof(IDockable),
             typeof(DockableBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty FactoryProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty FactoryProperty = DependencyProperty.Register(
             nameof(Factory),
             typeof(IFactory),
             typeof(DockableBase),
             new PropertyMetadata(null));
 
-        public static DependencyProperty CanCloseProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanCloseProperty = DependencyProperty.Register(
             nameof(CanClose),
             typeof(bool),
             typeof(DockableBase),
             new PropertyMetadata(true));
 
-        public static DependencyProperty CanPinProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanPinProperty = DependencyProperty.Register(
             nameof(CanPin),
             typeof(bool),
             typeof(DockableBase),
             new PropertyMetadata(true));
 
-        public static DependencyProperty CanFloatProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanFloatProperty = DependencyProperty.Register(
             nameof(CanFloat),
             typeof(bool),
             typeof(DockableBase),

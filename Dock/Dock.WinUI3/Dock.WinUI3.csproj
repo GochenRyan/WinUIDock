@@ -10,6 +10,7 @@
     <None Remove="Controls\DockControl.xaml" />
     <None Remove="Controls\DockTarget.xaml" />
     <None Remove="Controls\DockTemplate.xaml" />
+    <None Remove="Controls\DocumentContentControl.xaml" />
     <None Remove="Controls\DocumentControl.xaml" />
     <None Remove="Controls\DocumentDockControl.xaml" />
     <None Remove="Controls\DocumentTabStrip.xaml" />
@@ -21,6 +22,7 @@
     <None Remove="Controls\ProportionalStackPanelSplitter.xaml" />
     <None Remove="Controls\RootDockControl.xaml" />
     <None Remove="Controls\ToolChromeControl.xaml" />
+    <None Remove="Controls\ToolContentControl.xaml" />
     <None Remove="Controls\ToolControl.xaml" />
     <None Remove="Controls\ToolDockControl.xaml" />
     <None Remove="Controls\ToolPinItemControl.xaml" />
@@ -35,6 +37,7 @@
       <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
       <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
       <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.0.240109" />
+      <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.0.240109" />
       <PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
       <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240428000" />
       <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
@@ -49,6 +52,33 @@
     <ProjectReference Include="..\Dock.Model.WinUI3\Dock.Model.WinUI3.csproj" />
     <ProjectReference Include="..\Dock.Model\Dock.Model.csproj" />
     <ProjectReference Include="..\Dock.Settings\Dock.Settings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ToolContentControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\DocumentContentControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

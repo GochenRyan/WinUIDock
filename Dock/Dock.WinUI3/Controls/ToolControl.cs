@@ -2,6 +2,7 @@ using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -10,26 +11,37 @@ using Windows.Foundation;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = TabStripName, Type = typeof(ToolTabStrip))]
-    [TemplatePart(Name = DockableControlName, Type = typeof(DockableControl))]
-    [TemplatePart(Name = ContentPresenterName, Type = typeof(ContentPresenter))]
+    [TemplatePart(Name = ToolContentControlName, Type = typeof(ContentControl))]
     public sealed class ToolControl : ContentControl
     {
         public const string TabStripName = "PART_TabStrip";
         public const string DockableControlName = "PART_DockableControl";
-        public const string ContentPresenterName = "PART_ContentPresenter";
+        public const string ToolContentControlName = "PART_ToolContentControl";
 
         public ToolControl()
         {
             this.DefaultStyleKey = typeof(ToolControl);
+            Loaded += ToolControl_Loaded;
+            Unloaded += ToolControl_Unloaded;
+        }
+
+        private void ToolControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ToolDock toolDock)
+            {
+                if (_activeDockableContentToken != 0)
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableContentToken);
+            }
+        }
+
+        private void ToolControl_Loaded(object sender, RoutedEventArgs e)
+        {
             DataContextChanged += ToolControl_DataContextChanged;
         }
 
         private void ToolControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is ToolDock dock)
-            {
-                Content = dock;
-            }
+            BindData();
         }
 
         protected override void OnApplyTemplate()
@@ -37,8 +49,7 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _toolTabStrip = GetTemplateChild(TabStripName) as ToolTabStrip;
-            _dockableControl = GetTemplateChild(DockableControlName) as DockableControl;
-            _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+            _toolContentControl = GetTemplateChild(ToolContentControlName) as ContentControl;
 
             BindData();
         }
@@ -47,35 +58,68 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            _toolTabStrip.SetBinding(ToolTabStrip.SelectedItemProperty, new Binding
+            if (DataContext is ToolDock toolDock)
             {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.TwoWay
-            });
+                _toolTabStrip.ClearValue(ToolTabStrip.DataContextProperty);
+                _toolTabStrip.SetBinding(ToolTabStrip.DataContextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath(""),
+                    Mode = BindingMode.OneWay
+                });
 
-            _dockableControl.SetBinding(DockableControl.DataContextProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.OneWay
-            });
+                _toolTabStrip.ClearValue(ToolTabStrip.SelectedItemProperty);
+                _toolTabStrip.SetBinding(ToolTabStrip.SelectedItemProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.TwoWay
+                });
 
-            _contentPresenter.SetBinding(ContentPresenter.ContentProperty, new Binding
+                UpdateToolContentControl();
+                if (_activeDockableContentToken != 0)
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableContentToken);
+                _activeDockableContentToken = toolDock.RegisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, ActiveDockableChangedCallback);
+            }
+        }
+
+        private void ActiveDockableChangedCallback(DependencyObject sender, DependencyProperty dp)
+        {
+            if (dp == ToolDock.ActiveDockableProperty)
             {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable.Content"),
-                Mode = BindingMode.OneWay
-            });
+                UpdateToolContentControl();
+            }
+        }
+
+        private void UpdateToolContentControl()
+        {
+            if (DataContext is ToolDock toolDock)
+            {
+                if (toolDock.ActiveDockable != null)
+                {
+                    _toolContentControl.Content = null;
+                    // To reuse child controls
+                    VisualTreeHelper.DisconnectChildrenRecursive(_toolContentControl);
+                    _toolContentControl.Content = toolDock.ActiveDockable;
+                }
+                else
+                {
+                    _toolContentControl.Content = null;
+                    // To reuse child controls
+                    VisualTreeHelper.DisconnectChildrenRecursive(_toolContentControl);
+                }
+            }
         }
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            return base.MeasureOverride(availableSize);
+            Size size = base.MeasureOverride(availableSize);
+            return size;
         }
 
         private ToolTabStrip _toolTabStrip;
-        private DockableControl _dockableControl;
-        private ContentPresenter _contentPresenter;
+        //private ToolContentControl _toolContentControl;
+        private ContentControl _toolContentControl;
+        private long _activeDockableContentToken = 0;
     }
 }

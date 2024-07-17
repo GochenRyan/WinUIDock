@@ -10,28 +10,35 @@ namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = DocumentTabStripName, Type = typeof(DocumentControl))]
     [TemplatePart(Name = DockableControlName, Type = typeof(DockableControl))]
-    [TemplatePart(Name = ContentPresenterName, Type = typeof(ContentPresenter))]
+    [TemplatePart(Name = DocumentContentControlName, Type = typeof(DocumentContentControl))]
     public sealed class DocumentControl : ContentControl
     {
         public const string DocumentTabStripName = "PART_TabStrip";
         public const string DockableControlName = "PART_DockableControl";
-        public const string ContentPresenterName = "PART_ContentPresenter";
+        public const string DocumentContentControlName = "PART_DocumentContentControl";
 
         public DocumentControl()
         {
             this.DefaultStyleKey = typeof(DocumentControl);
+            Loaded += DocumentControl_Loaded;
+            Unloaded += DocumentControl_Unloaded;
+        }
+
+        private void DocumentControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private void DocumentControl_Loaded(object sender, RoutedEventArgs e)
+        {
             DataContextChanged += DocumentControl_DataContextChanged;
         }
 
         private void DocumentControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is DocumentDock dock)
-            {
-                Content = dock;
-            }
+            BindData();
         }
 
-        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsActiveProperty = DependencyProperty.Register(
             nameof(IsActive),
             typeof(bool),
             typeof(DocumentControl),
@@ -49,7 +56,7 @@ namespace Dock.WinUI3.Controls
 
             _documentTabStrip = GetTemplateChild(DocumentTabStripName) as DocumentTabStrip;
             _dockableControl = GetTemplateChild(DockableControlName) as DockableControl;
-            _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+            _documentContentControl = GetTemplateChild(DocumentContentControlName) as DocumentContentControl;
 
             BindData();
         }
@@ -58,44 +65,52 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            _documentTabStrip.SetBinding(DocumentTabStrip.SelectedItemProperty, new Binding
+            if (DataContext is DocumentDock)
             {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.TwoWay
-            });
+                _documentTabStrip.ClearValue(DocumentTabStrip.SelectedItemProperty);
+                _documentTabStrip.SetBinding(DocumentTabStrip.SelectedItemProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.TwoWay
+                });
 
-            _documentTabStrip.SetBinding(DocumentTabStrip.CanCreateItemProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("CanCreateDocument"),
-                Mode = BindingMode.OneWay
-            });
+                _documentTabStrip.ClearValue(DocumentTabStrip.CanCreateItemProperty);
+                _documentTabStrip.SetBinding(DocumentTabStrip.CanCreateItemProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("CanCreateDocument"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _documentTabStrip.SetBinding(DocumentTabStrip.IsActiveProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("IsActive"),
-                Mode = BindingMode.OneWay
-            });
+                _documentTabStrip.ClearValue(DocumentTabStrip.IsActiveProperty);
+                _documentTabStrip.SetBinding(DocumentTabStrip.IsActiveProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("IsActive"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _dockableControl.SetBinding(DockableControl.DataContextProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable"),
-                Mode = BindingMode.OneWay
-            });
+                _dockableControl.ClearValue(DockableControl.DataContextProperty);
+                _dockableControl.SetBinding(DockableControl.DataContextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _contentPresenter.SetBinding(ContentPresenter.ContentProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("ActiveDockable.Content"),
-                Mode = BindingMode.OneWay
-            });
+                _documentContentControl.ClearValue(DocumentContentControl.DataContextProperty);
+                _documentContentControl.SetBinding(DocumentContentControl.DataContextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("ActiveDockable"),
+                    Mode = BindingMode.OneWay
+                });
+            }
         }
 
         private DocumentTabStrip _documentTabStrip;
         private DockableControl _dockableControl;
-        private ContentPresenter _contentPresenter;
+        private DocumentContentControl _documentContentControl;
     }
 }

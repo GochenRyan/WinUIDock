@@ -238,8 +238,6 @@ namespace Dock.WinUI3.Controls
             panel.InvalidateMeasure();
         }
 
-
-
         public event DragStartedEventHandler ThumbDragStarted;
         public event DragCompletedEventHandler ThumbDragCompleted;
         public event DragDeltaEventHandler ThumbDragDelta;

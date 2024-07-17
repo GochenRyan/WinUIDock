@@ -9,14 +9,21 @@ using Windows.Foundation;
 
 namespace Dock.WinUI3.Controls
 {
-    [TemplatePart(Name = WrapPanelName, Type = typeof(WrapPanel))]
     public sealed class DocumentTabStrip : ItemsControl
     {
-        public const string WrapPanelName = "HorizontalWrapPanel";
-
         public DocumentTabStrip()
         {
             this.DefaultStyleKey = typeof(DocumentTabStrip);
+            Loaded += DocumentTabStrip_Loaded;
+        }
+
+
+        private void DocumentTabStrip_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is DocumentDock dock)
+            {
+                ItemsSource = dock.VisibleDockables;
+            }
             DataContextChanged += DocumentTabStrip_DataContextChanged;
         }
 
@@ -28,12 +35,17 @@ namespace Dock.WinUI3.Controls
             }
         }
 
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+        }
+
         protected override void OnItemsChanged(object e)
         {
             base.OnItemsChanged(e);
         }
 
-        public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsActiveProperty = DependencyProperty.Register(
             nameof(IsActive),
             typeof(bool),
             typeof(DocumentTabStrip),
@@ -45,7 +57,7 @@ namespace Dock.WinUI3.Controls
             set => SetValue(IsActiveProperty, value);
         }
 
-        public static DependencyProperty CanCreateItemProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty CanCreateItemProperty = DependencyProperty.Register(
             nameof(CanCreateItem),
             typeof(bool),
             typeof(DocumentTabStrip),
@@ -58,7 +70,7 @@ namespace Dock.WinUI3.Controls
             set => SetValue(CanCreateItemProperty, value);
         }
 
-        public static DependencyProperty SelectedItemProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty SelectedItemProperty = DependencyProperty.Register(
             nameof(SelectedItem),
             typeof(IDockable),
             typeof(DocumentTabStrip),
@@ -70,11 +82,6 @@ namespace Dock.WinUI3.Controls
         {
             var control = ob as DocumentTabStrip;
             IDockable item = (IDockable)args.NewValue;
-        }
-
-        protected override void OnApplyTemplate()
-        {
-            base.OnApplyTemplate();
         }
 
         protected override Size MeasureOverride(Size availableSize)

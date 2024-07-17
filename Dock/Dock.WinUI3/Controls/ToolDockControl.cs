@@ -1,4 +1,4 @@
-using Dock.WinUI3.Converters;
+using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -18,15 +18,18 @@ namespace Dock.WinUI3.Controls
         public ToolDockControl()
         {
             this.DefaultStyleKey = typeof(ToolDockControl);
+            Loaded += ToolDockControl_Loaded;
+        }
+
+
+        private void ToolDockControl_Loaded(object sender, RoutedEventArgs e)
+        {
             DataContextChanged += ToolDockControl_DataContextChanged;
         }
 
         private void ToolDockControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            //if (DataContext is ToolDock)
-            //{
-            //    BindData();
-            //}
+            BindData();
         }
 
         protected override void OnApplyTemplate()
@@ -35,44 +38,44 @@ namespace Dock.WinUI3.Controls
 
             _toolChromeControl = GetTemplateChild(ToolChromeControlPartName) as ToolChromeControl;
             _toolControl = GetTemplateChild(ToolControlPartName) as ToolControl;
+            _toolChromeControl.RegisterPropertyChangedCallback(ToolChromeControl.VisibilityProperty, OnChildVisibilityChanged);
 
             BindData();
+        }
+
+        private void OnChildVisibilityChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            if (dp == ToolChromeControl.VisibilityProperty)
+            {
+                var visibility = (Visibility)sender.GetValue(dp);
+                Visibility = visibility;
+            }
         }
 
         // The Windows Runtime doesn't support a Binding usage for Setter.Value.
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            if (_toolChromeControl == null || _toolControl == null)
-                return;
-
-            _toolChromeControl.ClearValue(ToolChromeControl.IsActiveProperty);
-            _toolChromeControl.ClearValue(ToolChromeControl.VisibilityProperty);
-
-            _toolChromeControl.SetBinding(ToolChromeControl.IsActiveProperty, new Binding
+            if (DataContext is ToolDock)
             {
-                Source = DataContext,
-                Path = new PropertyPath("IsActive"),
-                Mode = BindingMode.OneWay
-            });
+                _toolChromeControl.ClearValue(ToolChromeControl.IsActiveProperty);
+                _toolChromeControl.SetBinding(ToolChromeControl.IsActiveProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("IsActive"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _toolChromeControl.SetBinding(ToolChromeControl.VisibilityProperty, new Binding
-            {
-                Source = DataContext,
-                Path = _path,
-                Mode = BindingMode.OneWay,
-                Converter = _collectionVisibilityConverter
-            });
+                _toolControl.ClearValue(ToolControl.DataContextProperty);
+                _toolControl.SetBinding(ToolControl.DataContextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath(""),
+                    Mode = BindingMode.OneWay
+                });
 
-
-            //_toolControl.SetBinding(ToolControl.DataContextProperty, new Binding
-            //{
-            //    Source = DataContext,
-            //    Path = new PropertyPath(""),
-            //    Mode = BindingMode.OneWay
-            //});
+            }
         }
-
 
         protected override Size MeasureOverride(Size availableSize)
         {
@@ -81,7 +84,5 @@ namespace Dock.WinUI3.Controls
 
         private ToolChromeControl _toolChromeControl;
         private ToolControl _toolControl;
-        private static CollectionVisibilityConverter _collectionVisibilityConverter = new CollectionVisibilityConverter();
-        private static PropertyPath _path = new("VisibleDockables");
     }
 }

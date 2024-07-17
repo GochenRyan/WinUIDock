@@ -1,4 +1,6 @@
+using Dock.Model.Controls;
 using Dock.Model.Core;
+using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -31,7 +33,18 @@ namespace Dock.WinUI3.Controls
         public DocumentTabStripItem()
         {
             this.DefaultStyleKey = typeof(DocumentTabStripItem);
+            Loaded += DocumentTabStripItem_Loaded;
             Unloaded += DocumentTabStripItem_Unloaded;
+        }
+
+        private void DocumentTabStripItem_Loaded(object sender, RoutedEventArgs e)
+        {
+            DataContextChanged += DocumentTabStripItem_DataContextChanged;
+        }
+
+        private void DocumentTabStripItem_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            BindData();
         }
 
         private void DocumentTabStripItem_Unloaded(object sender, RoutedEventArgs e)
@@ -55,53 +68,62 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            _titleItem.PointerPressed += _titleItem_PointerPressed;
-
-            _titleItem.SetBinding(TextBlock.TextProperty, new Binding
+            if (DataContext is IDocument)
             {
-                Source = DataContext,
-                Path = new PropertyPath("Title"),
-                Mode = BindingMode.OneWay
-            });
+                _titleItem.PointerPressed -= _titleItem_PointerPressed;
+                _titleItem.PointerPressed += _titleItem_PointerPressed;
 
-            _closeButton.SetBinding(Button.CommandProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
-                Mode = BindingMode.OneWay
-            });
+                _titleItem.ClearValue(TextBlock.TextProperty);
+                _titleItem.SetBinding(TextBlock.TextProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("Title"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _closeButton.SetBinding(Button.CommandParameterProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath(""),
-                Mode = BindingMode.OneWay
-            });
+                _closeButton.ClearValue(Button.CommandProperty);
+                _closeButton.SetBinding(Button.CommandProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
+                    Mode = BindingMode.OneWay
+                });
 
-            _closeButton.SetBinding(Button.VisibilityProperty, new Binding
-            {
-                Source = DataContext,
-                Path = new PropertyPath("CanClose"),
-                Mode = BindingMode.OneWay
-            });
+                _closeButton.ClearValue(Button.CommandParameterProperty);
+                _closeButton.SetBinding(Button.CommandParameterProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath(""),
+                    Mode = BindingMode.OneWay
+                });
 
-            var menuFlyout = new MenuFlyout();
-            menuFlyout.XamlRoot = this.XamlRoot;
-            var floatItem = CreateMenuFlyoutItem(FloatItemName, "Float", "Owner.Factory.FloatDockableCmd", "CanFloat");
-            var closeSelfItem = CreateMenuFlyoutItem(CloseSelfItemName, "Close", "Owner.Factory.CloseDockableCmd", "CanClose");
-            var closeOtherItem = CreateMenuFlyoutItem(CloseOtherItemName, "Close other tabs", "Owner.Factory.CloseOtherDockablesCmd", "CanClose");
-            var closeAllItem = CreateMenuFlyoutItem(CloseAllItemName, "Close all tabs", "Owner.Factory.CloseAllDockablesCmd", "CanClose");
-            var closeLeftItem = CreateMenuFlyoutItem(CloseLeftItemName, "Close tabs to the left", "Owner.Factory.CloseLeftDockablesCmd", "CanClose");
-            var closeRightItem = CreateMenuFlyoutItem(CloseRightItemName, "Close tabs to the right", "Owner.Factory.CloseRightDockablesCmd", "CanClose");
+                _closeButton.ClearValue(Button.VisibilityProperty);
+                _closeButton.SetBinding(Button.VisibilityProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("CanClose"),
+                    Converter = DockConverters.DockBoolToVisibilityConverter,
+                    Mode = BindingMode.OneWay
+                });
 
-            menuFlyout.Items.Add(floatItem);
-            menuFlyout.Items.Add(closeSelfItem);
-            menuFlyout.Items.Add(closeOtherItem);
-            menuFlyout.Items.Add(closeAllItem);
-            menuFlyout.Items.Add(closeLeftItem);
-            menuFlyout.Items.Add(closeRightItem);
+                var menuFlyout = new MenuFlyout();
+                menuFlyout.XamlRoot = this.XamlRoot;
+                var floatItem = CreateMenuFlyoutItem(FloatItemName, "Float", "Owner.Factory.FloatDockableCmd", "CanFloat");
+                var closeSelfItem = CreateMenuFlyoutItem(CloseSelfItemName, "Close", "Owner.Factory.CloseDockableCmd", "CanClose");
+                var closeOtherItem = CreateMenuFlyoutItem(CloseOtherItemName, "Close other tabs", "Owner.Factory.CloseOtherDockablesCmd", "CanClose");
+                var closeAllItem = CreateMenuFlyoutItem(CloseAllItemName, "Close all tabs", "Owner.Factory.CloseAllDockablesCmd", "CanClose");
+                var closeLeftItem = CreateMenuFlyoutItem(CloseLeftItemName, "Close tabs to the left", "Owner.Factory.CloseLeftDockablesCmd", "CanClose");
+                var closeRightItem = CreateMenuFlyoutItem(CloseRightItemName, "Close tabs to the right", "Owner.Factory.CloseRightDockablesCmd", "CanClose");
 
-            _border.ContextFlyout = menuFlyout;
+                menuFlyout.Items.Add(floatItem);
+                menuFlyout.Items.Add(closeSelfItem);
+                menuFlyout.Items.Add(closeOtherItem);
+                menuFlyout.Items.Add(closeAllItem);
+                menuFlyout.Items.Add(closeLeftItem);
+                menuFlyout.Items.Add(closeRightItem);
+
+                _border.ContextFlyout = menuFlyout;
+            }
         }
 
         private MenuFlyoutItem CreateMenuFlyoutItem(string name, string text, string cmdPath, string visibilityPath)
@@ -127,6 +149,7 @@ namespace Dock.WinUI3.Controls
             {
                 Source = DataContext,
                 Path = new PropertyPath("CanClose"),
+                Converter = DockConverters.DockBoolToVisibilityConverter,
                 Mode = BindingMode.OneWay
             });
 

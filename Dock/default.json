@@ -22,8 +22,8 @@
             }
           ],
           "Alignment": 0,
-          "IsExpanded": false,
-          "AutoHide": false,
+          "IsExpanded": true,
+          "AutoHide": true,
           "GripMode": 0,
           "ActiveDockable": {
             "$ref": "4"
@@ -147,8 +147,8 @@
                     }
                   ],
                   "Alignment": 2,
-                  "IsExpanded": false,
-                  "AutoHide": false,
+                  "IsExpanded": true,
+                  "AutoHide": true,
                   "GripMode": 0,
                   "ActiveDockable": {
                     "$ref": "14"
@@ -219,15 +219,15 @@
                 }
               ],
               "Alignment": 1,
-              "IsExpanded": false,
-              "AutoHide": false,
+              "IsExpanded": true,
+              "AutoHide": true,
               "GripMode": 0,
               "ActiveDockable": {
                 "$ref": "18"
               },
               "Proportion": 0.30000001192092896,
               "Dock": 0,
-              "IsActive": true,
+              "IsActive": false,
               "IsEmpty": false,
               "IsCollapsable": true,
               "OpenedDockablesCount": 1,
@@ -278,11 +278,11 @@
     "$ref": "2"
   },
   "FocusedDockable": {
-    "$ref": "18"
+    "$ref": "2"
   },
   "Proportion": "NaN",
   "Dock": 0,
-  "IsActive": false,
+  "IsActive": true,
   "IsEmpty": false,
   "IsCollapsable": false,
   "OpenedDockablesCount": 7,
@@ -291,4 +291,5 @@
   "CanClose": true,
   "CanPin": true,
   "CanFloat": true
+}true
 }

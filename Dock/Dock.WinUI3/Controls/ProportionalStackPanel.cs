@@ -1,7 +1,9 @@
 using Dock.Model.WinUI3.Controls;
 using Dock.Model.WinUI3.Core;
+using Dock.WinUI3.Converters;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using System;
 using System.Data;
 using System.Diagnostics;
@@ -17,14 +19,69 @@ namespace Dock.WinUI3.Controls
     {
         public ProportionalStackPanel() : base()
         {
-            Loaded += ProportionalStackPanel_Loaded;
+            //Loaded += ProportionalStackPanel_Loaded;
+            DataContextChanged += ProportionalStackPanel_DataContextChanged;
         }
 
-        private void ProportionalStackPanel_Loaded(object sender, RoutedEventArgs e)
+
+        //private void ProportionalStackPanel_Loaded(object sender, RoutedEventArgs e)
+        //{
+        //    /*
+        //     * Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}, FallbackValue=Vertical}"
+        //                                          IsCollapsable="{Binding IsCollapsable, Mode=OneWay}"
+        //                                          IsEmpty ="{Binding IsEmpty, Mode=OneWay}"
+        //     * 
+        //     */
+
+        //    //if (DataContext is ProportionalDock proportionalDock)
+        //    //{
+
+        //    //    Orientation = proportionalDock.Orientation == Model.Core.Orientation.Horizontal ? Orientation.Horizontal : Orientation.Vertical;
+        //    //    IsCollapsable = proportionalDock.IsCollapsable;
+        //    //    IsEmpty = proportionalDock.IsEmpty;
+        //    //}
+        //    DataContextChanged += ProportionalStackPanel_DataContextChanged;
+        //}
+
+        private void ProportionalStackPanel_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
+            BindData();
         }
 
-        public static DependencyProperty OrientationProperty = DependencyProperty.Register(
+        // The Windows Runtime doesn't support a Binding usage for Setter.Value.
+        // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
+        private void BindData()
+        {
+            if (DataContext is ProportionalDock)
+            {
+                ClearValue(OrientationProperty);
+                SetBinding(OrientationProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("Orientation"),
+                    Converter = new OrientationConverter(),
+                    Mode = BindingMode.OneWay
+                });
+
+                ClearValue(IsCollapsableProperty);
+                SetBinding(IsCollapsableProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("IsCollapsable"),
+                    Mode = BindingMode.OneWay
+                });
+
+                ClearValue(IsEmptyProperty);
+                SetBinding(IsEmptyProperty, new Binding
+                {
+                    Source = DataContext,
+                    Path = new PropertyPath("IsEmpty"),
+                    Mode = BindingMode.OneWay
+                });
+            }
+        }
+
+        public static readonly DependencyProperty OrientationProperty = DependencyProperty.Register(
             nameof(Orientation),
             typeof(Orientation),
             typeof(ProportionalStackPanel),
@@ -32,7 +89,7 @@ namespace Dock.WinUI3.Controls
 
         public Orientation Orientation { get => (Orientation)GetValue(OrientationProperty); set => SetValue(OrientationProperty, value); }
 
-        public static DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty IsCollapsableProperty = DependencyProperty.Register(
             nameof(IsCollapsable),
             typeof(bool),
             typeof(ProportionalStackPanel),
@@ -50,8 +107,8 @@ namespace Dock.WinUI3.Controls
             control.Visibility = (control.IsCollapsable && control.IsEmpty) ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        public static DependencyProperty IsEmptyProperty = DependencyProperty.Register(
-        nameof(IsEmpty),
+        public static readonly DependencyProperty IsEmptyProperty = DependencyProperty.Register(
+            nameof(IsEmpty),
             typeof(bool),
             typeof(ProportionalStackPanel),
             new PropertyMetadata(false, OnIsEmptyChanged));
@@ -228,7 +285,10 @@ namespace Dock.WinUI3.Controls
 
             if (assignedProportion < 1)
             {
-                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c));
+                var numChildren = (double)children.Count(c =>
+                {
+                    return !ProportionalStackPanelSplitter.IsSplitter(c) && !GetIsCollapsed(c);
+                });
 
                 var toAdd = (1.0 - assignedProportion) / numChildren;
 
@@ -244,7 +304,10 @@ namespace Dock.WinUI3.Controls
             }
             else if (assignedProportion > 1)
             {
-                var numChildren = (double)children.Count(c => !ProportionalStackPanelSplitter.IsSplitter(c));
+                var numChildren = (double)children.Count(c =>
+                {
+                    return !ProportionalStackPanelSplitter.IsSplitter(c) && !GetIsCollapsed(c);
+                });
 
                 var toRemove = (assignedProportion - 1.0) / numChildren;
 

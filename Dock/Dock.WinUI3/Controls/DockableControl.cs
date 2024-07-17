@@ -172,15 +172,20 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
+            Size size = availableSize;
             if (Children.Count > 0)
             {
                 foreach (var child in Children)
                 {
                     child.Measure(availableSize);
+                    if (child.DesiredSize.Width > size.Width)
+                        size.Width = child.DesiredSize.Width;
+                    if (child.DesiredSize.Height > size.Height)
+                        size.Height = child.DesiredSize.Height;
                 }
             }
 
-            return availableSize;
+            return size;
         }
 
         protected override Size ArrangeOverride(Size finalSize)

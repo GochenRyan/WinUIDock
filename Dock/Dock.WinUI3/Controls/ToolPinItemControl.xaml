@@ -5,49 +5,17 @@
     xmlns:local="using:Dock.WinUI3.Controls" 
     xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
-    <MenuFlyout x:Key="ToolPinItemControlContextMenu">
-        <!--<MenuFlyoutItem Text="Float"
-                        Command="{Binding Owner.Factory.FloatDockableCmd, Mode=OneWay}"
-                        CommandParameter="{Binding}"
-                        Visibility="{Binding CanFloat}"/>
-        <MenuFlyoutItem Text="Show"
-                        Command="{Binding Owner.Factory.PreviewPinnedDockableCmd, Mode=OneWay}"
-                        CommandParameter="{Binding}"
-                        Visibility="{Binding CanPin}"/>
-        <MenuFlyoutItem Text="Close"
-                        Command="{Binding Owner.Factory.CloseDockableCmd, Mode=OneWay}"
-                        CommandParameter="{Binding}"
-                        Visibility="{Binding CanClose}"/>-->
-    </MenuFlyout>
-
     <Style TargetType="local:ToolPinItemControl">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolPinItemControl">
                     <local:DockableControl TrackingMode="Pinned">
                         <controls:LayoutTransformControl x:Name="PART_LayoutTransformControl">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="OrientationStates">
-                                    <VisualState x:Name="Vertical">
-                                        <VisualState.Setters>
-                                            <Setter Target="Angle" Value="270"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Horizontal">
-                                        <VisualState.Setters>
-                                            <Setter Target="Angle" Value="0"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            
-                            <Button Command="{Binding Owner.Factory.PreviewPinnedDockableCmd}"
-                                    CommandParameter="{Binding}"
-                                    Visibility="{TemplateBinding CanPin}">
-                                <TextBlock Text="{TemplateBinding Title}"
-                                           VerticalAlignment="Center"
-                                           HorizontalAlignment="Left"
-                                           ContextFlyout="{StaticResource ToolPinItemControlContextMenu}"/>
+                            <Button x:Name="PART_PreviewPinnedBtn"
+                                    BorderThickness="0">
+                                <TextBlock x:Name="PART_PreviewPinnedText"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Left"/>
                             </Button>
                         </controls:LayoutTransformControl>
                     </local:DockableControl>

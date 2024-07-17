@@ -11,7 +11,7 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "Content")]
     public class DocumentTemplate : DependencyObject, IDocumentTemplate
     {
-        public static DependencyProperty ContentProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty ContentProperty = DependencyProperty.Register(
             nameof(Content),
             typeof(object),
             typeof(DocumentTemplate),

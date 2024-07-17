@@ -5,13 +5,6 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:settings="using:Dock.Settings">
 
-    <MenuFlyout x:Key="ToolTabStripItemContextMenu">
-        <MenuFlyoutItem Text="Float"/>
-        <MenuFlyoutItem Text="Dock"/>
-        <MenuFlyoutItem Text="Auto Hide"/>
-        <MenuFlyoutItem Text="Close"/>
-    </MenuFlyout>
-
     <Style TargetType="local:ToolTabStripItem">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
@@ -25,21 +18,17 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolTabStripItem">
-                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                    <Border x:Name="PART_Border" 
+                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            Padding="{TemplateBinding Padding}"
-                            ContextFlyout="{StaticResource ToolTabStripItemContextMenu}"
-                            Width="{Binding ElementName=PART_DragTool, Path=Width, Mode=OneWay}">
+                            Padding="{TemplateBinding Padding}">
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
                                         Spacing="2">
-                                <Button x:Name="PART_TitleItem" 
-                                        Content="{Binding Title, Mode=OneWay}" 
+                                <Button x:Name="PART_TitleItem"
                                         VerticalAlignment="Center"
-                                        BorderThickness="0"
-                                        Command="{Binding Owner.Factory.SetActiveDockableCmd}"
-                                        CommandParameter="{Binding}"/>
+                                        BorderThickness="0"/>
                             </StackPanel>
                         </local:DockableControl>
                     </Border>

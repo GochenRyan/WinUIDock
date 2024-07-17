@@ -22,8 +22,10 @@
                             <local:ToolPinnedControl x:Name ="PART_BottomPinnedControl" 
                                                      local:DockPanel.Dock="Bottom" 
                                                      Orientation="Horizontal"/>
-                            <local:ProportionalDockControl x:Name ="PART_ProportionalDockControl"/>
-                            <local:PinnedDockControl />
+                            <Grid>
+                                <local:ProportionalDockControl x:Name ="PART_ProportionalDockControl"/>
+                                <local:PinnedDockControl x:Name="PART_PinnedDockControl"/>
+                            </Grid>
                         </local:DockPanel>
                     </local:DockableControl>
                 </ControlTemplate>
