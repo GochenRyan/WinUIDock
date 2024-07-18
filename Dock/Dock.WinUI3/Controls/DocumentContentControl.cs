@@ -89,6 +89,7 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+            UpdateContent();
         }
 
         private long _contentToken = 0;

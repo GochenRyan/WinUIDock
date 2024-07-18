@@ -40,8 +40,8 @@ namespace Dock.Model.WinUI3.Core
         [JsonPropertyName("Context")]
         public object Context { get => GetValue(ContextProperty); set => SetValue(ContextProperty, value); }
 
-        [IgnoreDataMember]
-        [JsonIgnore]
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Owner")]
         public IDockable Owner { get => (IDockable)GetValue(OwnerProperty); set => SetValue(OwnerProperty, value); }
 
         [IgnoreDataMember]

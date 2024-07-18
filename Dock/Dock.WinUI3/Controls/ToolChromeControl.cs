@@ -56,6 +56,8 @@ namespace Dock.WinUI3.Controls
             if (DataContext is ToolDock toolDock)
             {
                 toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
+                if (_activeDockableToken != 0)
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableToken);
             }
         }
 
@@ -218,9 +220,21 @@ namespace Dock.WinUI3.Controls
                     FallbackValue = Visibility.Collapsed
                 });
 
+                if (_activeDockableToken != 0)
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableToken);
+                _activeDockableToken = toolDock.RegisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, ActiveDockableChangedCallback);
+
                 AddFlyout();
                 _menuButton.Click += _menuButton_Click;
                 _maximizeRestoreButton.Click += _maximizeRestoreButton_Click;
+            }
+        }
+
+        private void ActiveDockableChangedCallback(DependencyObject sender, DependencyProperty dp)
+        {
+            if (dp == ToolDock.ActiveDockableProperty)
+            {
+                RefreshPinBtn();
             }
         }
 
@@ -477,5 +491,6 @@ namespace Dock.WinUI3.Controls
 
         private static ObjectToBoolConverter _objectToBoolConverter = new();
         private MenuFlyoutItem _autoHideItem;
+        private long _activeDockableToken;
     }
 }
