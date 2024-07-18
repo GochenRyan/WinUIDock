@@ -48,7 +48,7 @@ namespace DockWinUISample
 
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
-            OpenLayout();
+            await OpenLayout();
         }
 
         private async Task SaveLayout()
