@@ -1,5 +1,4 @@
 using Dock.Model.WinUI3.Controls;
-using Dock.WinUI3.Converters;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -163,7 +162,7 @@ namespace Dock.WinUI3.Controls
                 Source = DataContext,
                 Path = new PropertyPath("OriginalOwner"),
                 Mode = BindingMode.OneWay,
-                Converter = _objectToBoolConverter,
+                Converter = DockConverters.DockObjectToBoolConverter,
                 FallbackValue = false
             });
             menuFlyout.Items.Add(dockItem);
@@ -190,7 +189,7 @@ namespace Dock.WinUI3.Controls
                 Source = DataContext,
                 Path = new PropertyPath("OriginalOwner"),
                 Mode = BindingMode.OneWay,
-                Converter = _objectToBoolConverter,
+                Converter = DockConverters.DockObjectToBoolConverter,
                 ConverterParameter = true,
                 FallbackValue = false
             });
@@ -262,8 +261,6 @@ namespace Dock.WinUI3.Controls
         private StackPanel _dragTool;
         private Button _titleItem;
         private Border _border;
-
-        private static ObjectToBoolConverter _objectToBoolConverter = new();
         private MenuFlyoutItem _autoHideItem;
 
         private long _canPinToken = 0;

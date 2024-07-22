@@ -1,6 +1,5 @@
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
-using Dock.WinUI3.Converters;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -353,7 +352,7 @@ namespace Dock.WinUI3.Controls
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.OriginalOwner"),
                 Mode = BindingMode.OneWay,
-                Converter = _objectToBoolConverter,
+                Converter = DockConverters.DockObjectToBoolConverter,
                 FallbackValue = false
             });
             menuFlyout.Items.Add(dockItem);
@@ -383,7 +382,7 @@ namespace Dock.WinUI3.Controls
                 Source = DataContext,
                 Path = new PropertyPath("ActiveDockable.OriginalOwner"),
                 Mode = BindingMode.OneWay,
-                Converter = _objectToBoolConverter,
+                Converter = DockConverters.DockObjectToBoolConverter,
                 ConverterParameter = true,
                 FallbackValue = false
             });
@@ -488,8 +487,6 @@ namespace Dock.WinUI3.Controls
         private Button _maximizeRestoreButton;
         private Border _border;
         private Button _menuButton;
-
-        private static ObjectToBoolConverter _objectToBoolConverter = new();
         private MenuFlyoutItem _autoHideItem;
         private long _activeDockableToken;
     }

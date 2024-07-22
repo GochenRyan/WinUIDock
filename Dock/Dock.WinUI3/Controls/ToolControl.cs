@@ -68,14 +68,8 @@ namespace Dock.WinUI3.Controls
                     Mode = BindingMode.OneWay
                 });
 
-                _toolTabStrip.ClearValue(ToolTabStrip.SelectedItemProperty);
-                _toolTabStrip.SetBinding(ToolTabStrip.SelectedItemProperty, new Binding
-                {
-                    Source = DataContext,
-                    Path = new PropertyPath("ActiveDockable"),
-                    Mode = BindingMode.TwoWay
-                });
-
+                // If you use SetBinding, there will be a conversion error. I don't know why...
+                UpdateSelectedItem();
                 UpdateToolContentControl();
                 if (_activeDockableContentToken != 0)
                     toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableContentToken);
@@ -87,7 +81,16 @@ namespace Dock.WinUI3.Controls
         {
             if (dp == ToolDock.ActiveDockableProperty)
             {
+                UpdateSelectedItem();
                 UpdateToolContentControl();
+            }
+        }
+
+        private void UpdateSelectedItem()
+        {
+            if (DataContext is ToolDock toolDock)
+            {
+                _toolTabStrip.SelectedItem = toolDock.ActiveDockable;
             }
         }
 
@@ -95,19 +98,19 @@ namespace Dock.WinUI3.Controls
         {
             if (DataContext is ToolDock toolDock)
             {
-                if (toolDock.ActiveDockable != null)
+                // To reuse child controls
+                if (toolDock.ActiveDockable is Tool tool)
                 {
-                    _toolContentControl.Content = null;
-                    // To reuse child controls
-                    VisualTreeHelper.DisconnectChildrenRecursive(_toolContentControl);
-                    _toolContentControl.Content = toolDock.ActiveDockable;
+                    var contentElem = tool.Content as UIElement;
+                    var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
+                    if (parent is ContentPresenter presenter)
+                    {
+                        presenter.Content = null;
+                    }
                 }
-                else
-                {
-                    _toolContentControl.Content = null;
-                    // To reuse child controls
-                    VisualTreeHelper.DisconnectChildrenRecursive(_toolContentControl);
-                }
+
+                _toolContentControl.Content = null;
+                _toolContentControl.DataContext = toolDock.ActiveDockable;
             }
         }
 

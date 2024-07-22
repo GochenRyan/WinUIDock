@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>DockWinUISample</RootNamespace>
+    <RootNamespace>DockServiceSample</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
@@ -11,7 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.0.240109" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <Manifest Include="$(ApplicationManifest)" />
@@ -21,5 +20,24 @@
     <ProjectReference Include="..\..\Dock.Model.WinUI3\Dock.Model.WinUI3.csproj" />
     <ProjectReference Include="..\..\Dock.Serializer\Dock.Serializer.csproj" />
     <ProjectReference Include="..\..\Dock.WinUI3\Dock.WinUI3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <CustomAdditionalCompileInputs Remove="DocumentSampleControl1.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="DocumentSampleControl1.xaml" />
+    <None Remove="ToolSampleControl1.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Remove="DocumentSampleControl1.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="ToolSampleControl1.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>

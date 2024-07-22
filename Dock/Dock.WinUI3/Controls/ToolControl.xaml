@@ -18,9 +18,6 @@
                         <Border x:Name="PART_Border" local:DockPanel.Dock="Top">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
-                                <!--<local:ToolContentControl x:Name="PART_ToolContentControl"
-                                                  HorizontalAlignment="Stretch"
-                                                  VerticalAlignment="Stretch"/>-->
                                 <ContentControl x:Name="PART_ToolContentControl">
                                     <ContentControl.ContentTemplate>
                                         <DataTemplate>

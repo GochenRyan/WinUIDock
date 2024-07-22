@@ -239,6 +239,16 @@ namespace Dock.WinUI3.Controls
 
         public IDockControlState DockControlState => _dockControlState;
 
+        public void RefreshLayout()
+        {
+            if (_isInitialized)
+            {
+                DeInitialize(Layout);
+            }
+
+            Initialize(Layout);
+        }
+
         private static void OnFactoryChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
         {
             var factory = args.NewValue as IFactory;
@@ -330,6 +340,8 @@ namespace Dock.WinUI3.Controls
             }
 
             _isInitialized = true;
+
+            DataContext = layout;
         }
 
         protected override void OnContentTemplateChanged(DataTemplate oldContentTemplate, DataTemplate newContentTemplate)

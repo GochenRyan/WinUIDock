@@ -148,9 +148,10 @@ namespace Dock.WinUI3.Controls
             item.SetBinding(MenuFlyoutItem.VisibilityProperty, new Binding
             {
                 Source = DataContext,
-                Path = new PropertyPath("CanClose"),
+                Path = new PropertyPath(visibilityPath),
                 Converter = DockConverters.DockBoolToVisibilityConverter,
-                Mode = BindingMode.OneWay
+                Mode = BindingMode.OneWay,
+                FallbackValue = Visibility.Collapsed
             });
 
             return item;

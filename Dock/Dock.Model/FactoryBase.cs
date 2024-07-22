@@ -28,7 +28,7 @@ public abstract partial class FactoryBase : IFactory
     /// <inheritdoc/>
     public virtual void CollapseDock(IDock dock)
     {
-        if (!dock.IsCollapsable || dock.VisibleDockables is null || dock.VisibleDockables.Count != 0)
+        if (!dock.IsCollapsable || dock.VisibleDockables is null || dock.VisibleDockables.Count != 0 || !dock.CanClose)
         {
             return;
         }
@@ -260,6 +260,7 @@ public abstract partial class FactoryBase : IFactory
             case ITool:
                 {
                     target = CreateToolDock();
+                    target.Id = nameof(IToolDock);
                     target.Title = nameof(IToolDock);
                     if (target is IDock dock)
                     {
@@ -276,6 +277,7 @@ public abstract partial class FactoryBase : IFactory
             case IDocument:
                 {
                     target = CreateDocumentDock();
+                    target.Id = nameof(IDocumentDock);
                     target.Title = nameof(IDocumentDock);
                     if (target is IDock dock)
                     {
@@ -337,10 +339,16 @@ public abstract partial class FactoryBase : IFactory
 
         var root = CreateRootDock();
         root.Title = nameof(IRootDock);
+        root.Id = nameof(IRootDock);
         root.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         if (root.VisibleDockables is not null && target is not null)
         {
-            var proportionDock = CreateProportionalDock();
+            if (target is not IProportionalDock proportionDock)
+            {
+                proportionDock = CreateProportionalDock();
+                proportionDock.Id = nameof(proportionDock);
+            }
+
             AddVisibleDockable(root, proportionDock);
             OnDockableAdded(proportionDock);
             AddVisibleDockable(proportionDock, target);

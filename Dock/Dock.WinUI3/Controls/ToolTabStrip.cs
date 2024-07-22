@@ -95,7 +95,11 @@ namespace Dock.WinUI3.Controls
             typeof(ToolTabStrip),
             new PropertyMetadata(null, OnSelectedItemChanged));
 
-        public IDockable SelectedItem { get => (IDockable)GetValue(SelectedItemProperty); set => SetValue(SelectedItemProperty, value); }
+        public IDockable SelectedItem
+        {
+            get => (IDockable)GetValue(SelectedItemProperty);
+            set => SetValue(SelectedItemProperty, value);
+        }
 
         private static void OnSelectedItemChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
         {

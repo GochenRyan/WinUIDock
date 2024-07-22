@@ -1,6 +1,7 @@
 ﻿using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml.Controls;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Dock.WinUI3
@@ -23,7 +24,7 @@ namespace Dock.WinUI3
             return dockable;
         }
 
-        public static IDockable CreateDockable(DockableType DockableType, string id, Control control)
+        public static IDockable CreateDockable(DockableType DockableType, string id, string title, Control control)
         {
             IDockable dockable = CreateDockable(DockableType);
 
@@ -35,11 +36,13 @@ namespace Dock.WinUI3
                 case DockableType.Tool:
                     var tool = dockable as Tool;
                     tool.Id = id;
+                    tool.Title = title;
                     tool.Content = control;
                     break;
                 case DockableType.Document:
                     var document = dockable as Document;
                     document.Id = id;
+                    document.Title = title;
                     document.Content = control;
                     break;
             }
@@ -57,24 +60,16 @@ namespace Dock.WinUI3
             _factory.SplitToDock(dock, dockable, operation);
         }
 
-        public static IDockable FindDockableByID(string id)
+        public static IEnumerable<IDockable> FindDockableByID(string id)
         {
             var res = _factory.Find(x => x.Id == id);
-
-            if (res.Count() > 0)
-                return res.First();
-
-            return null;
+            return res;
         }
 
-        public static IDock FindDockByID(string id)
+        public static IEnumerable<IDock> FindDockByID(string id)
         {
-            var res = _factory.Find(x => x is IDock && x.Id == id);
-
-            if (res.Count() > 0)
-                return res.First() as IDock;
-
-            return null;
+            IEnumerable<IDock> res = _factory.Find(x => x is IDock && x.Id == id).Select(x => (IDock)x);
+            return res;
         }
 
         public static int GetIndex(IDockable dockable)
@@ -89,12 +84,12 @@ namespace Dock.WinUI3
 
         public static void AddDockableTo(IDockable dockable, IDock dock)
         {
-            dock.VisibleDockables.Add(dockable);
+            _factory.AddDockable(dock, dockable);
         }
 
         public static void InsertDockableTo(IDockable dockable, IDock dock, int index)
         {
-            dock.VisibleDockables.Insert(index, dockable);
+            _factory.InsertDockable(dock, dockable, index);
         }
 
         public static void CloseDockable(IDockable dockable)
@@ -146,9 +141,9 @@ namespace Dock.WinUI3
         {
             var res = FindDockableByID(id);
 
-            if (res != null)
+            if (res.Count() > 0)
             {
-                ActiveDockable(res);
+                ActiveDockable(res.First());
             }
         }
 
@@ -186,9 +181,14 @@ namespace Dock.WinUI3
             _factory.UnpinDockable(dockable);
         }
 
-        internal static void SetFactory(IFactory factory)
+        public static void SetFactory(IFactory factory)
         {
             _factory = factory;
+        }
+
+        public static IFactory GetFactory()
+        {
+            return _factory;
         }
 
         private static IFactory _factory;

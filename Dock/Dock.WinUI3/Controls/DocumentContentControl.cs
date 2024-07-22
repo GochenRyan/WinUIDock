@@ -41,24 +41,7 @@ namespace Dock.WinUI3.Controls
 
         private void DocumentContentControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (DataContext is IDocument doc)
-            {
-                if (_contentToken != 0)
-                {
-                    if (doc is Tool tool)
-                    {
-                        tool.UnregisterPropertyChangedCallback(Tool.ContentProperty, _contentToken);
-                        _contentToken = tool.RegisterPropertyChangedCallback(Tool.ContentProperty, ContentChangedCallback);
-                    }
-                    else if (doc is Document document)
-                    {
-                        document.UnregisterPropertyChangedCallback(Document.ContentProperty, _contentToken);
-                        _contentToken = document.RegisterPropertyChangedCallback(Tool.ContentProperty, ContentChangedCallback);
-                    }
-                }
-
-                UpdateContent();
-            }
+            BindData();
         }
 
         private void ContentChangedCallback(DependencyObject sender, DependencyProperty dp)
@@ -73,13 +56,15 @@ namespace Dock.WinUI3.Controls
         {
             if (DataContext is IDocument document)
             {
-                if (document is IDocumentContent documentContent)
+                if (document is IDocumentContent documentContent && _contentPresenter.Content != documentContent.Content)
                 {
                     _contentPresenter.Content = documentContent.Content;
+                    _contentPresenter.InvalidateMeasure();
                 }
-                else if (document is IToolContent toolContent)
+                else if (document is IToolContent toolContent && _contentPresenter.Content != toolContent.Content)
                 {
                     _contentPresenter.Content = toolContent.Content;
+                    _contentPresenter.InvalidateMeasure();
                 }
             }
         }
@@ -89,10 +74,43 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+
+            BindData();
+        }
+
+        private void BindData()
+        {
+            if (DataContext is IDocument document)
+            {
+                if (_lastDocument != null && _contentToken != 0)
+                {
+                    if (_lastDocument is Document lastDoc)
+                    {
+                        lastDoc.UnregisterPropertyChangedCallback(Document.ContentProperty, _contentToken);
+                    }
+                    else if (_lastDocument is Tool lastTool)
+                    {
+                        lastTool.UnregisterPropertyChangedCallback(Tool.ContentProperty, _contentToken);
+                    }
+                }
+
+                if (document is Tool tool)
+                {
+                    _contentToken = tool.RegisterPropertyChangedCallback(Tool.ContentProperty, ContentChangedCallback);
+                }
+                else if (document is Document doc)
+                {
+                    _contentToken = doc.RegisterPropertyChangedCallback(Tool.ContentProperty, ContentChangedCallback);
+                }
+                _lastDocument = document;
+
+            }
+
             UpdateContent();
         }
 
         private long _contentToken = 0;
+        private IDocument _lastDocument = null;
         private ContentPresenter _contentPresenter;
     }
 }

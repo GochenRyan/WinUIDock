@@ -1,6 +1,3 @@
-using Dock.Model;
-using Dock.Model.Core;
-using Dock.Serializer;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using System;
@@ -10,11 +7,10 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
-
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace DockWinUISample
+namespace DockServiceSample
 {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
@@ -24,21 +20,14 @@ namespace DockWinUISample
         public MainWindow()
         {
             this.InitializeComponent();
-
-            _serializer = new DockSerializer(typeof(List<>));
-
-            _dockState = new DockState();
-
-            if (Dock is { })
-            {
-                var layout = Dock.Layout;
-                if (layout is { })
-                {
-                    _dockState.Save(layout);
-                }
-            }
+            m_dockService = new(Dock);
+            Dock.Loaded += Dock_Loaded;
         }
 
+        private void Dock_Loaded(object sender, RoutedEventArgs e)
+        {
+            m_dockService.LoadDefault();
+        }
 
         private async void Save_Click(object sender, RoutedEventArgs e)
         {
@@ -75,12 +64,7 @@ namespace DockWinUISample
                 {
                     using (var stream = await file.OpenStreamForWriteAsync())
                     {
-
-                        var dock = Dock;
-                        if (dock?.Layout is { })
-                        {
-                            _serializer.Save(stream, dock.Layout);
-                        }
+                        m_dockService.SaveLayout(stream);
                     }
 
                 }
@@ -114,12 +98,7 @@ namespace DockWinUISample
                 {
                     using (var stream = await file.OpenStreamForReadAsync())
                     {
-                        var layout = _serializer.Load<IDock>(stream);
-                        if (layout is { })
-                        {
-                            Dock.Layout = layout;
-                            _dockState.Restore(layout);
-                        }
+                        m_dockService.LoadLayout(stream);
                     }
 
                 }
@@ -130,7 +109,16 @@ namespace DockWinUISample
             }
         }
 
-        private readonly IDockSerializer _serializer;
-        private readonly IDockState _dockState;
+        private void HideLeftTool_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.Hide("left_tool");
+        }
+
+        private void ShowLeftTool_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.Show("left_tool");
+        }
+
+        private DockService m_dockService;
     }
 }

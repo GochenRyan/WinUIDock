@@ -2,6 +2,7 @@ using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,6 +27,11 @@ namespace Dock.WinUI3.Controls
 
         private void DocumentControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (DataContext is DocumentDock documentDock)
+            {
+                if (_activeDockableContentToken != 0)
+                    documentDock.UnregisterPropertyChangedCallback(DocumentDock.ActiveDockableProperty, _activeDockableContentToken);
+            }
         }
 
         private void DocumentControl_Loaded(object sender, RoutedEventArgs e)
@@ -65,16 +71,8 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            if (DataContext is DocumentDock)
+            if (DataContext is DocumentDock documentDock)
             {
-                _documentTabStrip.ClearValue(DocumentTabStrip.SelectedItemProperty);
-                _documentTabStrip.SetBinding(DocumentTabStrip.SelectedItemProperty, new Binding
-                {
-                    Source = DataContext,
-                    Path = new PropertyPath("ActiveDockable"),
-                    Mode = BindingMode.TwoWay
-                });
-
                 _documentTabStrip.ClearValue(DocumentTabStrip.CanCreateItemProperty);
                 _documentTabStrip.SetBinding(DocumentTabStrip.CanCreateItemProperty, new Binding
                 {
@@ -91,26 +89,57 @@ namespace Dock.WinUI3.Controls
                     Mode = BindingMode.OneWay
                 });
 
-                _dockableControl.ClearValue(DockableControl.DataContextProperty);
-                _dockableControl.SetBinding(DockableControl.DataContextProperty, new Binding
-                {
-                    Source = DataContext,
-                    Path = new PropertyPath("ActiveDockable"),
-                    Mode = BindingMode.OneWay
-                });
+                // If you use SetBinding, there will be a conversion error. I don't know why...
+                UpdateActiveDockable();
+                if (_activeDockableContentToken != 0)
+                    documentDock.UnregisterPropertyChangedCallback(DocumentDock.ActiveDockableProperty, _activeDockableContentToken);
+                _activeDockableContentToken = documentDock.RegisterPropertyChangedCallback(DocumentDock.ActiveDockableProperty, ActiveDockableChangedCallback);
+            }
+        }
 
-                _documentContentControl.ClearValue(DocumentContentControl.DataContextProperty);
-                _documentContentControl.SetBinding(DocumentContentControl.DataContextProperty, new Binding
+        private void ActiveDockableChangedCallback(DependencyObject sender, DependencyProperty dp)
+        {
+            if (dp == DocumentDock.ActiveDockableProperty)
+            {
+                UpdateActiveDockable();
+            }
+        }
+
+        private void UpdateActiveDockable()
+        {
+            if (DataContext is DocumentDock documentDock)
+            {
+                _documentTabStrip.SelectedItem = documentDock.ActiveDockable;
+                _dockableControl.DataContext = documentDock.ActiveDockable;
+
+                // To reuse child controls
+                if (documentDock.ActiveDockable is Tool tool)
                 {
-                    Source = DataContext,
-                    Path = new PropertyPath("ActiveDockable"),
-                    Mode = BindingMode.OneWay
-                });
+                    var contentElem = tool.Content as UIElement;
+                    var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
+                    if (parent is ContentPresenter presenter)
+                    {
+                        presenter.Content = null;
+                    }
+                }
+                else if (documentDock.ActiveDockable is Document document)
+                {
+                    var contentElem = document.Content as UIElement;
+                    var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
+                    if (parent is ContentPresenter presenter)
+                    {
+                        presenter.Content = null;
+                    }
+                }
+
+                _documentContentControl.Content = null;
+                _documentContentControl.DataContext = documentDock.ActiveDockable;
             }
         }
 
         private DocumentTabStrip _documentTabStrip;
         private DockableControl _dockableControl;
         private DocumentContentControl _documentContentControl;
+        private long _activeDockableContentToken = 0;
     }
 }

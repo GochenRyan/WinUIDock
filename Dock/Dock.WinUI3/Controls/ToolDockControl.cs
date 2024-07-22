@@ -1,7 +1,10 @@
+using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
+using System.Collections.ObjectModel;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,8 +22,16 @@ namespace Dock.WinUI3.Controls
         {
             this.DefaultStyleKey = typeof(ToolDockControl);
             Loaded += ToolDockControl_Loaded;
+            Unloaded += ToolDockControl_Unloaded;
         }
 
+        private void ToolDockControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ToolDock toolDock)
+            {
+                toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
+            }
+        }
 
         private void ToolDockControl_Loaded(object sender, RoutedEventArgs e)
         {
@@ -56,7 +67,7 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            if (DataContext is ToolDock)
+            if (DataContext is ToolDock toolDock)
             {
                 _toolChromeControl.ClearValue(ToolChromeControl.IsActiveProperty);
                 _toolChromeControl.SetBinding(ToolChromeControl.IsActiveProperty, new Binding
@@ -74,6 +85,30 @@ namespace Dock.WinUI3.Controls
                     Mode = BindingMode.OneWay
                 });
 
+                toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
+                toolDock.VisibleDockables.CollectionChanged += VisibleDockables_CollectionChanged;
+            }
+        }
+
+        private void VisibleDockables_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add &&
+                sender is ObservableCollection<IDockable> visibleDockables &&
+                visibleDockables.Count == 1)
+            {
+                var parent = VisualTreeHelper.GetParent(this);
+                while (parent != null)
+                {
+                    if (parent is ProportionalStackPanel proportionalStackPanel)
+                    {
+                        proportionalStackPanel.InvalidateMeasure();
+                        break;
+                    }
+                    else
+                    {
+                        parent = VisualTreeHelper.GetParent(parent);
+                    }
+                }
             }
         }
 
