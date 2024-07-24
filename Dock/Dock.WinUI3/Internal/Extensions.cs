@@ -18,39 +18,76 @@ namespace Dock.WinUI3.Internal
                 .Reverse();
         }
 
-        // TODO: test multiple monitors, different scaling
         public static Point TransformPoint(UIElement from, Point point, UIElement to)
         {
             if (from.XamlRoot != to.XamlRoot)
             {
+                // Get the window containing the 'from' element
                 var fromWindow = HostWindow.GetWindowForElement(from);
-                GeneralTransform t1 = from.TransformToVisual(null);
+                if (fromWindow == null)
+                {
+                    throw new InvalidOperationException("Cannot find window for 'from' element.");
+                }
+
+                // Calculate the position relative to the window content
+                GeneralTransform t1 = from.TransformToVisual(fromWindow.Content);
                 Point fromWindowPoint = t1.TransformPoint(point);
+
+                // Adjust for rasterization scale
                 double fromScaleAdjustment = from.XamlRoot.RasterizationScale;
                 var fromLeft = fromWindowPoint.X * fromScaleAdjustment + fromWindow.AppWindow.Position.X;
                 var fromTop = fromWindowPoint.Y * fromScaleAdjustment + fromWindow.AppWindow.Position.Y;
 
-                var toWindow = HostWindow.GetWindowForElement(to);
-                double toScaleAdjustment = to.XamlRoot.RasterizationScale;
-                Point toWindowPoint = new();
-                toWindowPoint.X = (fromLeft - toWindow.AppWindow.Position.X) / toScaleAdjustment;
-                toWindowPoint.Y = (fromTop - toWindow.AppWindow.Position.Y) / toScaleAdjustment;
+                // Adjust Y coordinate if the window extends content into title bar
+                if (fromWindow.ExtendsContentIntoTitleBar)
+                {
+                    fromTop -= GetTitleBarHeight(fromWindow);
+                }
 
+                // Get the window containing the 'to' element
+                var toWindow = HostWindow.GetWindowForElement(to);
+                if (toWindow == null)
+                {
+                    throw new InvalidOperationException("Cannot find window for 'to' element.");
+                }
+
+                double toScaleAdjustment = to.XamlRoot.RasterizationScale;
+                Point toWindowPoint = new()
+                {
+                    X = (fromLeft - toWindow.AppWindow.Position.X) / toScaleAdjustment,
+                    Y = (fromTop - toWindow.AppWindow.Position.Y) / toScaleAdjustment
+                };
+
+                // Adjust Y coordinate if the target window extends content into title bar
+                if (toWindow.ExtendsContentIntoTitleBar)
+                {
+                    toWindowPoint.Y += GetTitleBarHeight(toWindow);
+                }
+
+                // Calculate the position relative to the 'to' element
                 GeneralTransform t2 = toWindow.Content.TransformToVisual(to);
                 Point toPoint = t2.TransformPoint(toWindowPoint);
 
                 return toPoint;
             }
 
+            // For elements within the same XamlRoot
             GeneralTransform transform = from.TransformToVisual(to);
             var relativePoint = transform.TransformPoint(point);
             return relativePoint;
         }
 
+        private static double GetTitleBarHeight(Window window)
+        {
+            // Get the height of the title bar; adjust as necessary
+            var appTitleBar = window.AppWindow.TitleBar;
+            return appTitleBar.Height;
+        }
+
         public static Point GetScreenPoint(UIElement element, Point point)
         {
             var fromWindow = HostWindow.GetWindowForElement(element);
-            GeneralTransform t1 = element.TransformToVisual(null);
+            GeneralTransform t1 = element.TransformToVisual(fromWindow.Content);
             Point fromWindowPoint = t1.TransformPoint(point);
             double fromScaleAdjustment = element.XamlRoot.RasterizationScale;
             var fromLeft = fromWindowPoint.X * fromScaleAdjustment + fromWindow.AppWindow.Position.X;
@@ -63,7 +100,8 @@ namespace Dock.WinUI3.Internal
         {
             double scaleAdjustment = element.XamlRoot.RasterizationScale;
 
-            GeneralTransform transform = element.TransformToVisual(null);
+            var window = HostWindow.GetWindowForElement(element);
+            GeneralTransform transform = element.TransformToVisual(window.Content);
             Rect bounds = transform.TransformBounds(new Rect(0, 0, size.Width, size.Height));
 
             return new Size(bounds.Width * scaleAdjustment, bounds.Height * scaleAdjustment);
@@ -72,8 +110,8 @@ namespace Dock.WinUI3.Internal
         public static Rect GetScreenBounds(UIElement element, double x, double y, double width, double height)
         {
             double scaleAdjustment = element.XamlRoot.RasterizationScale;
-
-            GeneralTransform transform = element.TransformToVisual(null);
+            var window = HostWindow.GetWindowForElement(element);
+            GeneralTransform transform = element.TransformToVisual(window.Content);
             Rect bounds = transform.TransformBounds(new Rect(x, y, width, height));
             Rect screenBounds = new(bounds.X * scaleAdjustment,
                 bounds.Y * scaleAdjustment,
@@ -86,8 +124,8 @@ namespace Dock.WinUI3.Internal
         public static Rect GetScreenBounds(UIElement element, Rect rect)
         {
             double scaleAdjustment = element.XamlRoot.RasterizationScale;
-
-            GeneralTransform transform = element.TransformToVisual(null);
+            var window = HostWindow.GetWindowForElement(element);
+            GeneralTransform transform = element.TransformToVisual(window.Content);
             Rect bounds = transform.TransformBounds(rect);
             Rect screenBounds = new(bounds.X * scaleAdjustment,
                 bounds.Y * scaleAdjustment,

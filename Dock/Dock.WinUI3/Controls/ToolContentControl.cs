@@ -8,9 +8,11 @@ using Microsoft.UI.Xaml.Controls;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = ContentPresenterName, Type = typeof(ContentPresenter))]
+    [TemplatePart(Name = DockableControlName, Type = typeof(DockableControl))]
     public sealed class ToolContentControl : ContentControl
     {
         public const string ContentPresenterName = "PART_ContentPresenter";
+        public const string DockableControlName = "PART_DockableControl";
         public ToolContentControl()
         {
             this.DefaultStyleKey = typeof(ToolContentControl);
@@ -40,6 +42,7 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+            _dockableControl = GetTemplateChild(DockableControlName) as DockableControl;
 
             BindData();
         }
@@ -60,6 +63,7 @@ namespace Dock.WinUI3.Controls
         {
             Tool tool = (Tool)DataContext;
             _contentPresenter.Content = tool.Content;
+            _dockableControl.RecordSize();
         }
 
         private void ToolContentChangedCallback(DependencyObject sender, DependencyProperty dp)
@@ -72,5 +76,6 @@ namespace Dock.WinUI3.Controls
 
         private long _toolContentToken = 0;
         ContentPresenter _contentPresenter;
+        private DockableControl _dockableControl;
     }
 }

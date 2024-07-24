@@ -171,7 +171,7 @@ namespace Dock.WinUI3.Controls
             Size finalSize = base.MeasureOverride(availableSize);
 
             _dragTool.Width = _titleItem.DesiredSize.Width + _closeButton.DesiredSize.Width + _dragTool.Spacing * 2;
-            _border.Width = _dragTool.Width;
+            _border.Width = _dragTool.Width + _border.Padding.Left + _border.Padding.Right;
 
             return finalSize;
         }

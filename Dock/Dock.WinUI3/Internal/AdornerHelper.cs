@@ -23,7 +23,8 @@ namespace Dock.WinUI3.Internal
             Adorner = new DockTarget();
             grid.Children.Add(Adorner);
 
-            var t = element.TransformToVisual(null);
+            var window = HostWindow.GetWindowForElement(element);
+            var t = element.TransformToVisual(window.Content);
             var windowPoint = t.TransformPoint(new Point());
 
             _popup = new Popup();

@@ -21,7 +21,7 @@ namespace Dock.WinUI3.Internal
         public static IEnumerable<UIElement> GetVisualsAt(Point point, UIElement element)
         {
             List<UIElement> elements = new();
-            var hits = VisualTreeHelper.FindElementsInHostCoordinates(point, element);
+            var hits = VisualTreeHelper.FindElementsInHostCoordinates(point, element, true);
             foreach (var hit in hits)
             {
                 if (IsHitTestVisible(hit) && hit is UIElement uiElement)

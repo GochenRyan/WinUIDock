@@ -47,7 +47,7 @@ namespace Dock.WinUI3.Controls
             RecordSize();
         }
 
-        private void RecordSize()
+        public void RecordSize()
         {
             if (DataContext is not IDockable dockable)
             {

@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls">
-    
+
     <Style TargetType="local:DocumentDockControl">
         <Setter Property="Template">
             <Setter.Value>

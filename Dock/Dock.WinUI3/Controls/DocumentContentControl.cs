@@ -9,9 +9,11 @@ using Microsoft.UI.Xaml.Controls;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = ContentPresenterName, Type = typeof(ContentPresenter))]
+    [TemplatePart(Name = DockableControlName, Type = typeof(DockableControl))]
     public sealed class DocumentContentControl : ContentControl
     {
         public const string ContentPresenterName = "PART_ContentPresenter";
+        public const string DockableControlName = "PART_DockableControl";
         public DocumentContentControl()
         {
             this.DefaultStyleKey = typeof(DocumentContentControl);
@@ -60,11 +62,13 @@ namespace Dock.WinUI3.Controls
                 {
                     _contentPresenter.Content = documentContent.Content;
                     _contentPresenter.InvalidateMeasure();
+                    _dockableControl.RecordSize();
                 }
                 else if (document is IToolContent toolContent && _contentPresenter.Content != toolContent.Content)
                 {
                     _contentPresenter.Content = toolContent.Content;
                     _contentPresenter.InvalidateMeasure();
+                    _dockableControl.RecordSize();
                 }
             }
         }
@@ -74,6 +78,7 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _contentPresenter = GetTemplateChild(ContentPresenterName) as ContentPresenter;
+            _dockableControl = GetTemplateChild(DockableControlName) as DockableControl;
 
             BindData();
         }
@@ -112,5 +117,6 @@ namespace Dock.WinUI3.Controls
         private long _contentToken = 0;
         private IDocument _lastDocument = null;
         private ContentPresenter _contentPresenter;
+        private DockableControl _dockableControl;
     }
 }

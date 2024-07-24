@@ -8,7 +8,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolContentControl">
-                    <local:DockableControl TrackingMode="Visible">
+                    <local:DockableControl x:Name="PART_DockableControl"
+                                           TrackingMode="Visible">
                         <ContentPresenter x:Name="PART_ContentPresenter"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch"/>

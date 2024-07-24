@@ -95,7 +95,7 @@ namespace Dock.WinUI3.Controls
             }
 
 
-            if (VisualTreeHelper.FindElementsInHostCoordinates(point, this) is { } inputElements && inputElements.Contains(selector))
+            if (VisualTreeHelper.FindElementsInHostCoordinates(point, this, true) is { } inputElements && inputElements.Contains(selector))
             {
                 if (validate(point, operation, dragAction, relativeTo))
                 {
