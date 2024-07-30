@@ -1,4 +1,5 @@
-﻿using Dock.Model;
+﻿using CommunityToolkit.WinUI.UI;
+using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Serializer;
@@ -13,9 +14,9 @@ namespace DockServiceSample
 {
     public class DockService
     {
-        public DockService(DockControl dockControl)
+        public DockService()
         {
-            DockControl = dockControl;
+            DockControl = HostWindow.MainWindow.Content.FindDescendant<DockControl>();
 
             RegisterDockableControls();
 
@@ -69,7 +70,6 @@ namespace DockServiceSample
                 Link();
                 m_dockState.Save(layout);
                 m_dockState.Restore(layout);
-                DockControl.RefreshLayout();
             }
         }
 

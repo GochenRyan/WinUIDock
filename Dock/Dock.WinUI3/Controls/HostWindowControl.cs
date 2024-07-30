@@ -113,7 +113,6 @@ namespace Dock.WinUI3.Controls
 
         private readonly DockManager _dockManager;
         private List<Grid> _chromeGrips = new();
-        private bool _mouseDown, _draggingWindow;
 
         public IDockManager DockManager => _dockManager;
 

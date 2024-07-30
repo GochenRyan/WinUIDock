@@ -20,12 +20,12 @@ namespace DockServiceSample
         public MainWindow()
         {
             this.InitializeComponent();
-            m_dockService = new(Dock);
             Dock.Loaded += Dock_Loaded;
         }
 
         private void Dock_Loaded(object sender, RoutedEventArgs e)
         {
+            m_dockService = new();
             m_dockService.LoadDefault();
         }
 
