@@ -116,19 +116,25 @@ namespace Dock.WinUI3.Controls
                 if (documentDock.ActiveDockable is Tool tool)
                 {
                     var contentElem = tool.Content as UIElement;
-                    var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
-                    if (parent is ContentPresenter presenter)
+                    if (contentElem != null)
                     {
-                        presenter.Content = null;
+                        var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
+                        if (parent is ContentPresenter presenter)
+                        {
+                            presenter.Content = null;
+                        }
                     }
                 }
                 else if (documentDock.ActiveDockable is Document document)
                 {
                     var contentElem = document.Content as UIElement;
-                    var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
-                    if (parent is ContentPresenter presenter)
+                    if (contentElem != null)
                     {
-                        presenter.Content = null;
+                        var parent = VisualTreeHelper.GetParent(contentElem) as UIElement;
+                        if (parent is ContentPresenter presenter)
+                        {
+                            presenter.Content = null;
+                        }
                     }
                 }
 

@@ -5,6 +5,7 @@ using Dock.Model.Core;
 using Dock.Serializer;
 using Dock.WinUI3;
 using Dock.WinUI3.Controls;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,10 +68,35 @@ namespace DockServiceSample
             if (layout is { })
             {
                 DockControl.Layout = layout;
-                Link();
-                m_dockState.Save(layout);
-                m_dockState.Restore(layout);
+                var map = HostWindow.windowMap;
+                m_loadingCnt = map.Count;
+                foreach (var kv in map)
+                {
+                    var windowContent = kv.Value.Content as FrameworkElement;
+                    if (windowContent != null)
+                    {
+                        var hostWindowControl = windowContent.FindChild<HostWindowControl>();
+                        hostWindowControl.Loaded += HostWindowControl_Loaded;
+                    }
+                }
+                LinkRegisterControls();
             }
+        }
+
+        private void LinkRegisterControls()
+        {
+            if (m_loadingCnt == 0)
+            {
+                Link();
+                m_dockState.Save(DockControl.Layout);
+                m_dockState.Restore(DockControl.Layout);
+            }
+        }
+
+        private void HostWindowControl_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            m_loadingCnt--;
+            LinkRegisterControls();
         }
 
         private void Link()
@@ -196,11 +222,10 @@ namespace DockServiceSample
                 case StandardControlGroup.Floating:
                     {
                         var tool = WinUIDockManager.CreateDockable(DockableType.Tool, id, info.Name, info.Control) as IDocument;
-                        var dock = WinUIDockManager.FindDockByID(DocumentPaneName).First();
+                        var dock = WinUIDockManager.FindDockByID(TopPaneName).First();
                         if (dock != null)
                         {
-                            WinUIDockManager.AddDockableTo(tool, dock);
-                            WinUIDockManager.SplitToWindow(dock, tool, 0, 0, 1920, 1080);
+                            WinUIDockManager.SplitToWindow(dock, tool, 0, 0, 800, 600);
                         }
                     }
                     break;
@@ -249,6 +274,17 @@ namespace DockServiceSample
             info = new ControlInfo("bottom_tool", StandardControlGroup.Bottom)
             {
                 Control = bottomToolControl
+            };
+            id = GetPersistenceId(info);
+            m_controlInfoDict[id] = info;
+
+            var toolWindowControl = new ToolSampleControl1
+            {
+                ToolText = "Do or do not. there’s no try."
+            };
+            info = new ControlInfo("window_tool", StandardControlGroup.Floating)
+            {
+                Control = toolWindowControl
             };
             id = GetPersistenceId(info);
             m_controlInfoDict[id] = info;
@@ -320,5 +356,7 @@ namespace DockServiceSample
         private const string LeftPaneName = "LeftPane";
         private const string RightPaneName = "RightPane";
         private const string DocumentPaneName = "DocumentPane";
+
+        private int m_loadingCnt = 0;
     }
 }

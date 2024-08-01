@@ -26,6 +26,7 @@ namespace Dock.WinUI3.Controls
             _dockManager = new DockManager();
             _dockControlState = new DockControlState(_dockManager);
 
+            Loaded += DockControl_Loaded;
             Unloaded += DockControl_Unloaded;
 
             PointerPressed += DockControl_PointerPressed;
@@ -36,6 +37,25 @@ namespace Dock.WinUI3.Controls
             PointerCaptureLost += DockControl_PointerCaptureLost;
             PointerMoved += DockControl_PointerMoved;
             PointerWheelChanged += DockControl_PointerWheelChanged;
+        }
+
+        private void DockControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            var window = HostWindow.GetWindowForElement(this);
+            window.Closed += Window_Closed;
+        }
+
+        /// <summary>
+        /// Call the close funtion of window will not trigger Unloaded. (WindowsAppSDK 1.5.240627000)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void Window_Closed(object sender, WindowEventArgs args)
+        {
+            if (_isInitialized)
+            {
+                DeInitialize(Layout);
+            }
         }
 
         private void DockControl_Unloaded(object sender, RoutedEventArgs e)
