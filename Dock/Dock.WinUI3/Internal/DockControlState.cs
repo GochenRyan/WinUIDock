@@ -220,6 +220,17 @@ namespace Dock.WinUI3.Internal
                                     Drop(_state.TargetPoint, dragAction, _state.TargetDockControl);
                                 }
                             }
+                            else
+                            {
+                                // Drag out of the window
+                                _state.DropControl = activeDockControl;
+                                _state.TargetDockControl = activeDockControl;
+                                _state.TargetPoint = point;
+                                Drop(_state.TargetPoint, dragAction, activeDockControl);
+                                _state.DropControl = null;
+                                _state.TargetPoint = default;
+                                _state.TargetDockControl = null;
+                            }
                         }
                         Leave();
                         _state.End();
