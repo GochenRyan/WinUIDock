@@ -3,6 +3,7 @@ using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Serializer;
+using Dock.Settings;
 using Dock.WinUI3;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
@@ -18,6 +19,7 @@ namespace DockServiceSample
         public DockService()
         {
             DockControl = HostWindow.MainWindow.Content.FindDescendant<DockControl>();
+            DockSettings.DockBetweenFloatWindows = false;
 
             RegisterDockableControls();
 

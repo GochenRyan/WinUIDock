@@ -269,6 +269,9 @@ namespace Dock.WinUI3.Internal
                                 {
                                     var fromWindow = HostWindow.GetWindowForElement(inputActiveDockControl);
                                     var toWindow = HostWindow.GetWindowForElement(inputDockControl);
+                                    if (!DockSettings.DockBetweenFloatWindows && toWindow != HostWindow.MainWindow)
+                                        continue;
+
                                     var toPoint = Extensions.TransformPoint(fromWindow.Content, point, toWindow.Content);
                                     dropControl = DockHelpers.GetControl(inputDockControl, toPoint, DockProperties.IsDropAreaProperty);
                                     if (dropControl is { })
