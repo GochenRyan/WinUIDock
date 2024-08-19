@@ -1,3 +1,4 @@
+using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Dock.WinUI3.Internal;
@@ -6,7 +7,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using System.Collections.ObjectModel;
+using System.Reflection.Metadata;
 using Windows.Foundation;
+using Windows.System;
+using WinRT;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -20,7 +24,9 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = CloseButtonPartName, Type = typeof(Button))]
     [TemplatePart(Name = TitlePartName, Type = typeof(TextBlock))]
     [TemplatePart(Name = PinButtonPartName, Type = typeof(Button))]
-    [TemplatePart(Name = MaximizeRestoreButtonPartName, Type = typeof(Button))]
+    //[TemplatePart(Name = MaximizeRestoreButtonPartName, Type = typeof(Button))]
+    //[TemplateVisualState(Name = NormalState, GroupName = BorderStates)]
+    //[TemplateVisualState(Name = ActiveState, GroupName = BorderStates)]
     public sealed class ToolChromeControl : ContentControl
     {
         public const string BorderName = "PART_Border";
@@ -35,6 +41,10 @@ namespace Dock.WinUI3.Controls
         public const string DockItemName = "PART_DockItem";
         public const string AutoHideItemName = "PART_AutoHideItem";
         public const string CloseItemName = "PART_CloseItem";
+
+        public const string BorderStates = "BorderStates";
+        public const string NormalState = "Normal";
+        public const string ActiveState = "Active";
 
         public ToolChromeControl()
         {
@@ -226,6 +236,35 @@ namespace Dock.WinUI3.Controls
                 AddFlyout();
                 _menuButton.Click += _menuButton_Click;
                 _maximizeRestoreButton.Click += _maximizeRestoreButton_Click;
+
+                if (toolDock.Factory != null)
+                {
+                    toolDock.Factory.ActiveDockableChanged -= Factory_ActiveDockableChanged;
+                    toolDock.Factory.ActiveDockableChanged += Factory_ActiveDockableChanged;
+                }
+            }
+        }
+
+        private void Factory_ActiveDockableChanged(object sender, Model.Core.Events.ActiveDockableChangedEventArgs e)
+        {
+            if (e.Dockable == null)
+                return;
+
+            if (DataContext is not ToolDock toolDock)
+                return;
+
+            // I have no idea about why VisualStateManager.GotoState does not take effect
+            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
+
+            if (e.Dockable == toolDock.ActiveDockable)
+            {
+                _border.Background = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemPressedBrush"];
+                _title.Foreground = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemPressedForeBrush"];
+            }
+            else
+            {
+                _border.Background = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemRestBrush"];
+                _title.Foreground = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemRestForeBrush"];
             }
         }
 
@@ -458,7 +497,7 @@ namespace Dock.WinUI3.Controls
 
         private void AttachToWindow()
         {
-            if (Grip == null)
+            if (Grip == null || DataContext is not ToolDock)
                 return;
 
             if (HostWindow.GetWindowForElement(this) is HostWindow window)

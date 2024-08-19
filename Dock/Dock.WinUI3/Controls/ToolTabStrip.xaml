@@ -8,7 +8,9 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <controls:WrapPanel Name="HorizontalWrapPanel" Margin="2" />
+                    <controls:WrapPanel Name="HorizontalWrapPanel" 
+                                        Background="{ThemeResource DockChromeBackgroundBrush}" 
+                                        HorizontalSpacing="2"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>

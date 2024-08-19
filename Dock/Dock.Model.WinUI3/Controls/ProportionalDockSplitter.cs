@@ -36,7 +36,7 @@ namespace Dock.Model.WinUI3.Controls
             nameof(Thickness),
             typeof(double),
             typeof(ProportionalDockSplitter),
-            new PropertyMetadata(4.0));
+            new PropertyMetadata(8.0));
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Thickness")]

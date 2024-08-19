@@ -1,5 +1,7 @@
 using Dock.Model.Controls;
 using Dock.Model.Core;
+using Dock.Model.WinUI3.Controls;
+using Dock.Model.WinUI3.Core;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -16,6 +18,10 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = DragToolName, Type = typeof(StackPanel))]
     [TemplatePart(Name = TitleItemName, Type = typeof(TextBlock))]
     [TemplatePart(Name = CloseButtonName, Type = typeof(Button))]
+    [TemplateVisualState(Name = NormalState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = ActiveState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = HoverState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = SelectedUnfocusedState, GroupName = BorderStates)]
     public sealed class DocumentTabStripItem : Control
     {
         public const string BorderName = "PART_Border";
@@ -30,6 +36,12 @@ namespace Dock.WinUI3.Controls
         public const string CloseLeftItemName = "PART_CloseLeftItem";
         public const string CloseRightItemName = "PART_CloseRightItem";
 
+        public const string BorderStates = "BorderStates";
+        public const string NormalState = "Normal";
+        public const string ActiveState = "Active";
+        public const string HoverState = "Hover";
+        public const string SelectedUnfocusedState = "SelectedUnfocused";
+
         public DocumentTabStripItem()
         {
             this.DefaultStyleKey = typeof(DocumentTabStripItem);
@@ -40,6 +52,7 @@ namespace Dock.WinUI3.Controls
         private void DocumentTabStripItem_Loaded(object sender, RoutedEventArgs e)
         {
             DataContextChanged += DocumentTabStripItem_DataContextChanged;
+            UpdateIdleState();
         }
 
         private void DocumentTabStripItem_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -68,10 +81,16 @@ namespace Dock.WinUI3.Controls
         // See https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.setter?view=winrt-26100
         private void BindData()
         {
-            if (DataContext is IDocument)
+            if (DataContext is IDocument document)
             {
                 _titleItem.PointerPressed -= _titleItem_PointerPressed;
                 _titleItem.PointerPressed += _titleItem_PointerPressed;
+
+                _titleItem.PointerEntered -= _titleItem_PointerEntered;
+                _titleItem.PointerEntered += _titleItem_PointerEntered;
+
+                _titleItem.PointerExited -= _titleItem_PointerExited;
+                _titleItem.PointerExited += _titleItem_PointerExited;
 
                 _titleItem.ClearValue(TextBlock.TextProperty);
                 _titleItem.SetBinding(TextBlock.TextProperty, new Binding
@@ -123,6 +142,74 @@ namespace Dock.WinUI3.Controls
                 menuFlyout.Items.Add(closeRightItem);
 
                 _border.ContextFlyout = menuFlyout;
+
+                if (document.Owner is DocumentDock dock)
+                {
+                    dock.Factory.ActiveDockableChanged -= Factory_ActiveDockableChanged;
+                    dock.Factory.ActiveDockableChanged += Factory_ActiveDockableChanged;
+                }
+            }
+        }
+
+        private void _titleItem_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is IDockable dockable)
+            {
+                if (dockable.Owner is IDock dock && dock.ActiveDockable != dockable)
+                {
+                    VisualStateManager.GoToState(this, NormalState, true);
+                }
+            }
+        }
+
+        private void _titleItem_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is IDockable dockable)
+            {
+                if (dockable.Owner is IDock dock && dock.ActiveDockable != dockable)
+                {
+                    VisualStateManager.GoToState(this, HoverState, true);
+                }
+            }
+        }
+
+        private void Factory_ActiveDockableChanged(object sender, Model.Core.Events.ActiveDockableChangedEventArgs e)
+        {
+            if (e.Dockable == null)
+                return;
+
+            if (DataContext is IDockable dockable)
+            {
+                if (e.Dockable.Owner == dockable.Owner)
+                {
+                    if (e.Dockable == dockable)
+                    {
+                        VisualStateManager.GoToState(this, ActiveState, true);
+                    }
+                    else
+                    {
+                        VisualStateManager.GoToState(this, NormalState, true);
+                    }
+                }
+                else
+                {
+                    UpdateIdleState();
+                }
+            }
+        }
+
+        private void UpdateIdleState()
+        {
+            if (DataContext is not IDocument dockable)
+                return;
+
+            if (dockable.Owner is IDock dock && dock.ActiveDockable == dockable)
+            {
+                VisualStateManager.GoToState(this, SelectedUnfocusedState, true);
+            }
+            else
+            {
+                VisualStateManager.GoToState(this, NormalState, true);
             }
         }
 

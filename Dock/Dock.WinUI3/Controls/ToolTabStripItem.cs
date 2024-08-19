@@ -1,8 +1,12 @@
+using Dock.Model.Controls;
+using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using System.Reflection.Metadata;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -13,6 +17,10 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = DragToolName, Type = typeof(StackPanel))]
     [TemplatePart(Name = TitleItemName, Type = typeof(Button))]
     [TemplatePart(Name = BorderItemName, Type = typeof(Border))]
+    [TemplateVisualState(Name = NormalState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = ActiveState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = HoverState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = SelectedUnfocusedState, GroupName = BorderStates)]
     public sealed class ToolTabStripItem : ContentControl
     {
         public const string DragToolName = "PART_DragTool";
@@ -24,6 +32,12 @@ namespace Dock.WinUI3.Controls
         public const string AutoHideItemName = "PART_AutoHideItem";
         public const string CloseItemName = "PART_CloseItem";
 
+        public const string BorderStates = "BorderStates";
+        public const string NormalState = "Normal";
+        public const string ActiveState = "Active";
+        public const string HoverState = "Hover";
+        public const string SelectedUnfocusedState = "SelectedUnfocused";
+
         public ToolTabStripItem()
         {
             this.DefaultStyleKey = typeof(ToolTabStripItem);
@@ -34,6 +48,7 @@ namespace Dock.WinUI3.Controls
         private void ToolTabStripItem_Loaded(object sender, RoutedEventArgs e)
         {
             DataContextChanged += ToolTabStripItem_DataContextChanged;
+            UpdateIdleState();
         }
 
         private void ToolTabStripItem_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -51,7 +66,7 @@ namespace Dock.WinUI3.Controls
         {
             base.OnApplyTemplate();
             _dragTool = GetTemplateChild(DragToolName) as StackPanel;
-            _titleItem = GetTemplateChild(TitleItemName) as Button;
+            _titleItem = GetTemplateChild(TitleItemName) as TextBlock;
             _border = GetTemplateChild(BorderItemName) as Border;
 
             BindData();
@@ -63,6 +78,15 @@ namespace Dock.WinUI3.Controls
         {
             if (DataContext is Tool tool)
             {
+                _titleItem.PointerPressed -= _titleItem_PointerPressed;
+                _titleItem.PointerPressed += _titleItem_PointerPressed;
+
+                _titleItem.PointerEntered -= _titleItem_PointerEntered;
+                _titleItem.PointerEntered += _titleItem_PointerEntered;
+
+                _titleItem.PointerExited -= _titleItem_PointerExited;
+                _titleItem.PointerExited += _titleItem_PointerExited;
+
                 if (_canPinToken != 0)
                     tool.UnregisterPropertyChangedCallback(Tool.CanPinProperty, _canPinToken);
                 tool.RegisterPropertyChangedCallback(Tool.CanPinProperty, CanPinChangedCallback);
@@ -75,28 +99,90 @@ namespace Dock.WinUI3.Controls
                     Mode = BindingMode.OneWay
                 });
 
-                _titleItem.SetBinding(Button.ContentProperty, new Binding
+                _titleItem.SetBinding(TextBlock.TextProperty, new Binding
                 {
                     Source = DataContext,
                     Path = new PropertyPath("Title"),
                     Mode = BindingMode.OneWay
                 });
-
-                _titleItem.SetBinding(Button.CommandProperty, new Binding
-                {
-                    Source = DataContext,
-                    Path = new PropertyPath("Owner.Factory.SetActiveDockableCmd"),
-                    Mode = BindingMode.OneWay
-                });
-
-                _titleItem.SetBinding(Button.CommandParameterProperty, new Binding
-                {
-                    Source = DataContext,
-                    Path = new PropertyPath(""),
-                    Mode = BindingMode.OneWay
-                });
-
                 AddFlyout();
+
+                if (tool.Owner is ToolDock dock)
+                {
+                    dock.Factory.ActiveDockableChanged -= Factory_ActiveDockableChanged;
+                    dock.Factory.ActiveDockableChanged += Factory_ActiveDockableChanged;
+                }
+            }
+        }
+
+        private void _titleItem_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is IDockable dockable)
+            {
+                if (dockable.Owner is IDock dock && dock.ActiveDockable != dockable)
+                {
+                    VisualStateManager.GoToState(this, NormalState, true);
+                }
+            }
+        }
+
+        private void _titleItem_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is IDockable dockable)
+            {
+                if (dockable.Owner is IDock dock && dock.ActiveDockable != dockable)
+                {
+                    VisualStateManager.GoToState(this, HoverState, true);
+                }
+            }
+        }
+
+        private void Factory_ActiveDockableChanged(object sender, Model.Core.Events.ActiveDockableChangedEventArgs e)
+        {
+            if (e.Dockable == null)
+                return;
+
+            if (DataContext is IDockable dockable)
+            {
+                if (e.Dockable.Owner == dockable.Owner)
+                {
+                    if (e.Dockable == dockable)
+                    {
+                        VisualStateManager.GoToState(this, ActiveState, true);
+                    }
+                    else
+                    {
+                        VisualStateManager.GoToState(this, NormalState, true);
+                    }
+                }
+                else
+                {
+                    UpdateIdleState();
+                }
+            }
+        }
+
+        private void UpdateIdleState()
+        {
+            if (DataContext is not ITool dockable)
+                return;
+
+            if (dockable.Owner is IDock dock && dock.ActiveDockable == dockable)
+            {
+                VisualStateManager.GoToState(this, SelectedUnfocusedState, true);
+            }
+            else
+            {
+                VisualStateManager.GoToState(this, NormalState, true);
+            }
+        }
+
+        private void _titleItem_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (DataContext != null)
+            {
+                IDockable dockable = (IDockable)DataContext;
+                dockable?.Owner?.Factory?.SetActiveDockable(dockable);
             }
         }
 
@@ -253,13 +339,14 @@ namespace Dock.WinUI3.Controls
         {
             Size finalSize = base.MeasureOverride(availableSize);
 
-            _dragTool.Width = _titleItem.DesiredSize.Width + _dragTool.Spacing;
+            _dragTool.Width = _titleItem.DesiredSize.Width + _dragTool.Spacing * 2;
+            _border.Width = _dragTool.Width + _border.Padding.Left + _border.Padding.Right;
 
             return finalSize;
         }
 
         private StackPanel _dragTool;
-        private Button _titleItem;
+        private TextBlock _titleItem;
         private Border _border;
         private MenuFlyoutItem _autoHideItem;
 

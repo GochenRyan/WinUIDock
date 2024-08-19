@@ -20,15 +20,47 @@
                 <ControlTemplate TargetType="local:ToolTabStripItem">
                     <Border x:Name="PART_Border" 
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            Padding="{TemplateBinding Padding}">
+                            BorderThickness="0"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{ThemeResource DockChromeTabItemRestBrush}"
+                            Height="30">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="BorderStates">
+                                <VisualState x:Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemRestBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemRestForeBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Active">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemPressedBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Hover">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemHoverBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="SelectedUnfocused">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemSelectedUnfocusedBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
                         <local:DockableControl TrackingMode="Tab">
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
                                         Spacing="2">
-                                <Button x:Name="PART_TitleItem"
+                                <TextBlock x:Name="PART_TitleItem"
                                         VerticalAlignment="Center"
-                                        BorderThickness="0"/>
+                                        Margin="0"
+                                        Foreground="{ThemeResource DockChromeTabItemRestForeBrush}"/>
                             </StackPanel>
                         </local:DockableControl>
                     </Border>

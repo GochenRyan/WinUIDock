@@ -3,6 +3,7 @@ using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 using Windows.Foundation;
@@ -23,6 +24,7 @@ namespace Dock.WinUI3.Controls
             this.DefaultStyleKey = typeof(ToolDockControl);
             Loaded += ToolDockControl_Loaded;
             Unloaded += ToolDockControl_Unloaded;
+            AddHandler(PointerPressedEvent, new PointerEventHandler(Dockable_PointerPressed), true);
         }
 
         private void ToolDockControl_Unloaded(object sender, RoutedEventArgs e)
@@ -115,6 +117,17 @@ namespace Dock.WinUI3.Controls
         protected override Size MeasureOverride(Size availableSize)
         {
             return base.MeasureOverride(availableSize);
+        }
+
+        private void Dockable_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is ToolDock dock)
+            {
+                if (dock.ActiveDockable != null)
+                {
+                    dock.Owner.Factory.SetActiveDockable(dock.ActiveDockable);
+                }
+            }
         }
 
         private ToolChromeControl _toolChromeControl;

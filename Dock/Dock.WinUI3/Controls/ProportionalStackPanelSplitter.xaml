@@ -11,8 +11,8 @@
                     <Grid>
                         <Thumb x:Name="InternalThumb"
                                CanDrag="True"
-                               Height="{TemplateBinding Height}"
-                               Width="{TemplateBinding Width}"/>
+                               Background="{ThemeResource DockChromeBackgroundBrush}"
+                               BorderThickness="0"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

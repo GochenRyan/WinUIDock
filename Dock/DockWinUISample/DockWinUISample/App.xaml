@@ -12,6 +12,16 @@
                 <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Generic.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
+            <ResourceDictionary.ThemeDictionaries>
+                <!--<ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AsukaLangleySoryu_Light.xaml" x:Key="Light"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AsukaLangleySoryu_Dark.xaml" x:Key="Dark"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AyanamiRei_Light.xaml" x:Key="Light"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AyanamiRei_Dark.xaml" x:Key="Dark"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/EvaUnit01_Light.xaml" x:Key="Light"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/EvaUnit01_Dark.xaml" x:Key="Dark"/>-->
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/VS_Light.xaml" x:Key="Light"/>
+                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/VS_Dark.xaml" x:Key="Dark"/>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -8,6 +8,7 @@
     <Style TargetType="local:ToolControl">
         <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="settings:DockProperties.IsDockTarget" Value="True"/>
+        
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolControl">
@@ -15,7 +16,9 @@
                         <local:ToolTabStrip x:Name="PART_TabStrip"
                                             MaxHeight="40"
                                             local:DockPanel.Dock="Bottom"/>
-                        <Border x:Name="PART_Border" local:DockPanel.Dock="Top">
+                        <Border x:Name="PART_Border" 
+                                local:DockPanel.Dock="Top"
+                                Background="{ThemeResource ControlFillColorDefaultBrush}">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
                                 <ContentControl x:Name="PART_ToolContentControl">

@@ -6,6 +6,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using WinRT;
+using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -15,11 +17,16 @@ namespace DockServiceSample
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : Window
+    public sealed partial class MainWindow : WindowEx
     {
         public MainWindow()
         {
             this.InitializeComponent();
+
+            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
+            var brush = (Microsoft.UI.Xaml.Media.SolidColorBrush)resourceDict["DockBackgroundBrush"];
+            this.SetTitleBarBackgroundColors(brush.Color);
+
             Dock.Loaded += Dock_Loaded;
         }
 

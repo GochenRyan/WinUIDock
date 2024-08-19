@@ -20,6 +20,8 @@ public interface IDock : IDockable
 
     /// <summary>
     /// Gets or sets the focused dockable.
+    /// Different windows can have their own focused dockable at the same time, 
+    /// but there can only be one active dockable.
     /// </summary>
     IDockable? FocusedDockable { get; set; }
 

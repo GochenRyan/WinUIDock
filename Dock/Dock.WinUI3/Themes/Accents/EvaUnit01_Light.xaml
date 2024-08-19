@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="DockBackgroundBrush" Color="#f4f4f4" />
+    <SolidColorBrush x:Key="DockChromeBackgroundBrush" Color="#6a0dad" />
+    <SolidColorBrush x:Key="DockChromeTabItemRestBrush" Color="#6a0dad" />
+    <SolidColorBrush x:Key="DockChromeTabItemRestForeBrush" Color="#ffffff" />
+    <SolidColorBrush x:Key="DockChromeTabItemHoverBrush" Color="#7e57c2" />
+    <SolidColorBrush x:Key="DockChromeTabItemPressedBrush" Color="#5e35b1" />
+    <SolidColorBrush x:Key="DockChromeTabItemPressedForeBrush" Color="#ffffff" />
+    <SolidColorBrush x:Key="DockChromeTabItemSelectedUnfocusedBrush" Color="#8cbd1b" />
+
+
+</ResourceDictionary>

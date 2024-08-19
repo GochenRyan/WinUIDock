@@ -1,7 +1,9 @@
 using Dock.Model.Core;
+using Dock.Model.WinUI3;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 
@@ -20,6 +22,7 @@ namespace Dock.WinUI3.Controls
             this.DefaultStyleKey = typeof(DocumentDockControl);
             Loaded += DocumentDockControl_Loaded;
             Unloaded += DocumentDockControl_Unloaded;
+            AddHandler(PointerPressedEvent, new PointerEventHandler(Dockable_PointerPressed), true);
         }
 
         private void DocumentDockControl_Unloaded(object sender, RoutedEventArgs e)
@@ -78,6 +81,17 @@ namespace Dock.WinUI3.Controls
                     {
                         parent = VisualTreeHelper.GetParent(parent);
                     }
+                }
+            }
+        }
+
+        private void Dockable_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (DataContext is DocumentDock documentDock)
+            {
+                if (documentDock.ActiveDockable != null)
+                {
+                    documentDock.Owner.Factory.SetActiveDockable(documentDock.ActiveDockable);
                 }
             }
         }

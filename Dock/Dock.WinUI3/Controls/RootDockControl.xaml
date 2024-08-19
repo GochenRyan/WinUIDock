@@ -22,7 +22,7 @@
                             <local:ToolPinnedControl x:Name ="PART_BottomPinnedControl" 
                                                      local:DockPanel.Dock="Bottom" 
                                                      Orientation="Horizontal"/>
-                            <Grid>
+                            <Grid BorderThickness="4" BorderBrush="{ThemeResource DockChromeBackgroundBrush}">
                                 <local:ProportionalDockControl x:Name ="PART_ProportionalDockControl"/>
                                 <local:PinnedDockControl x:Name="PART_PinnedDockControl"/>
                             </Grid>

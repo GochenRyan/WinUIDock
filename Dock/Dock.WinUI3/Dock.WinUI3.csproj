@@ -32,6 +32,14 @@
     <None Remove="Controls\ToolTabStrip.xaml" />
     <None Remove="Controls\ToolTabStripItem.xaml" />
     <None Remove="DockTarget.xaml" />
+    <None Remove="Themes\Accents\AsukaLangleySoryu_Dark.xaml" />
+    <None Remove="Themes\Accents\AsukaLangleySoryu_Light.xaml" />
+    <None Remove="Themes\Accents\AyanamiRei_Dark.xaml" />
+    <None Remove="Themes\Accents\AyanamiRei_Light.xaml" />
+    <None Remove="Themes\Accents\EvaUnit01_Dark.xaml" />
+    <None Remove="Themes\Accents\EvaUnit01_Light.xaml" />
+    <None Remove="Themes\Accents\VS_Dark.xaml" />
+    <None Remove="Themes\Accents\VS_Light.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +77,54 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\VS_Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\VS_Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\EvaUnit01_Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\EvaUnit01_Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\AsukaLangleySoryu_Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\AsukaLangleySoryu_Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\AyanamiRei_Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Themes\Accents\AyanamiRei_Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

@@ -9,6 +9,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using WinRT;
+using WinUIEx;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,14 +21,17 @@ namespace DockWinUISample
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : Window
+    public sealed partial class MainWindow : WindowEx
     {
         public MainWindow()
         {
             this.InitializeComponent();
 
-            _serializer = new DockSerializer(typeof(List<>));
+            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
+            var brush = (Microsoft.UI.Xaml.Media.SolidColorBrush)resourceDict["DockBackgroundBrush"];
+            this.SetTitleBarBackgroundColors(brush.Color);
 
+            _serializer = new DockSerializer(typeof(List<>));
             _dockState = new DockState();
 
             if (Dock is { })

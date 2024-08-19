@@ -6,7 +6,7 @@
     xmlns:settings="using:Dock.Settings">
 
     <Style x:Key="ChromeButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}" >
-        <Setter Property="Margin" Value="2 0 0 0" />
+        <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="3" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -22,12 +22,32 @@
                         <Border x:Name="PART_Border"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 VerticalAlignment="Top"
-                                Grid.Row="0">
+                                Grid.Row="0"
+                                Background="{ThemeResource DockChromeTabItemRestBrush}"
+                                Height="30">
+                            <!--<VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="BorderStates">
+                                    <VisualState x:Name="Normal">
+                                        <VisualState.Setters>
+                                            <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemRestBrush}"/>
+                                            <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockChromeTabItemRestForeBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Active">
+                                        <VisualState.Setters>
+                                            <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemPressedBrush}"/>
+                                            <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>-->
+
                             <Grid x:Name="PART_Grip"
                                   settings:DockProperties.IsDragArea="True">
                                 <local:DockPanel LastChildFill="True" Margin="8 0">
                                     <TextBlock x:Name="PART_Title"
-                                               local:DockPanel.Dock="Left"/>
+                                               local:DockPanel.Dock="Left"
+                                               VerticalAlignment="Center"/>
                                     <StackPanel local:DockPanel.Dock="Right"
                                                 Orientation="Horizontal">
                                         <Button x:Name="PART_MenuButton"

@@ -14,7 +14,7 @@
                 <ControlTemplate TargetType="local:ToolDockControl">
                     <local:DockableControl Name="PART_DockableControl"
                                            TrackingMode="Visible"
-                                           Background="{TemplateBinding Background}">
+                                           Background="{ThemeResource DockBackgroundBrush}">
                         <local:ToolChromeControl x:Name="PART_ToolChromeControl">
                             <!--<local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 
                                                  Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">-->

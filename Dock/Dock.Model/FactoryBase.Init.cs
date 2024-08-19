@@ -157,6 +157,7 @@ public abstract partial class FactoryBase
                 if (root.FocusedDockable != dockable)
                 {
                     root.FocusedDockable = dockable;
+                    OnFocusedDockableChanged(dockable);
                 }
             }
 

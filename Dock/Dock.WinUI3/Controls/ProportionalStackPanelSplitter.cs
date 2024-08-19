@@ -92,14 +92,14 @@ namespace Dock.WinUI3.Controls
             {
                 if (panel.Orientation == Orientation.Vertical)
                 {
-                    Height = Thickness;
-                    Width = double.NaN;
+                    _thumb.Height = Thickness;
+                    _thumb.Width = double.NaN;
                     ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeNorthSouth);
                 }
                 else
                 {
-                    Width = Thickness;
-                    Height = double.NaN;
+                    _thumb.Width = Thickness;
+                    _thumb.Height = double.NaN;
                     ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
                 }
             }
@@ -248,7 +248,7 @@ namespace Dock.WinUI3.Controls
             nameof(Thickness),
             typeof(double),
             typeof(ProportionalStackPanelSplitter),
-            new PropertyMetadata(4.0));
+            new PropertyMetadata(8.0));
 
         public static readonly DependencyProperty MinimumProportionSizeProperty = DependencyProperty.RegisterAttached(
             "MinimumProportionSize",

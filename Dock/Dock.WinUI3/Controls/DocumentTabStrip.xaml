@@ -8,14 +8,16 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <local:WrapPanel Name="HorizontalWrapPanel" Margin="2" />
+                    <local:WrapPanel Name="HorizontalWrapPanel"
+                                     Height="35"
+                                     Background="{ThemeResource DockChromeBackgroundBrush}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
         <Setter Property="ItemTemplate">
             <Setter.Value>
                 <DataTemplate>
-                    <local:DocumentTabStripItem />
+                    <local:DocumentTabStripItem/>
                 </DataTemplate>
             </Setter.Value>
         </Setter>

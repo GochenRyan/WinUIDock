@@ -16,8 +16,8 @@
                     <Grid x:Name="PART_PinnedDockGrid">
                         <!--<local:ToolDockControl ui:FrameworkElementExtensions.AncestorType="Window"
                                                Background="{Binding (ui:FrameworkElementExtensions.Ancestor).Background, RelativeSource={RelativeSource Self}}"/>-->
-                        <local:ToolDockControl x:Name="PART_ToolDockControl" Background="AliceBlue"/>
-                        <controls:GridSplitter x:Name="PART_Splitter"/>
+                        <local:ToolDockControl x:Name="PART_ToolDockControl"/>
+                        <controls:GridSplitter x:Name="PART_Splitter" Background="{ThemeResource DockChromeBackgroundBrush}"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

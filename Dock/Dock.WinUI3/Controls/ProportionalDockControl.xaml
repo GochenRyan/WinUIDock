@@ -10,7 +10,7 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <local:ProportionalStackPanel />
+                    <local:ProportionalStackPanel/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
