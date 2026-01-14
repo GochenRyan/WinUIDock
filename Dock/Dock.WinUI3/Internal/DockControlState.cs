@@ -56,10 +56,10 @@ namespace Dock.WinUI3.Internal
 
         private void Enter(Point point, DragAction dragAction, FrameworkElement relativeTo)
         {
-            var isValid = Validate(point, DockOperation.Fill, dragAction, relativeTo);
-            if (isValid && _state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
+            var valid = Validate(point, DockOperation.Fill, dragAction, relativeTo);
+            if (_state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
-                _adornerHelper.AddAdorner(control);
+                EnsureAdorner(control);
             }
         }
 
@@ -69,7 +69,9 @@ namespace Dock.WinUI3.Internal
 
             if (_adornerHelper.Adorner is DockTarget target)
             {
-                operation = target.GetDockOperation(point, relativeTo, dragAction, Validate);
+                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                var targetDockable = _state.DropControl?.DataContext as IDockable;
+                operation = target.GetDockOperation(point, relativeTo, dragAction, sourceDockable, targetDockable, Validate);
             }
 
             Validate(point, operation, dragAction, relativeTo);
@@ -81,7 +83,9 @@ namespace Dock.WinUI3.Internal
 
             if (_adornerHelper.Adorner is DockTarget target)
             {
-                operation = target.GetDockOperation(point, relativeTo, dragAction, Validate);
+                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                var targetDockable = _state.DropControl?.DataContext as IDockable;
+                operation = target.GetDockOperation(point, relativeTo, dragAction, sourceDockable, targetDockable, Validate);
             }
 
             if (_state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
@@ -94,9 +98,53 @@ namespace Dock.WinUI3.Internal
 
         private void Leave()
         {
-            if (_state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
+            if (_adornerHelper.Adorner is { } adorner)
             {
-                _adornerHelper.RemoveAdorner(control);
+                _adornerHelper.RemoveAdorner(adorner);
+            }
+        }
+
+        private static bool IsPointInBounds(Point point, FrameworkElement element)
+        {
+            return point.X >= 0
+                   && point.Y >= 0
+                   && point.X <= element.ActualWidth
+                   && point.Y <= element.ActualHeight;
+        }
+
+        private void EnsureAdorner(UIElement element)
+        {
+            _adornerHelper.AddAdorner(element);
+        }
+
+        private void ShowRootAdorner(Point point, FrameworkElement relativeTo)
+        {
+            if (relativeTo is null)
+            {
+                return;
+            }
+
+            var window = HostWindow.GetWindowForElement(relativeTo);
+            if (window?.Content is not FrameworkElement root)
+            {
+                return;
+            }
+
+            var rootPoint = Extensions.TransformPoint(relativeTo, point, root);
+            if (!IsPointInBounds(rootPoint, root))
+            {
+                if (_adornerHelper.Adorner is { })
+                {
+                    _adornerHelper.RemoveAdorner(_adornerHelper.Adorner);
+                }
+                return;
+            }
+
+            EnsureAdorner(root);
+            if (_adornerHelper.Adorner is DockTarget target)
+            {
+                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                target.UpdateRootVisibility(sourceDockable);
             }
         }
 
@@ -263,6 +311,7 @@ namespace Dock.WinUI3.Internal
                             Point targetPoint = default;
                             FrameworkElement targetDockControl = null;
                             Control dropControl = null;
+                            bool isOverDockControl = false;
 
                             foreach (var inputDockControl in dockControls.GetZOrderedDockControls())
                             {
@@ -287,12 +336,22 @@ namespace Dock.WinUI3.Internal
                                     dropControl = DockHelpers.GetControl(inputDockControl, toPoint, DockProperties.IsDropAreaProperty);
                                     if (dropControl is { })
                                         targetPoint = toPoint;
+
+                                    if (IsPointInBounds(toPoint, inputDockControl))
+                                    {
+                                        isOverDockControl = true;
+                                    }
                                 }
                                 else
                                 {
                                     dropControl = DockHelpers.GetControl(inputDockControl, point, DockProperties.IsDropAreaProperty);
                                     if (dropControl is { })
                                         targetPoint = point;
+
+                                    if (IsPointInBounds(point, inputDockControl))
+                                    {
+                                        isOverDockControl = true;
+                                    }
                                 }
 
                                 if (dropControl is { })
@@ -310,6 +369,11 @@ namespace Dock.WinUI3.Internal
                                     targetPoint = point;
                                     targetDockControl = inputActiveDockControl;
                                 }
+                            }
+
+                            if (IsPointInBounds(point, inputActiveDockControl))
+                            {
+                                isOverDockControl = true;
                             }
 
                             if (dropControl is { } && targetDockControl is { })
@@ -356,10 +420,25 @@ namespace Dock.WinUI3.Internal
                             }
                             else
                             {
-                                Leave();
-                                _state.DropControl = null;
-                                _state.TargetPoint = default;
-                                _state.TargetDockControl = null;
+                                if (_state.DropControl is { })
+                                {
+                                    Leave();
+                                    _state.DropControl = null;
+                                }
+
+                                if (!isOverDockControl)
+                                {
+                                    _state.TargetPoint = point;
+                                    _state.TargetDockControl = inputActiveDockControl;
+                                    ShowRootAdorner(point, inputActiveDockControl);
+                                }
+                                else
+                                {
+                                    Leave();
+                                    _state.DropControl = null;
+                                    _state.TargetPoint = default;
+                                    _state.TargetDockControl = null;
+                                }
                             }
                         }
                         break;

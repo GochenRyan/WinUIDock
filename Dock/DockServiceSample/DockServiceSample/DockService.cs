@@ -19,7 +19,7 @@ namespace DockServiceSample
         public DockService()
         {
             DockControl = HostWindow.MainWindow.Content.FindDescendant<DockControl>();
-            DockSettings.DockBetweenFloatWindows = false;
+            DockSettings.DockBetweenFloatWindows = true;
 
             RegisterDockableControls();
 

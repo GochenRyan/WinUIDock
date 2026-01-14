@@ -297,6 +297,80 @@ public class DockManager : IDockManager
         };
     }
 
+    private bool DockDockable(IDock sourceDock, IDock targetDock, DragAction action, DockOperation operation, bool bExecute)
+    {
+        return DockDockable(sourceDock, targetDock, targetDock, action, operation, bExecute);
+    }
+
+    private static DockOperation NormalizeRootOperation(DockOperation operation)
+    {
+        return operation switch
+        {
+            DockOperation.RootLeft => DockOperation.Fill,
+            DockOperation.RootRight => DockOperation.Fill,
+            DockOperation.RootTop => DockOperation.Fill,
+            DockOperation.RootBottom => DockOperation.Fill,
+            _ => operation
+        };
+    }
+
+    private bool TryResolveRootTarget(IDockable targetDockable, DockOperation operation, out IDock targetDock)
+    {
+        targetDock = null;
+
+        if (operation is not (DockOperation.RootLeft or DockOperation.RootRight or DockOperation.RootTop or DockOperation.RootBottom))
+        {
+            return false;
+        }
+
+        var rootDock = targetDockable switch
+        {
+            IRootDock root => root,
+            _ => targetDockable.Factory?.FindRoot(targetDockable, _ => true)
+                 ?? targetDockable.Owner?.Factory?.FindRoot(targetDockable, _ => true)
+        };
+
+        if (rootDock is null)
+        {
+            return false;
+        }
+
+        targetDock = operation switch
+        {
+            DockOperation.RootLeft => rootDock.RootLeftDock,
+            DockOperation.RootRight => rootDock.RootRightDock,
+            DockOperation.RootTop => rootDock.RootTopDock,
+            DockOperation.RootBottom => rootDock.RootBottomDock,
+            _ => null
+        };
+
+        return targetDock is not null;
+    }
+
+    private bool TryDockToRoot(IDockable sourceDockable, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute, out bool result)
+    {
+        result = false;
+
+        if (!TryResolveRootTarget(targetDockable, operation, out var targetDock))
+        {
+            return false;
+        }
+
+        var normalizedOperation = NormalizeRootOperation(operation);
+
+        result = sourceDockable switch
+        {
+            ITool tool => DockDockableIntoDock(tool, targetDock, action, normalizedOperation, bExecute),
+            IDocument document => DockDockableIntoDock(document, targetDock, action, normalizedOperation, bExecute),
+            IToolDock toolDock => DockDockable(toolDock, targetDock, action, normalizedOperation, bExecute),
+            IDocumentDock documentDock => DockDockable(documentDock, targetDock, action, normalizedOperation, bExecute),
+            IProportionalDock proportionalDock => DockDockable(proportionalDock, targetDock, action, normalizedOperation, bExecute),
+            _ => false
+        };
+
+        return true;
+    }
+
     private bool DockDockableIntoDock(IDockable sourceDockable, IDock targetDock, DragAction action, DockOperation operation, bool bExecute)
     {
         if (sourceDockable.Owner is not IDock sourceDockableOwner)
@@ -386,6 +460,11 @@ public class DockManager : IDockManager
     /// <inheritdoc/>
     public virtual bool ValidateTool(ITool sourceTool, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
+        if (TryDockToRoot(sourceTool, targetDockable, action, operation, bExecute, out var rootResult))
+        {
+            return rootResult;
+        }
+
         return targetDockable switch
         {
             IRootDock _ => DockDockableIntoWindow(sourceTool, targetDockable, bExecute),
@@ -400,6 +479,11 @@ public class DockManager : IDockManager
     /// <inheritdoc/>
     public bool ValidateDocument(IDocument sourceDocument, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
+        if (TryDockToRoot(sourceDocument, targetDockable, action, operation, bExecute, out var rootResult))
+        {
+            return rootResult;
+        }
+
         return targetDockable switch
         {
             ITool => false,
@@ -413,6 +497,11 @@ public class DockManager : IDockManager
     /// <inheritdoc/>
     public bool ValidateDock(IDock sourceDock, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
+        if (TryDockToRoot(sourceDock, targetDockable, action, operation, bExecute, out var rootResult))
+        {
+            return rootResult;
+        }
+
         return targetDockable switch
         {
             IRootDock _ => DockDockableIntoWindow(sourceDock, targetDockable, bExecute),
@@ -446,6 +535,11 @@ public class DockManager : IDockManager
     /// <inheritdoc/>
     public bool ValidateDockable(IDockable sourceDockable, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
+        if (TryDockToRoot(sourceDockable, targetDockable, action, operation, bExecute, out var rootResult))
+        {
+            return rootResult;
+        }
+
         return sourceDockable switch
         {
             IToolDock toolDock => ValidateDock(toolDock, targetDockable, action, operation, bExecute),

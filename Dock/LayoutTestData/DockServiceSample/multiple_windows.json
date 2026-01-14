@@ -34,7 +34,7 @@
           "$id": "4",
           "$type": "Dock.Model.WinUI3.Controls.ProportionalDockSplitter, Dock.Model.WinUI3",
           "VisibleDockables": [],
-          "Thickness": 4.0,
+          "Thickness": 8.0,
           "Proportion": "NaN",
           "Dock": 0,
           "IsActive": false,
@@ -62,8 +62,8 @@
                 {
                   "$id": "7",
                   "$type": "Dock.Model.WinUI3.Controls.Tool, Dock.Model.WinUI3",
-                  "Id": "ToolSampleControl1_left_tool",
-                  "Title": "left_tool",
+                  "Id": "ToolSampleControl1_Game Project Lister",
+                  "Title": "Game Project Lister",
                   "Owner": {
                     "$ref": "6"
                   },
@@ -98,7 +98,7 @@
               "$id": "8",
               "$type": "Dock.Model.WinUI3.Controls.ProportionalDockSplitter, Dock.Model.WinUI3",
               "VisibleDockables": [],
-              "Thickness": 4.0,
+              "Thickness": 8.0,
               "Proportion": "NaN",
               "Dock": 0,
               "IsActive": false,
@@ -164,7 +164,7 @@
                       "$id": "13",
                       "$type": "Dock.Model.WinUI3.Controls.ProportionalDockSplitter, Dock.Model.WinUI3",
                       "VisibleDockables": [],
-                      "Thickness": 4.0,
+                      "Thickness": 8.0,
                       "Proportion": "NaN",
                       "Dock": 0,
                       "IsActive": false,
@@ -190,7 +190,7 @@
                       "GripMode": 0,
                       "Proportion": 0.30000001192092896,
                       "Dock": 0,
-                      "IsActive": false,
+                      "IsActive": true,
                       "IsEmpty": true,
                       "IsCollapsable": true,
                       "OpenedDockablesCount": 1,
@@ -223,7 +223,7 @@
                   "$id": "15",
                   "$type": "Dock.Model.WinUI3.Controls.ProportionalDockSplitter, Dock.Model.WinUI3",
                   "VisibleDockables": [],
-                  "Thickness": 4.0,
+                  "Thickness": 8.0,
                   "Proportion": "NaN",
                   "Dock": 0,
                   "IsActive": false,
@@ -338,8 +338,8 @@
       "$id": "18",
       "$type": "Dock.Model.WinUI3.Core.DockWindow, Dock.Model.WinUI3",
       "Id": "IDockWindow",
-      "X": 1141.0,
-      "Y": 525.0,
+      "X": 960.0,
+      "Y": 466.0,
       "Topmost": true,
       "Title": "",
       "Layout": {
@@ -441,103 +441,56 @@
         "CanPin": true,
         "CanFloat": true
       },
-      "WindowWidth": 785.3333129882812,
-      "WindowHeight": 592.6666870117188
-    },
-    {
-      "$id": "23",
-      "$type": "Dock.Model.WinUI3.Core.DockWindow, Dock.Model.WinUI3",
-      "Id": "IDockWindow",
-      "X": 2341.0,
-      "Y": 523.0,
-      "Topmost": true,
-      "Title": "",
-      "Layout": {
-        "$id": "24",
-        "$type": "Dock.Model.WinUI3.Controls.RootDock, Dock.Model.WinUI3",
+      "WindowWidth": 780.0,
+      "WindowHeight": 592.6666870117188,
+      "IsShellWindow": true
+    }
+  ],
+  "ActiveDockable": {
+    "$ref": "2"
+  },
+  "DefaultDockable": {
+    "$ref": "2"
+  },
+  "FocusedDockable": {
+    "$id": "23",
+    "$type": "Dock.Model.WinUI3.Controls.Tool, Dock.Model.WinUI3",
+    "Id": "ToolSampleControl1_right_tool",
+    "Title": "right_tool",
+    "Owner": {
+      "$id": "24",
+      "$type": "Dock.Model.WinUI3.Controls.ToolDock, Dock.Model.WinUI3",
+      "VisibleDockables": [
+        {
+          "$ref": "23"
+        }
+      ],
+      "Alignment": -1,
+      "IsExpanded": true,
+      "AutoHide": true,
+      "GripMode": 0,
+      "ActiveDockable": {
+        "$ref": "23"
+      },
+      "Proportion": 1.0,
+      "Dock": 0,
+      "IsActive": true,
+      "IsEmpty": false,
+      "IsCollapsable": true,
+      "OpenedDockablesCount": 1,
+      "Id": "IToolDock",
+      "Title": "IToolDock",
+      "Owner": {
+        "$id": "25",
+        "$type": "Dock.Model.WinUI3.Controls.ProportionalDock, Dock.Model.WinUI3",
+        "Orientation": 0,
         "VisibleDockables": [
           {
-            "$id": "25",
-            "$type": "Dock.Model.WinUI3.Controls.ProportionalDock, Dock.Model.WinUI3",
-            "Orientation": 0,
-            "VisibleDockables": [
-              {
-                "$id": "26",
-                "$type": "Dock.Model.WinUI3.Controls.ToolDock, Dock.Model.WinUI3",
-                "VisibleDockables": [
-                  {
-                    "$id": "27",
-                    "$type": "Dock.Model.WinUI3.Controls.Tool, Dock.Model.WinUI3",
-                    "Id": "ToolSampleControl1_right_tool",
-                    "Title": "right_tool",
-                    "Owner": {
-                      "$ref": "26"
-                    },
-                    "CanClose": true,
-                    "CanPin": true,
-                    "CanFloat": true
-                  }
-                ],
-                "Alignment": -1,
-                "IsExpanded": true,
-                "AutoHide": true,
-                "GripMode": 0,
-                "ActiveDockable": {
-                  "$ref": "27"
-                },
-                "Proportion": 1.0,
-                "Dock": 0,
-                "IsActive": true,
-                "IsEmpty": false,
-                "IsCollapsable": true,
-                "OpenedDockablesCount": 1,
-                "Id": "IToolDock",
-                "Title": "IToolDock",
-                "Owner": {
-                  "$ref": "25"
-                },
-                "CanClose": true,
-                "CanPin": true,
-                "CanFloat": true
-              }
-            ],
-            "ActiveDockable": {
-              "$ref": "26"
-            },
-            "Proportion": "NaN",
-            "Dock": 0,
-            "IsActive": false,
-            "IsEmpty": false,
-            "IsCollapsable": true,
-            "OpenedDockablesCount": 1,
-            "Id": "proportionDock",
-            "Title": "",
-            "Owner": {
-              "$ref": "24"
-            },
-            "CanClose": true,
-            "CanPin": true,
-            "CanFloat": true
+            "$ref": "24"
           }
         ],
-        "IsFocusableRoot": true,
-        "HiddenDockables": [],
-        "LeftPinnedDockables": [],
-        "RightPinnedDockables": [],
-        "TopPinnedDockables": [],
-        "BottomPinnedDockables": [],
-        "Window": {
-          "$ref": "23"
-        },
-        "Windows": [],
         "ActiveDockable": {
-          "$ref": "25"
-        },
-        "DefaultDockable": {
-          "$ref": "25"
-        },
-        "FocusedDockable": {
-          "$ref": "27"
+          "$ref": "24"
         },
         "Proportion": "NaN",
         "Dock": 0,
@@ -545,19 +498,83 @@
         "IsEmpty": false,
         "IsCollapsable": true,
         "OpenedDockablesCount": 1,
-        "Id": "IRootDock",
-        "Title": "IRootDock",
+        "Id": "proportionDock",
+        "Title": "",
+        "Owner": {
+          "$id": "26",
+          "$type": "Dock.Model.WinUI3.Controls.RootDock, Dock.Model.WinUI3",
+          "VisibleDockables": [
+            {
+              "$ref": "25"
+            }
+          ],
+          "IsFocusableRoot": true,
+          "HiddenDockables": [],
+          "LeftPinnedDockables": [],
+          "RightPinnedDockables": [],
+          "TopPinnedDockables": [],
+          "BottomPinnedDockables": [],
+          "Window": {
+            "$id": "27",
+            "$type": "Dock.Model.WinUI3.Core.DockWindow, Dock.Model.WinUI3",
+            "Id": "IDockWindow",
+            "X": 2159.0,
+            "Y": 461.0,
+            "Topmost": true,
+            "Title": "",
+            "Layout": {
+              "$ref": "26"
+            },
+            "WindowWidth": 413.3333435058594,
+            "WindowHeight": 591.3333129882812,
+            "IsShellWindow": false
+          },
+          "Windows": [],
+          "ActiveDockable": {
+            "$ref": "25"
+          },
+          "DefaultDockable": {
+            "$ref": "25"
+          },
+          "FocusedDockable": {
+            "$ref": "23"
+          },
+          "Proportion": "NaN",
+          "Dock": 0,
+          "IsActive": false,
+          "IsEmpty": false,
+          "IsCollapsable": true,
+          "OpenedDockablesCount": 1,
+          "Id": "IRootDock",
+          "Title": "IRootDock",
+          "CanClose": true,
+          "CanPin": true,
+          "CanFloat": true
+        },
         "CanClose": true,
         "CanPin": true,
         "CanFloat": true
       },
-      "WindowWidth": 411.3333435058594,
-      "WindowHeight": 593.3333129882812
-    }
-  ],
-  "ActiveDockable": {
-    "$ref": "2"
+      "CanClose": true,
+      "CanPin": true,
+      "CanFloat": true
+    },
+    "CanClose": true,
+    "CanPin": true,
+    "CanFloat": true
   },
+  "Proportion": "NaN",
+  "Dock": 0,
+  "IsActive": false,
+  "IsEmpty": false,
+  "IsCollapsable": false,
+  "OpenedDockablesCount": 9,
+  "Id": "Root",
+  "Title": "",
+  "CanClose": false,
+  "CanPin": true,
+  "CanFloat": true
+}  },
   "DefaultDockable": {
     "$ref": "2"
   },

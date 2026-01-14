@@ -47,7 +47,15 @@
             <controls:DockControl.Factory>
                 <modewinui3:Factory/>
             </controls:DockControl.Factory>
-            <winui3controls:RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{x:Bind MainLayout, Mode=OneWay}" CanClose="False">
+            <winui3controls:RootDock x:Name="Root"
+                                     Id="Root"
+                                     IsCollapsable="False"
+                                     DefaultDockable="{x:Bind MainLayout, Mode=OneWay}"
+                                     RootLeftDock="{x:Bind LeftPane, Mode=OneWay}"
+                                     RootRightDock="{x:Bind RightPane, Mode=OneWay}"
+                                     RootTopDock="{x:Bind TopPane, Mode=OneWay}"
+                                     RootBottomDock="{x:Bind BottomPane, Mode=OneWay}"
+                                     CanClose="False">
                 <winui3controls:RootDock.Windows>
 
                 </winui3controls:RootDock.Windows>

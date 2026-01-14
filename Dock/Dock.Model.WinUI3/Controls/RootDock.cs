@@ -77,6 +77,30 @@ namespace Dock.Model.WinUI3.Controls
             typeof(RootDock),
             new PropertyMetadata(null));
 
+        public static readonly DependencyProperty RootLeftDockProperty = DependencyProperty.Register(
+            nameof(RootLeftDock),
+            typeof(IDock),
+            typeof(RootDock),
+            new PropertyMetadata(null));
+
+        public static readonly DependencyProperty RootRightDockProperty = DependencyProperty.Register(
+            nameof(RootRightDock),
+            typeof(IDock),
+            typeof(RootDock),
+            new PropertyMetadata(null));
+
+        public static readonly DependencyProperty RootTopDockProperty = DependencyProperty.Register(
+            nameof(RootTopDock),
+            typeof(IDock),
+            typeof(RootDock),
+            new PropertyMetadata(null));
+
+        public static readonly DependencyProperty RootBottomDockProperty = DependencyProperty.Register(
+            nameof(RootBottomDock),
+            typeof(IDock),
+            typeof(RootDock),
+            new PropertyMetadata(null));
+
         public static readonly DependencyProperty WindowProperty = DependencyProperty.Register(
             nameof(Window),
             typeof(IDockWindow),
@@ -123,6 +147,22 @@ namespace Dock.Model.WinUI3.Controls
 
         [JsonIgnore]
         public IToolDock PinnedDock { get => (IToolDock)GetValue(PinnedDockProperty); set => SetValue(PinnedDockProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("RootLeftDock")]
+        public IDock RootLeftDock { get => (IDock)GetValue(RootLeftDockProperty); set => SetValue(RootLeftDockProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("RootRightDock")]
+        public IDock RootRightDock { get => (IDock)GetValue(RootRightDockProperty); set => SetValue(RootRightDockProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("RootTopDock")]
+        public IDock RootTopDock { get => (IDock)GetValue(RootTopDockProperty); set => SetValue(RootTopDockProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("RootBottomDock")]
+        public IDock RootBottomDock { get => (IDock)GetValue(RootBottomDockProperty); set => SetValue(RootBottomDockProperty, value); }
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Window")]
