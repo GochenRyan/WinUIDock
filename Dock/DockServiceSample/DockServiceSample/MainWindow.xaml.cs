@@ -1,3 +1,4 @@
+using Dock.WinUI3;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using System;
@@ -23,9 +24,16 @@ namespace DockServiceSample
         {
             this.InitializeComponent();
 
-            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
-            var brush = (Microsoft.UI.Xaml.Media.SolidColorBrush)resourceDict["DockBackgroundBrush"];
-            this.SetTitleBarBackgroundColors(brush.Color);
+            DockThemeManager.RegisterRoot(Content as FrameworkElement);
+            DockThemeManager.SetTheme(ElementTheme.Dark);
+
+            // Safe lookup: this sample registers NO dock theme dictionaries, so the
+            // brush resolves from the library defaults (DockDefaults.xaml).
+            if (DockThemeManager.TryGetResource("DockBackgroundBrush", out var value)
+                && value is Microsoft.UI.Xaml.Media.SolidColorBrush brush)
+            {
+                this.SetTitleBarBackgroundColors(brush.Color);
+            }
 
             Dock.Loaded += Dock_Loaded;
         }

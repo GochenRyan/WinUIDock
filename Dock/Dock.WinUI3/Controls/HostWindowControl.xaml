@@ -13,7 +13,10 @@
                 <ControlTemplate TargetType="local:HostWindowControl">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="32"/>
+                            <!-- Height comes from the DockFloatTitleBarHeight metric,
+                                 applied to PART_TitleBar in code (GridLength resources
+                                 are not declarable in XAML). -->
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
 

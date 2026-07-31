@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.WinUI.UI;
+﻿using CommunityToolkit.WinUI;
 using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;

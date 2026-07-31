@@ -11,7 +11,6 @@
   <ItemGroup>
     <None Remove="Controls\DockControl.xaml" />
     <None Remove="Controls\DockTarget.xaml" />
-    <None Remove="Controls\DockTemplate.xaml" />
     <None Remove="Controls\DocumentContentControl.xaml" />
     <None Remove="Controls\DocumentControl.xaml" />
     <None Remove="Controls\DocumentDockControl.xaml" />
@@ -31,15 +30,7 @@
     <None Remove="Controls\ToolPinnedControl.xaml" />
     <None Remove="Controls\ToolTabStrip.xaml" />
     <None Remove="Controls\ToolTabStripItem.xaml" />
-    <None Remove="DockTarget.xaml" />
-    <None Remove="Themes\Accents\AsukaLangleySoryu_Dark.xaml" />
-    <None Remove="Themes\Accents\AsukaLangleySoryu_Light.xaml" />
-    <None Remove="Themes\Accents\AyanamiRei_Dark.xaml" />
-    <None Remove="Themes\Accents\AyanamiRei_Light.xaml" />
-    <None Remove="Themes\Accents\EvaUnit01_Dark.xaml" />
-    <None Remove="Themes\Accents\EvaUnit01_Light.xaml" />
-    <None Remove="Themes\Accents\VS_Dark.xaml" />
-    <None Remove="Themes\Accents\VS_Light.xaml" />
+    <None Remove="Themes\DockDefaults.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,14 +39,9 @@
       <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
       <PackageReference Include="CommunityToolkit.WinUI.Converters" Version="8.0.240109" />
       <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.0.240109" />
-      <PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
       <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
       <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
       <PackageReference Include="WinUIEx" Version="2.3.4" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Assets\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -77,54 +63,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\VS_Dark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\VS_Light.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\EvaUnit01_Dark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\EvaUnit01_Light.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\AsukaLangleySoryu_Dark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\AsukaLangleySoryu_Light.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\AyanamiRei_Dark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Themes\Accents\AyanamiRei_Light.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
 
   <ItemGroup>
@@ -206,12 +144,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="DockTarget.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Update="Controls\ToolPinItemControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -260,13 +192,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Controls\DockTemplate.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Control\DockControl.xaml">
+    <Page Update="Themes\DockDefaults.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

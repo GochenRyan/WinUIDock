@@ -5,11 +5,52 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:settings="using:Dock.Settings">
 
-    <Style x:Key="ChromeButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}" >
+    <Style x:Key="ChromeButton" TargetType="Button">
         <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="3" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Width" Value="{ThemeResource DockCaptionButtonSize}" />
+        <Setter Property="Height" Value="{ThemeResource DockCaptionButtonSize}" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="PART_ButtonRoot"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <Border.BackgroundTransition>
+                            <BrushTransition Duration="0:0:0.083"/>
+                        </Border.BackgroundTransition>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_ButtonRoot.(Background)" Value="{ThemeResource DockCaptionButtonHoverBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_ButtonRoot.(Background)" Value="{ThemeResource DockCaptionButtonPressedBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_ButtonRoot.(Opacity)" Value="0.4"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="local:ToolChromeControl">
@@ -18,68 +59,82 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolChromeControl">
                     <Grid RowDefinitions="Auto,*">
+                        <!-- WinUI requires VisualStateGroups on the template ROOT element;
+                             attaching them to a child (PART_Border) makes GoToState a no-op. -->
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="BorderStates">
+                                <VisualState x:Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockCaptionBackgroundBrush}"/>
+                                        <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockCaptionForegroundBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Active">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockCaptionActiveBackgroundBrush}"/>
+                                        <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockCaptionActiveForegroundBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
                         <ContentPresenter Grid.Row="1" />
                         <Border x:Name="PART_Border"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 VerticalAlignment="Top"
                                 Grid.Row="0"
-                                Background="{ThemeResource DockChromeTabItemRestBrush}"
-                                Height="30">
-                            <!--<VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="BorderStates">
-                                    <VisualState x:Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemRestBrush}"/>
-                                            <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockChromeTabItemRestForeBrush}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Active">
-                                        <VisualState.Setters>
-                                            <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemPressedBrush}"/>
-                                            <Setter Target="PART_Title.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>-->
-
+                                Background="{ThemeResource DockCaptionBackgroundBrush}"
+                                Height="{ThemeResource DockToolChromeHeight}">
                             <Grid x:Name="PART_Grip"
                                   settings:DockProperties.IsDragArea="True">
-                                <local:DockPanel LastChildFill="True" Margin="8 0">
+                                <local:DockPanel LastChildFill="True" Margin="{ThemeResource DockCaptionPadding}">
                                     <TextBlock x:Name="PART_Title"
                                                local:DockPanel.Dock="Left"
+                                               FontSize="{ThemeResource DockCaptionFontSize}"
+                                               Foreground="{ThemeResource DockCaptionForegroundBrush}"
                                                VerticalAlignment="Center"/>
                                     <StackPanel local:DockPanel.Dock="Right"
                                                 Orientation="Horizontal">
                                         <Button x:Name="PART_MenuButton"
                                                 Style="{StaticResource ChromeButton}">
-                                            <FontIcon Glyph="&#xEDD8;"
-                                                      FontSize="12"/>
+                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                     Height="{ThemeResource DockCaptionGlyphSize}">
+                                                <Path local:DockIcon.Data="{StaticResource DockIconMenuData}"
+                                                      Width="16" Height="16"
+                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                            </Viewbox>
                                         </Button>
                                         <Button x:Name="PART_PinButton"
                                                 Style="{StaticResource ChromeButton}">
-                                            <FontIcon Glyph="&#xE718;"
-                                                      FontSize="12"/>
+                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                     Height="{ThemeResource DockCaptionGlyphSize}">
+                                                <Path local:DockIcon.Data="{StaticResource DockIconPinData}"
+                                                      Width="16" Height="16"
+                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                            </Viewbox>
                                         </Button>
                                         <Button x:Name="PART_MaximizeRestoreButton"
                                                 Style="{StaticResource ChromeButton}">
-                                            <FontIcon Glyph="&#xE922;"
-                                                      FontSize="12"/>
+                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                     Height="{ThemeResource DockCaptionGlyphSize}">
+                                                <Path local:DockIcon.Data="{StaticResource DockIconMaximizeData}"
+                                                      Width="16" Height="16"
+                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                            </Viewbox>
                                         </Button>
                                         <Button x:Name="PART_CloseButton"
                                                 Style="{StaticResource ChromeButton}">
-                                            <FontIcon Glyph="&#xE8BB;" 
-                                                      FontSize="12"/>
+                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                     Height="{ThemeResource DockCaptionGlyphSize}">
+                                                <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
+                                                      Width="16" Height="16"
+                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                            </Viewbox>
                                         </Button>
                                     </StackPanel>
                                     <Grid x:Name="PART_Grid" />
                                 </local:DockPanel>
                             </Grid>
                         </Border>
-                        <!--<StackPanel x:Name="PART_Panel"
-                                    Background="{TemplateBinding BorderBrush}"
-                                    Height="1"
-                                    VerticalAlignment="Top"
-                                    Grid.Row="{Binding GripMode, Converter={x:Static converters:GripModeConverters.GridRowAutoHideConverter}}" />-->
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

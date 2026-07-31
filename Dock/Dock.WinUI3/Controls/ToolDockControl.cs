@@ -1,3 +1,4 @@
+﻿using System;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
@@ -94,9 +95,28 @@ namespace Dock.WinUI3.Controls
 
         private void VisibleDockables_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add &&
-                sender is ObservableCollection<IDockable> visibleDockables &&
-                visibleDockables.Count == 1)
+            if (e.Action != System.Collections.Specialized.NotifyCollectionChangedAction.Add ||
+                sender is not ObservableCollection<IDockable> visibleDockables)
+            {
+                return;
+            }
+
+            if (DataContext is ToolDock toolDock)
+            {
+                // A dockable can arrive with no active selection (observed on
+                // the root-edge redock path: the tab shows up but ActiveDockable
+                // stays null, so the content pipeline never runs and the pane
+                // renders empty). Activate the newcomer.
+                if (toolDock.ActiveDockable is null
+                    && e.NewItems is { Count: > 0 }
+                    && e.NewItems[0] is IDockable added)
+                {
+                    Internal.DockDiag.Log($"ToolDockControl: ActiveDockable null after add — activating '{added.Title}'");
+                    toolDock.ActiveDockable = added;
+                }
+            }
+
+            if (visibleDockables.Count == 1)
             {
                 var parent = VisualTreeHelper.GetParent(this);
                 while (parent != null)
@@ -116,7 +136,52 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            return base.MeasureOverride(availableSize);
+            try
+            {
+                return base.MeasureOverride(availableSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                // See ToolChromeControl.MeasureOverride — transient cross-window
+                // migration race; self-heal instead of tearing the app down.
+                Internal.DockDiag.Log($"ToolDockControl.MeasureOverride transient failure on {Internal.DockDiag.Describe(this)}: {ex.Message} — retrying inline");
+                try
+                {
+                    // The pinpoint probe proved an immediate re-measure of the
+                    // same subtree succeeds — retry inline so the pass still
+                    // materializes templates/content (skipping it left panes
+                    // empty after redock).
+                    return base.MeasureOverride(availableSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ToolDockControl.MeasureOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateMeasure);
+                    return DesiredSize;
+                }
+            }
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            try
+            {
+                return base.ArrangeOverride(finalSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                Internal.DockDiag.Log($"ToolDockControl.ArrangeOverride transient failure on {Internal.DockDiag.Describe(this)}: {ex.Message} — retrying inline");
+                try
+                {
+                    return base.ArrangeOverride(finalSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ToolDockControl.ArrangeOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateArrange);
+                    return finalSize;
+                }
+            }
         }
 
         private void Dockable_PointerPressed(object sender, PointerRoutedEventArgs e)

@@ -3,7 +3,8 @@
     x:Class="DockWinUISample.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:DockWinUISample">
+    xmlns:local="using:DockWinUISample"
+    RequestedTheme="Dark">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -12,16 +13,9 @@
                 <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Generic.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
-            <ResourceDictionary.ThemeDictionaries>
-                <!--<ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AsukaLangleySoryu_Light.xaml" x:Key="Light"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AsukaLangleySoryu_Dark.xaml" x:Key="Dark"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AyanamiRei_Light.xaml" x:Key="Light"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/AyanamiRei_Dark.xaml" x:Key="Dark"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/EvaUnit01_Light.xaml" x:Key="Light"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/EvaUnit01_Dark.xaml" x:Key="Dark"/>-->
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/VS_Light.xaml" x:Key="Light"/>
-                <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/Accents/VS_Dark.xaml" x:Key="Dark"/>
-            </ResourceDictionary.ThemeDictionaries>
+            <!-- No dock ThemeDictionaries: the library's built-in black/light
+                 themes from Dock.WinUI3/Themes/DockDefaults.xaml apply. Override
+                 individual Dock* keys here to customize. -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

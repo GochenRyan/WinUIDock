@@ -3,8 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls"
-    xmlns:converters="using:CommunityToolkit.WinUI.Converters"
-    xmlns:ui="using:CommunityToolkit.WinUI.UI">
+    xmlns:converters="using:CommunityToolkit.WinUI.Converters">
 
     <converters:CollectionVisibilityConverter x:Key="CollectionVisibilityConverter" />
 
@@ -18,8 +17,6 @@
                         <local:ToolChromeControl x:Name="PART_ToolChromeControl">
                             <!--<local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 
                                                  Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">-->
-                            <!--<local:ToolControl ui:FrameworkElementExtensions.AncestorType="DockControl"
-                                               IsHitTestVisible="{Binding (ui:FrameworkElementExtensions.Ancestor).IsDraggingDock, RelativeSource={RelativeSource Self}}"/>-->
                             <local:ToolControl x:Name="PART_ToolControl"/>
                         </local:ToolChromeControl>
 

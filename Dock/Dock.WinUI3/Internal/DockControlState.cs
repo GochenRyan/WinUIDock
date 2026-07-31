@@ -260,7 +260,13 @@ namespace Dock.WinUI3.Internal
 
                                 if (_state.TargetDockControl is Control targetControl)
                                 {
-                                    isDropEnabled = DockProperties.GetIsDragEnabled(targetControl);
+                                    // The DROP target is gated by IsDropEnabled;
+                                    // IsDragEnabled belongs to the drag SOURCE
+                                    // (see the Pressed branch). Reading the wrong
+                                    // one here let a drop execute on a target that
+                                    // the Moved branch had already refused to show
+                                    // guides for.
+                                    isDropEnabled = DockProperties.GetIsDropEnabled(targetControl);
                                 }
 
                                 if (isDropEnabled)

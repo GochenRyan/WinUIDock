@@ -1,4 +1,4 @@
-using Dock.Model.WinUI3.Controls;
+﻿using Dock.Model.WinUI3.Controls;
 using Dock.Model.WinUI3.Core;
 using Dock.WinUI3.Converters;
 using Microsoft.UI.Xaml;
@@ -214,18 +214,25 @@ namespace Dock.WinUI3.Controls
             {
                 if (presenter.Content != null && presenter.Content is ProportionalDockSplitter proportionalDockSplitter)
                 {
-                    return proportionalDockSplitter.Thickness;
+                    return ResolveSplitterThickness(proportionalDockSplitter.Thickness);
                 }
             }
             else if (obj is Control control)
             {
                 if (control.DataContext != null && control.DataContext is ProportionalDockSplitter proportionalDockSplitter)
                 {
-                    return proportionalDockSplitter.Thickness;
+                    return ResolveSplitterThickness(proportionalDockSplitter.Thickness);
                 }
             }
 
             return double.NaN;
+        }
+
+        // Model thickness 0 means "not explicitly set" — fall back to the
+        // DockSplitterThickness theme metric (host-overridable).
+        internal static double ResolveSplitterThickness(double modelValue)
+        {
+            return modelValue > 0 ? modelValue : DockMetrics.GetDouble("DockSplitterThickness", 4.0);
         }
 
         private static void OnOrientationChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
@@ -245,14 +252,9 @@ namespace Dock.WinUI3.Controls
                 var isCollapsed = GetIsCollapsed(element);
                 var isSplitter = ProportionalStackPanelSplitter.IsSplitter(element);
 
-                if (!isSplitter)
+                if (!isSplitter && !isCollapsed)
                 {
                     var proportion = GetProportion(element);
-
-                    if (isCollapsed)
-                    {
-                        proportion = 0.0;
-                    }
 
                     if (double.IsNaN(proportion))
                     {
@@ -267,7 +269,10 @@ namespace Dock.WinUI3.Controls
 
             if (unassignedProportions > 0)
             {
-                var toAssign = assignedProportion;
+                // First-time assignment: give each not-yet-proportioned child an
+                // equal share of whatever is left. This is the ONLY place a
+                // proportion is written back to the model.
+                var toAssign = Math.Max(0.0, 1.0 - assignedProportion) / unassignedProportions;
                 foreach (var element in children.Where(c =>
                 {
                     var isCollapsed = GetIsCollapsed(c);
@@ -276,51 +281,42 @@ namespace Dock.WinUI3.Controls
                 {
                     if (!ProportionalStackPanelSplitter.IsSplitter(element))
                     {
-                        var proportion = (1.0 - toAssign) / unassignedProportions;
-                        SetProportion(element, proportion);
-                        assignedProportion += (1.0 - toAssign) / unassignedProportions;
+                        SetProportion(element, toAssign);
                     }
                 }
             }
 
-            if (assignedProportion < 1)
+            // Deliberately NO rebalancing writes when the total is not 1 (e.g. a
+            // pane is collapsed by auto-hide, or was floated out): stored
+            // proportions stay untouched and Measure/Arrange normalize at use
+            // time. The previous persistent rebalancing permanently shrank a pane
+            // on every hide/restore round-trip.
+        }
+
+        // Sum of the stored proportions currently participating in layout; used to
+        // normalize shares at measure/arrange time without mutating the model.
+        private double GetTotalProportion(UIElementCollection children)
+        {
+            var total = 0.0;
+            for (var i = 0; i < children.Count; i++)
             {
-                var numChildren = (double)children.Count(c =>
+                var c = children[i];
+                if (!ProportionalStackPanelSplitter.IsSplitter(c) && !GetIsCollapsed(c))
                 {
-                    return !ProportionalStackPanelSplitter.IsSplitter(c) && !GetIsCollapsed(c);
-                });
-
-                var toAdd = (1.0 - assignedProportion) / numChildren;
-
-                foreach (var child in children.Where(c =>
-                {
-                    var isCollapsed = GetIsCollapsed(c);
-                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c);
-                }))
-                {
-                    var proportion = GetProportion(child) + toAdd;
-                    SetProportion(child, proportion);
+                    var proportion = GetProportion(c);
+                    if (!double.IsNaN(proportion))
+                    {
+                        total += proportion;
+                    }
                 }
             }
-            else if (assignedProportion > 1)
-            {
-                var numChildren = (double)children.Count(c =>
-                {
-                    return !ProportionalStackPanelSplitter.IsSplitter(c) && !GetIsCollapsed(c);
-                });
 
-                var toRemove = (assignedProportion - 1.0) / numChildren;
+            return total;
+        }
 
-                foreach (var child in children.Where(c =>
-                {
-                    var isCollapsed = GetIsCollapsed(c);
-                    return !isCollapsed && !ProportionalStackPanelSplitter.IsSplitter(c);
-                }))
-                {
-                    var proportion = GetProportion(child) - toRemove;
-                    SetProportion(child, proportion);
-                }
-            }
+        private static double Normalize(double proportion, double totalProportion)
+        {
+            return totalProportion > 0 ? proportion / totalProportion : 0.0;
         }
 
         private double GetTotalSplitterThickness(UIElementCollection children)
@@ -366,6 +362,30 @@ namespace Dock.WinUI3.Controls
         /// <inheritdoc/>
         protected override Size MeasureOverride(Size availableSize)
         {
+            try
+            {
+                return MeasureCore(availableSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                // Transient close-vs-layout race during cross-window redock —
+                // self-heal (see ToolChromeControl.MeasureOverride).
+                Internal.DockDiag.Log($"ProportionalStackPanel.MeasureOverride transient failure: {ex.Message} — retrying inline");
+                try
+                {
+                    return MeasureCore(availableSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ProportionalStackPanel.MeasureOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateMeasure);
+                    return DesiredSize;
+                }
+            }
+        }
+
+        private Size MeasureCore(Size availableSize)
+        {
             var horizontal = Orientation == Orientation.Horizontal;
             if ((horizontal && double.IsInfinity(availableSize.Width))
                 || (!horizontal && double.IsInfinity(availableSize.Height)))
@@ -382,6 +402,7 @@ namespace Dock.WinUI3.Controls
             var splitterThickness = GetTotalSplitterThickness(Children);
 
             AssignProportions(Children);
+            var totalProportion = GetTotalProportion(Children);
 
             var needsNextSplitter = false;
 
@@ -408,14 +429,14 @@ namespace Dock.WinUI3.Controls
                     {
                         case Orientation.Horizontal:
                             {
-                                var width = Math.Max(0, (availableSize.Width - splitterThickness) * proportion);
+                                var width = Math.Max(0, (availableSize.Width - splitterThickness) * Normalize(proportion, totalProportion));
                                 var size = new Size(width, availableSize.Height);
                                 child.Measure(size);
                                 break;
                             }
                         case Orientation.Vertical:
                             {
-                                var height = Math.Max(0, (availableSize.Height - splitterThickness) * proportion);
+                                var height = Math.Max(0, (availableSize.Height - splitterThickness) * Normalize(proportion, totalProportion));
                                 var size = new Size(availableSize.Width, height);
                                 child.Measure(size);
                                 break;
@@ -466,7 +487,7 @@ namespace Dock.WinUI3.Controls
                             }
                             else
                             {
-                                usedWidth += Math.Max(0, (availableSize.Width - splitterThickness) * proportion);
+                                usedWidth += Math.Max(0, (availableSize.Width - splitterThickness) * Normalize(proportion, totalProportion));
                             }
 
                             break;
@@ -481,7 +502,7 @@ namespace Dock.WinUI3.Controls
                             }
                             else
                             {
-                                usedHeight += Math.Max(0, (availableSize.Height - splitterThickness) * proportion);
+                                usedHeight += Math.Max(0, (availableSize.Height - splitterThickness) * Normalize(proportion, totalProportion));
                             }
 
                             break;
@@ -497,6 +518,28 @@ namespace Dock.WinUI3.Controls
 
         protected override Size ArrangeOverride(Size finalSize)
         {
+            try
+            {
+                return ArrangeCore(finalSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                Internal.DockDiag.Log($"ProportionalStackPanel.ArrangeOverride transient failure: {ex.Message} — retrying inline");
+                try
+                {
+                    return ArrangeCore(finalSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ProportionalStackPanel.ArrangeOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateArrange);
+                    return finalSize;
+                }
+            }
+        }
+
+        private Size ArrangeCore(Size finalSize)
+        {
             var left = 0.0;
             var top = 0.0;
             var right = 0.0;
@@ -507,6 +550,7 @@ namespace Dock.WinUI3.Controls
             var index = 0;
 
             AssignProportions(Children);
+            var totalProportion = GetTotalProportion(Children);
 
             var needsNextSplitter = false;
 
@@ -563,7 +607,7 @@ namespace Dock.WinUI3.Controls
                                 else
                                 {
                                     Debug.Assert(!double.IsNaN(proportion));
-                                    var width = Math.Max(0, (finalSize.Width - splitterThickness) * proportion);
+                                    var width = Math.Max(0, (finalSize.Width - splitterThickness) * Normalize(proportion, totalProportion));
                                     remainingRect = new Rect(remainingRect.X, remainingRect.Y, width, remainingRect.Height);
                                     left += width;
                                 }
@@ -580,7 +624,7 @@ namespace Dock.WinUI3.Controls
                                 else
                                 {
                                     Debug.Assert(!double.IsNaN(proportion));
-                                    var height = Math.Max(0, (finalSize.Height - splitterThickness) * proportion);
+                                    var height = Math.Max(0, (finalSize.Height - splitterThickness) * Normalize(proportion, totalProportion));
                                     remainingRect = new Rect(remainingRect.X, remainingRect.Y, remainingRect.Width, height);
                                     top += height;
                                 }

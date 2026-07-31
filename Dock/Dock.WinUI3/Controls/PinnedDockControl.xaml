@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls" 
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:ui="using:CommunityToolkit.WinUI.UI" 
     xmlns:converters="using:CommunityToolkit.WinUI.Converters">
 
     <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
@@ -14,8 +13,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:PinnedDockControl">
                     <Grid x:Name="PART_PinnedDockGrid">
-                        <!--<local:ToolDockControl ui:FrameworkElementExtensions.AncestorType="Window"
-                                               Background="{Binding (ui:FrameworkElementExtensions.Ancestor).Background, RelativeSource={RelativeSource Self}}"/>-->
                         <local:ToolDockControl x:Name="PART_ToolDockControl"/>
                         <controls:GridSplitter x:Name="PART_Splitter" Background="{ThemeResource DockChromeBackgroundBrush}"/>
                     </Grid>

@@ -9,9 +9,11 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:ProportionalStackPanelSplitter">
                     <Grid>
+                        <!-- Invisible at rest (game-editor style); hover/pressed
+                             brushes are applied in code (theme-aware lookup). -->
                         <Thumb x:Name="InternalThumb"
                                CanDrag="True"
-                               Background="{ThemeResource DockChromeBackgroundBrush}"
+                               Background="{ThemeResource DockSplitterBackgroundBrush}"
                                BorderThickness="0"/>
                     </Grid>
                 </ControlTemplate>

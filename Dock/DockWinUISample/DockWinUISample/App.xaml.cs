@@ -18,6 +18,22 @@ namespace DockWinUISample
         public App()
         {
             this.InitializeComponent();
+
+            // Crash forensics: dump the full exception chain to a file next to
+            // the exe so field repros keep their evidence even without a
+            // debugger attached.
+            UnhandledException += (_, e) =>
+            {
+                try
+                {
+                    var path = System.IO.Path.Combine(System.AppContext.BaseDirectory, "crash.log");
+                    System.IO.File.AppendAllText(path,
+                        $"[{System.DateTimeOffset.Now:O}] Unhandled: {e.Message}\r\n{e.Exception}\r\nStack: {e.Exception?.StackTrace}\r\n\r\n");
+                }
+                catch
+                {
+                }
+            };
         }
 
         /// <summary>

@@ -32,11 +32,13 @@ namespace Dock.Model.WinUI3.Controls
             set => SetValue(VisibleDockablesProperty, value);
         }
 
+        // 0 = "not explicitly set": the view layer resolves the DockSplitterThickness
+        // theme metric instead. Layouts that serialized an explicit thickness keep it.
         public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
             nameof(Thickness),
             typeof(double),
             typeof(ProportionalDockSplitter),
-            new PropertyMetadata(8.0));
+            new PropertyMetadata(0.0));
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Thickness")]

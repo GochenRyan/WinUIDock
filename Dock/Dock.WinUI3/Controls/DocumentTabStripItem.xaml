@@ -5,14 +5,15 @@
     xmlns:local="using:Dock.WinUI3.Controls"
     xmlns:settings="using:Dock.Settings">
 
+    <!-- NOTE: {ThemeResource} inside Style setters of a CUSTOM TargetType is
+         evaluated eagerly at dictionary parse and crashes the app at startup —
+         metric keys are consumed on template elements instead. -->
     <Style TargetType="local:DocumentTabStripItem">
-        <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="MinHeight" Value="0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="4 0 4 0" />
         <Setter Property="settings:DockProperties.IsDragArea" Value="True"/>
         <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="Template">
@@ -21,58 +22,93 @@
                     <Border x:Name="PART_Border"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            Padding="{TemplateBinding Padding}"
-                            Background="{ThemeResource DockChromeTabItemRestBrush}"
-                            Margin="1 4 1 0"
-                            Height="25">
+                            Padding="{ThemeResource DockTabItemPadding}"
+                            Background="{ThemeResource DockTabItemBackgroundRestBrush}"
+                            CornerRadius="{ThemeResource DockDocumentTabCornerRadius}"
+                            Margin="0,4,2,0"
+                            Height="{ThemeResource DockDocumentTabItemHeight}">
+                        <Border.BackgroundTransition>
+                            <BrushTransition Duration="0:0:0.083"/>
+                        </Border.BackgroundTransition>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="BorderStates">
                                 <VisualState x:Name="Normal">
                                     <VisualState.Setters>
-                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemRestBrush}"/>
-                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemRestForeBrush}"/>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockTabItemBackgroundRestBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                        <Setter Target="PART_ActiveUnderline.(Visibility)" Value="Collapsed"/>
+                                        <Setter Target="PART_CloseButton.(Opacity)" Value="0"/>
+                                        <Setter Target="PART_CloseButton.(IsHitTestVisible)" Value="False"/>
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Active">
                                     <VisualState.Setters>
-                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemPressedBrush}"/>
-                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockTabItemBackgroundSelectedBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockTabItemForegroundSelectedBrush}"/>
+                                        <Setter Target="PART_ActiveUnderline.(Visibility)" Value="Visible"/>
+                                        <Setter Target="PART_CloseButton.(Opacity)" Value="1"/>
+                                        <Setter Target="PART_CloseButton.(IsHitTestVisible)" Value="True"/>
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Hover">
                                     <VisualState.Setters>
-                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemHoverBrush}"/>
-                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockTabItemBackgroundHoverBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockTabItemForegroundHoverBrush}"/>
+                                        <Setter Target="PART_ActiveUnderline.(Visibility)" Value="Collapsed"/>
+                                        <Setter Target="PART_CloseButton.(Opacity)" Value="1"/>
+                                        <Setter Target="PART_CloseButton.(IsHitTestVisible)" Value="True"/>
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="SelectedUnfocused">
                                     <VisualState.Setters>
-                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockChromeTabItemSelectedUnfocusedBrush}"/>
-                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockChromeTabItemPressedForeBrush}"/>
+                                        <Setter Target="PART_Border.(Background)" Value="{ThemeResource DockTabItemBackgroundSelectedUnfocusedBrush}"/>
+                                        <Setter Target="PART_TitleItem.(Foreground)" Value="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                        <Setter Target="PART_ActiveUnderline.(Visibility)" Value="Visible"/>
+                                        <Setter Target="PART_CloseButton.(Opacity)" Value="1"/>
+                                        <Setter Target="PART_CloseButton.(IsHitTestVisible)" Value="True"/>
                                     </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        
-                        <local:DockableControl TrackingMode="Tab">
-                            <StackPanel x:Name="PART_DragTool"
-                                        Orientation="Horizontal"
-                                        Spacing="2">
-                                <TextBlock x:Name="PART_TitleItem"
-                                           Margin="0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{ThemeResource DockChromeTabItemRestForeBrush}"/>
-                                <Button x:Name="PART_CloseButton"
-                                        BorderThickness="0"
-                                        VerticalAlignment="Center"
-                                        Margin="0"
-                                        Background="Transparent">
-                                    <FontIcon Glyph="&#xE8BB;" 
-                                              FontSize="6"
-                                              Margin="0 2 0 0"/>
-                                </Button>
-                            </StackPanel>
-                        </local:DockableControl>
+
+                        <Grid>
+                            <local:DockableControl TrackingMode="Tab">
+                                <StackPanel x:Name="PART_DragTool"
+                                            Orientation="Horizontal"
+                                            Spacing="4">
+                                    <TextBlock x:Name="PART_TitleItem"
+                                               Margin="0"
+                                               VerticalAlignment="Center"
+                                               FontSize="{ThemeResource DockTabItemFontSize}"
+                                               Foreground="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                    <Button x:Name="PART_CloseButton"
+                                            BorderThickness="0"
+                                            VerticalAlignment="Center"
+                                            Margin="0"
+                                            Padding="0"
+                                            MinWidth="0"
+                                            MinHeight="0"
+                                            Width="{ThemeResource DockTabCloseButtonSize}"
+                                            Height="{ThemeResource DockTabCloseButtonSize}"
+                                            CornerRadius="2"
+                                            Background="Transparent">
+                                        <Viewbox Width="{ThemeResource DockTabCloseGlyphSize}"
+                                                 Height="{ThemeResource DockTabCloseGlyphSize}">
+                                            <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
+                                                  Width="16" Height="16"
+                                                  Fill="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                        </Viewbox>
+                                    </Button>
+                                </StackPanel>
+                            </local:DockableControl>
+                            <Rectangle x:Name="PART_ActiveUnderline"
+                                       Height="{ThemeResource DockActiveTabUnderlineThickness}"
+                                       VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Stretch"
+                                       Margin="-8,0,-4,0"
+                                       Fill="{ThemeResource DockTabItemAccentBrush}"
+                                       Visibility="Collapsed"/>
+                        </Grid>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

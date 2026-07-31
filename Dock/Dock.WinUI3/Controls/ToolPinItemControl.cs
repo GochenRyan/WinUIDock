@@ -218,15 +218,16 @@ namespace Dock.WinUI3.Controls
         protected override Size MeasureOverride(Size availableSize)
         {
             var size = availableSize;
+            var barThickness = DockMetrics.GetDouble("DockPinBarThickness", 26.0);
             switch (Orientation)
             {
                 case Orientation.Horizontal:
-                    size.Height = 30;
+                    size.Height = barThickness;
                     _previewPinnedBtn.Measure(availableSize);
                     size.Width = _previewPinnedBtn.DesiredSize.Width;
                     break;
                 case Orientation.Vertical:
-                    size.Width = 30;
+                    size.Width = barThickness;
                     _previewPinnedBtn.Measure(availableSize);
                     // Rotate
                     size.Height = _previewPinnedBtn.DesiredSize.Width;

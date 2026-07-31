@@ -57,8 +57,15 @@ namespace Dock.WinUI3.Controls
             GeneralTransform transform = TransformToVisual(null);
             Rect bounds = transform.TransformBounds(new Rect(0, 0, ActualWidth, ActualHeight));
 
-            var x = bounds.X;
-            var y = bounds.Y;
+            // Size stays in DIPs — that is what IHostWindow.SetSize expects. The
+            // ORIGIN is recorded in PHYSICAL SCREEN pixels: its only consumer is
+            // FactoryBase.FloatDockable, which feeds it straight into
+            // IDockWindow.X/Y => AppWindow.Move, i.e. screen space. Recording
+            // window-relative coordinates there made floated panels land near
+            // the top-left corner of the screen instead of where they sat.
+            var origin = GetScreenOrigin(bounds);
+            var x = origin.X;
+            var y = origin.Y;
             var width = bounds.Width;
             var height = bounds.Height;
 
@@ -74,6 +81,34 @@ namespace Dock.WinUI3.Controls
                     dockable.SetTabBounds(x, y, width, height);
                     break;
             }
+        }
+
+        /// <summary>
+        /// This control's top-left in physical screen pixels (same conversion as
+        /// Extensions.GetScreenPoint). Falls back to the window-relative origin
+        /// when the hosting window cannot be resolved yet.
+        /// </summary>
+        private Point GetScreenOrigin(Rect clientBounds)
+        {
+            try
+            {
+                if (HostWindow.GetWindowForElement(this) is { } window
+                    && window.Content is { } content
+                    && XamlRoot is { } xamlRoot)
+                {
+                    var inWindow = TransformToVisual(content).TransformPoint(new Point(0, 0));
+                    var scale = xamlRoot.RasterizationScale;
+                    var position = window.AppWindow.Position;
+                    return new Point(
+                        inWindow.X * scale + position.X,
+                        inWindow.Y * scale + position.Y);
+                }
+            }
+            catch
+            {
+            }
+
+            return new Point(clientBounds.X, clientBounds.Y);
         }
 
         private void DockableControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)

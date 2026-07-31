@@ -5,11 +5,41 @@
     xmlns:local="using:Dock.WinUI3.Controls">
 
     <Style TargetType="local:DocumentTabStrip">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:DocumentTabStrip">
+                    <local:DockPanel LastChildFill="False"
+                                     Background="{ThemeResource DockChromeBackgroundBrush}">
+                        <ItemsPresenter local:DockPanel.Dock="Left"/>
+                        <Button x:Name="PART_CreateButton"
+                                local:DockPanel.Dock="Left"
+                                VerticalAlignment="Center"
+                                Margin="2,4,0,0"
+                                Padding="0"
+                                MinWidth="0"
+                                MinHeight="0"
+                                Width="{ThemeResource DockTabCloseButtonSize}"
+                                Height="{ThemeResource DockTabCloseButtonSize}"
+                                CornerRadius="2"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Visibility="Collapsed">
+                            <Viewbox Width="{ThemeResource DockTabCloseGlyphSize}"
+                                     Height="{ThemeResource DockTabCloseGlyphSize}">
+                                <Path local:DockIcon.Data="{StaticResource DockIconAddData}"
+                                      Width="16" Height="16"
+                                      Fill="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                            </Viewbox>
+                        </Button>
+                    </local:DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
                     <local:WrapPanel Name="HorizontalWrapPanel"
-                                     Height="35"
+                                     Height="{ThemeResource DockDocumentTabStripHeight}"
                                      Background="{ThemeResource DockChromeBackgroundBrush}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>

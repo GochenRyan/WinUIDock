@@ -1,3 +1,4 @@
+﻿using CommunityToolkit.WinUI;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -37,10 +38,78 @@ namespace Dock.WinUI3.Controls
         private void ToolControl_Loaded(object sender, RoutedEventArgs e)
         {
             DataContextChanged += ToolControl_DataContextChanged;
+
+            // Closed-loop guard, outer half: makes sure the inner
+            // ToolContentControl really materialized from the ContentTemplate.
+            // An expansion aborted mid-flight (cross-window redock) is not
+            // retried by any event, which is what leaves a pane hollow.
+            LayoutUpdated -= ToolControl_LayoutUpdated;
+            LayoutUpdated += ToolControl_LayoutUpdated;
+        }
+
+        private void ToolControl_LayoutUpdated(object sender, object e)
+        {
+            EnsureContentHostBound();
+        }
+
+        private void EnsureContentHostBound()
+        {
+            if (_hostSuspended || _toolContentControl is null || DataContext is not ToolDock toolDock)
+            {
+                return;
+            }
+
+            var active = toolDock.ActiveDockable;
+            if (active is null)
+            {
+                return;
+            }
+
+            var bound = ReferenceEquals(_toolContentControl.DataContext, active)
+                        && ReferenceEquals(_toolContentControl.Content, active);
+
+            if (bound && _innerContent is { IsLoaded: true })
+            {
+                _hostAttempts = 0;
+                return;
+            }
+
+            _innerContent = _toolContentControl.FindDescendant<ToolContentControl>();
+            if (bound && _innerContent is not null)
+            {
+                _hostAttempts = 0;
+                return;
+            }
+
+            if (!ToolContentControl.IsEffectivelyVisible(this))
+            {
+                return;
+            }
+
+            if (++_hostAttempts > HostAttemptLimit)
+            {
+                _hostSuspended = true;
+                Internal.DockDiag.Log(
+                    $"ToolControl watchdog SUSPENDED on {Internal.DockDiag.Describe(this)} after {HostAttemptLimit} consecutive rebuilds");
+                return;
+            }
+
+            Internal.DockDiag.Log(
+                $"ToolControl watchdog REBUILD content host on {Internal.DockDiag.Describe(this)} (bound={bound}, inner={_innerContent is not null}) active='{active.Title}'");
+
+            // Re-assigning Content forces the ContentTemplate to instantiate a
+            // fresh inner chain.
+            _toolContentControl.Content = null;
+            _toolContentControl.DataContext = active;
+            _toolContentControl.Content = active;
+            _innerContent = null;
         }
 
         private void ToolControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
+            _hostAttempts = 0;
+            _hostSuspended = false;
+            _innerContent = null;
             BindData();
         }
 
@@ -112,8 +181,15 @@ namespace Dock.WinUI3.Controls
                     }
                 }
 
+                // Setting Content (not just DataContext) forces the
+                // ContentTemplate to re-instantiate a fresh inner
+                // ToolContentControl chain. The old always-null-Content "reuse"
+                // scheme had no rebuild path: when the transient cross-window
+                // layout race aborted the one-shot template expansion, the pane
+                // stayed hollow forever (no later activation could repair it).
                 _toolContentControl.Content = null;
                 _toolContentControl.DataContext = toolDock.ActiveDockable;
+                _toolContentControl.Content = toolDock.ActiveDockable;
             }
         }
 
@@ -123,9 +199,14 @@ namespace Dock.WinUI3.Controls
             return size;
         }
 
+        private const int HostAttemptLimit = 10;
+
         private ToolTabStrip _toolTabStrip;
         //private ToolContentControl _toolContentControl;
         private ContentControl _toolContentControl;
+        private ToolContentControl _innerContent;
+        private int _hostAttempts;
+        private bool _hostSuspended;
         private long _activeDockableContentToken = 0;
     }
 }

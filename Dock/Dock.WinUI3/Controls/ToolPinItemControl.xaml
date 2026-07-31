@@ -12,10 +12,54 @@
                     <local:DockableControl TrackingMode="Pinned">
                         <controls:LayoutTransformControl x:Name="PART_LayoutTransformControl">
                             <Button x:Name="PART_PreviewPinnedBtn"
-                                    BorderThickness="0">
+                                    BorderThickness="0"
+                                    Background="Transparent"
+                                    MinHeight="0"
+                                    MinWidth="0"
+                                    Padding="10,2,10,2"
+                                    CornerRadius="0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Grid x:Name="PART_PinRoot"
+                                              Background="{TemplateBinding Background}"
+                                              Padding="{TemplateBinding Padding}">
+                                            <Grid.BackgroundTransition>
+                                                <BrushTransition Duration="0:0:0.083"/>
+                                            </Grid.BackgroundTransition>
+                                            <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal"/>
+                                                    <VisualState x:Name="PointerOver">
+                                                        <VisualState.Setters>
+                                                            <Setter Target="PART_PinRoot.(Background)" Value="{ThemeResource DockPinItemHoverBrush}"/>
+                                                            <Setter Target="PART_PinAccent.(Visibility)" Value="Visible"/>
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <VisualState.Setters>
+                                                            <Setter Target="PART_PinRoot.(Background)" Value="{ThemeResource DockPinItemHoverBrush}"/>
+                                                            <Setter Target="PART_PinAccent.(Visibility)" Value="Visible"/>
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateManager.VisualStateGroups>
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                            <Rectangle x:Name="PART_PinAccent"
+                                                       Height="2"
+                                                       VerticalAlignment="Bottom"
+                                                       HorizontalAlignment="Stretch"
+                                                       Margin="-10,0,-10,0"
+                                                       Fill="{ThemeResource DockPinItemAccentBrush}"
+                                                       Visibility="Collapsed"/>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Button.Template>
                                 <TextBlock x:Name="PART_PreviewPinnedText"
                                             VerticalAlignment="Center"
-                                            HorizontalAlignment="Left"/>
+                                            HorizontalAlignment="Left"
+                                            FontSize="{ThemeResource DockTabItemFontSize}"
+                                            Foreground="{ThemeResource DockPinItemForegroundBrush}"/>
                             </Button>
                         </controls:LayoutTransformControl>
                     </local:DockableControl>

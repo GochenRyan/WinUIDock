@@ -9,6 +9,7 @@
     xmlns:controls="using:Dock.WinUI3.Controls" 
     xmlns:modewinui3="using:Dock.Model.WinUI3" 
     xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    Title="WinUIDock Sample"
     mc:Ignorable="d">
 
     <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
@@ -41,6 +42,19 @@
                 <RadioMenuFlyoutItem Text="Small icons" GroupName="SizeGroup"/>
                 <RadioMenuFlyoutItem Text="Medium icons" IsChecked="True" GroupName="SizeGroup"/>
                 <RadioMenuFlyoutItem Text="Large icons" GroupName="SizeGroup"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Theme">
+                <RadioMenuFlyoutItem x:Name="ThemeDarkItem" Text="Dark" GroupName="ThemeGroup" IsChecked="True" Click="ThemeDark_Click"/>
+                <RadioMenuFlyoutItem x:Name="ThemeLightItem" Text="Light" GroupName="ThemeGroup" Click="ThemeLight_Click"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Material">
+                <ToggleMenuFlyoutItem x:Name="AcrylicToggleItem" Text="Acrylic effects" Click="AcrylicToggle_Click"/>
+                <MenuFlyoutSeparator/>
+                <RadioMenuFlyoutItem x:Name="BackdropNoneItem" Text="No backdrop" GroupName="BackdropGroup" IsChecked="True" Click="BackdropNone_Click"/>
+                <RadioMenuFlyoutItem x:Name="BackdropMicaItem" Text="Mica backdrop" GroupName="BackdropGroup" Click="BackdropMica_Click"/>
+                <RadioMenuFlyoutItem x:Name="BackdropAcrylicItem" Text="Acrylic backdrop" GroupName="BackdropGroup" Click="BackdropAcrylic_Click"/>
             </MenuBarItem>
 
             <MenuBarItem Title="Help">
@@ -89,7 +103,26 @@
                                 <!--Documents Pane-->
                                 <winui3controls:DocumentDock x:Name="DocumentsPane" Id="DocumentsPane" CanCreateDocument="True" CanClose="False" ActiveDockable="{x:Bind Document1, Mode=OneWay}">
                                     <winui3controls:Document x:Name="Document1" Id="Document1" Title="Program.cs">
-                                        <TextBlock Text="{x:Bind Document1.Title, Mode=OneWay}"/>
+                                        <!-- Mock code content: bright, varied lines so translucent
+                                             materials (acrylic flyouts) visibly blur something. -->
+                                        <StackPanel Padding="12,8" Spacing="2">
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#569CD6" Text="using System;"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#569CD6" Text="using Dock.WinUI3;"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Text=""/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#4EC9B0" Text="namespace DockWinUISample"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="{}{"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#DCDCAA" Text="    public static class Program"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="    {}{"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#C586C0" Text="        [STAThread]"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#DCDCAA" Text="        public static void Main(string[] args)"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="        {}{"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#CE9178" Text="            // Bootstraps the WinUI application."/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#FFFFFF" Text="            global::WinRT.ComWrappersSupport.InitializeComWrappers();"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#FFFFFF" Text="            Microsoft.UI.Xaml.Application.Start((p) =&gt; new App());"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="        }"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="    }"/>
+                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="#D4D4D4" Text="}"/>
+                                        </StackPanel>
                                     </winui3controls:Document>
                                     <winui3controls:Document x:Name="Document2" Id="Document2" Title="App.xaml">
                                         <TextBlock Text="{x:Bind Document2.Title, Mode=OneWay}"/>

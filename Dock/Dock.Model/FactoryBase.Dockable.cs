@@ -567,28 +567,39 @@ public abstract partial class FactoryBase
 
         UnpinDockable(dockable);
 
-        dock.GetPointerScreenPosition(out var dockPointerScreenX, out var dockPointerScreenY);
-        dockable.GetPointerScreenPosition(out var dockablePointerScreenX, out var dockablePointerScreenY);
-
-        if (double.IsNaN(dockablePointerScreenX))
-        {
-            dockablePointerScreenX = dockPointerScreenX;
-        }
-        if (double.IsNaN(dockablePointerScreenY))
-        {
-            dockablePointerScreenY = dockPointerScreenY;
-        }
-
         dock.GetVisibleBounds(out var ownerX, out var ownerY, out var ownerWidth, out var ownerHeight);
         dockable.GetVisibleBounds(out var dockableX, out var dockableY, out var dockableWidth, out var dockableHeight);
 
-        if (double.IsNaN(dockablePointerScreenX))
+        // Float IN PLACE: the window appears where the panel currently sits on
+        // screen (bounds origins are recorded in screen space by the view). The
+        // last pointer position is only a fallback — preferring it made the
+        // "Float" command drop the window wherever the mouse happened to be
+        // when the chrome menu was opened, which reads as random.
+        var x = dockableX;
+        var y = dockableY;
+
+        if (double.IsNaN(x) || double.IsNaN(y))
         {
-            dockablePointerScreenX = !double.IsNaN(dockableX) ? dockableX : !double.IsNaN(ownerX) ? ownerX : 0;
+            x = ownerX;
+            y = ownerY;
         }
-        if (double.IsNaN(dockablePointerScreenY))
+
+        if (double.IsNaN(x) || double.IsNaN(y))
         {
-            dockablePointerScreenY = !double.IsNaN(dockableY) ? dockableY : !double.IsNaN(ownerY) ? ownerY : 0;
+            dock.GetPointerScreenPosition(out var dockPointerScreenX, out var dockPointerScreenY);
+            dockable.GetPointerScreenPosition(out var dockablePointerScreenX, out var dockablePointerScreenY);
+
+            x = !double.IsNaN(dockablePointerScreenX) ? dockablePointerScreenX : dockPointerScreenX;
+            y = !double.IsNaN(dockablePointerScreenY) ? dockablePointerScreenY : dockPointerScreenY;
+        }
+
+        if (double.IsNaN(x))
+        {
+            x = 0;
+        }
+        if (double.IsNaN(y))
+        {
+            y = 0;
         }
         if (double.IsNaN(dockableWidth))
         {
@@ -599,7 +610,7 @@ public abstract partial class FactoryBase
             dockableHeight = double.IsNaN(ownerHeight) ? 400 : ownerHeight;
         }
 
-        SplitToWindow(dock, dockable, dockablePointerScreenX, dockablePointerScreenY, dockableWidth, dockableHeight);
+        SplitToWindow(dock, dockable, x, y, dockableWidth, dockableHeight);
     }
 
     /// <inheritdoc/>

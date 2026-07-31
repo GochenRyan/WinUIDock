@@ -1,3 +1,4 @@
+using CommunityToolkit.WinUI;
 using CommunityToolkit.WinUI.Controls;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
@@ -5,6 +6,7 @@ using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 using System;
 using Windows.Foundation;
 
@@ -26,6 +28,11 @@ namespace Dock.WinUI3.Controls
         {
             this.DefaultStyleKey = typeof(PinnedDockControl);
             Loaded += PinnedDockControl_Loaded;
+
+            // The flyout is a transient surface (Spec 05): its outer dockable
+            // gets the acrylic flyout brush. The brush is resolved per theme in
+            // code, so re-resolve when the element theme changes.
+            ActualThemeChanged += (_, _) => ApplyFlyoutSurface();
         }
 
         private void PinnedDockControl_Loaded(object sender, RoutedEventArgs e)
@@ -82,7 +89,7 @@ namespace Dock.WinUI3.Controls
                     {
                         MinWidth = 0,
                         MaxWidth = maxWidth,
-                        Width = new GridLength(300)
+                        Width = new GridLength(DockMetrics.GetDouble("DockPinnedFlyoutSize", 300.0))
                     });
                     _pinnedDockGrid.ColumnDefinitions.Add(new ColumnDefinition()
                     {
@@ -106,7 +113,7 @@ namespace Dock.WinUI3.Controls
                     {
                         MinHeight = 0,
                         MaxHeight = maxHeight,
-                        Height = new GridLength(300)
+                        Height = new GridLength(DockMetrics.GetDouble("DockPinnedFlyoutSize", 300.0))
                     });
                     _splitter.ResizeDirection = GridSplitter.GridResizeDirection.Rows;
 
@@ -125,7 +132,7 @@ namespace Dock.WinUI3.Controls
                     {
                         MinWidth = 0,
                         MaxWidth = maxWidth,
-                        Width = new GridLength(300)
+                        Width = new GridLength(DockMetrics.GetDouble("DockPinnedFlyoutSize", 300.0))
                     });
                     _splitter.ResizeDirection = GridSplitter.GridResizeDirection.Columns;
 
@@ -139,7 +146,7 @@ namespace Dock.WinUI3.Controls
                     {
                         MinHeight = 0,
                         MaxHeight = maxHeight,
-                        Height = new GridLength(300)
+                        Height = new GridLength(DockMetrics.GetDouble("DockPinnedFlyoutSize", 300.0))
                     });
                     _pinnedDockGrid.RowDefinitions.Add(new RowDefinition()
                     {
@@ -170,6 +177,52 @@ namespace Dock.WinUI3.Controls
 
             BindData();
             UpdateGrid();
+
+            // Inner templates are not applied yet at this point; retry on
+            // layout until the flyout's surface elements exist.
+            LayoutUpdated += TryApplyFlyoutMaterial;
+        }
+
+        /// <summary>
+        /// Locates the flyout's paint surfaces once the inner templates exist:
+        /// the outer DockableControl (solid DockBackgroundBrush by template)
+        /// becomes the acrylic flyout surface, and the tool pane border becomes
+        /// transparent so the surface shows through the content area. With
+        /// acrylic disabled (the default) the surface renders the brush's solid
+        /// FallbackColor — visually the plain theme.
+        /// </summary>
+        private void TryApplyFlyoutMaterial(object sender, object e)
+        {
+            if (_pinnedToolDock?.FindDescendant<DockableControl>() is not DockableControl surface)
+            {
+                return;
+            }
+
+            var paneBorder = _pinnedToolDock.FindDescendant<Border>(b => b.Name == "PART_Border");
+            if (paneBorder is null)
+            {
+                return;
+            }
+
+            LayoutUpdated -= TryApplyFlyoutMaterial;
+            _flyoutSurface = surface;
+            paneBorder.Background = null;
+            ApplyFlyoutSurface();
+        }
+
+        private void ApplyFlyoutSurface()
+        {
+            if (_flyoutSurface is null)
+            {
+                return;
+            }
+
+            var theme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark;
+            if (DockThemeManager.TryGetResource("DockAcrylicFlyoutBrush", theme, out var value)
+                && value is Brush brush)
+            {
+                _flyoutSurface.Background = brush;
+            }
         }
 
         // The Windows Runtime doesn't support a Binding usage for Setter.Value.
@@ -227,5 +280,6 @@ namespace Dock.WinUI3.Controls
         private Grid _pinnedDockGrid;
         private ToolDockControl _pinnedToolDock;
         private GridSplitter _splitter;
+        private DockableControl _flyoutSurface;
     }
 }

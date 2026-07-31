@@ -1,4 +1,4 @@
-using Dock.Model.Controls;
+﻿using Dock.Model.Controls;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,17 +28,32 @@ namespace Dock.WinUI3.Controls
                 if (DataContext is Tool tool)
                 {
                     tool.UnregisterPropertyChangedCallback(Tool.ContentProperty, _contentToken);
+                    _contentToken = 0;
                 }
                 else if (DataContext is Document document)
                 {
                     document.UnregisterPropertyChangedCallback(Document.ContentProperty, _contentToken);
+                    _contentToken = 0;
                 }
+            }
+
+            DataContextChanged -= DocumentContentControl_DataContextChanged;
+
+            // Detach the model-owned content element while this tree is still
+            // alive — see ToolContentControl_Unloaded for the closed-window
+            // poisoning this prevents (E_INVALIDARG on the next host's measure).
+            if (_contentPresenter is not null)
+            {
+                _contentPresenter.Content = null;
             }
         }
 
         private void DocumentContentControl_Loaded(object sender, RoutedEventArgs e)
         {
             DataContextChanged += DocumentContentControl_DataContextChanged;
+
+            // Restore content after an Unloaded detach (tab/float round trips).
+            BindData();
         }
 
         private void DocumentContentControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -56,21 +71,51 @@ namespace Dock.WinUI3.Controls
 
         private void UpdateContent()
         {
-            if (DataContext is IDocument document)
+            if (_contentPresenter is null || DataContext is not IDocument document)
             {
-                if (document is IDocumentContent documentContent && _contentPresenter.Content != documentContent.Content)
-                {
-                    _contentPresenter.Content = documentContent.Content;
-                    _contentPresenter.InvalidateMeasure();
-                    _dockableControl.RecordSize();
-                }
-                else if (document is IToolContent toolContent && _contentPresenter.Content != toolContent.Content)
-                {
-                    _contentPresenter.Content = toolContent.Content;
-                    _contentPresenter.InvalidateMeasure();
-                    _dockableControl.RecordSize();
-                }
+                return;
             }
+
+            object content = document is IDocumentContent documentContent
+                ? documentContent.Content
+                : document is IToolContent toolContent ? toolContent.Content : null;
+
+            if (content is null)
+            {
+                return;
+            }
+
+            if (ReferenceEquals(_contentPresenter.Content, content))
+            {
+                // Same stale-reference hole as ToolContentControl.UpdateContent:
+                // the presenter still references the element while another host
+                // stole it visually — a same-value assignment won't re-hook it.
+                if (content is UIElement el
+                    && !ReferenceEquals(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(el), _contentPresenter))
+                {
+                    Internal.DockDiag.Log(
+                        $"DocumentContentControl.UpdateContent REHOOK host={Internal.DockDiag.Describe(this)} content={Internal.DockDiag.Describe(content)}");
+                    ToolContentControl.DetachFromCurrentHost(el, _contentPresenter);
+                    _contentPresenter.Content = null;
+                    _contentPresenter.Content = content;
+                    _contentPresenter.InvalidateMeasure();
+                    _dockableControl?.RecordSize();
+                }
+
+                return;
+            }
+
+            // Release the element from its current visual host first — see
+            // ToolContentControl.UpdateContent (shared model-owned element;
+            // FrameworkElement.Parent does not surface presenter hosts).
+            if (content is UIElement element)
+            {
+                ToolContentControl.DetachFromCurrentHost(element, _contentPresenter);
+            }
+
+            _contentPresenter.Content = content;
+            _contentPresenter.InvalidateMeasure();
+            _dockableControl?.RecordSize();
         }
 
         protected override void OnApplyTemplate()

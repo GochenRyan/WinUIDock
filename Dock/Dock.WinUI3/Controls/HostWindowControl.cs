@@ -1,3 +1,4 @@
+﻿using CommunityToolkit.WinUI;
 using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
@@ -25,6 +26,11 @@ namespace Dock.WinUI3.Controls
             _ownerWindow = hostWindow;
             _ownerWindow.WindowContent = this;
             _ownerWindow.ExtendsContentIntoTitleBar = true;
+
+            // Float windows are created dynamically and must follow the dock theme
+            // (content root + OS caption buttons; applied immediately and kept in
+            // sync with later SetTheme calls; weak refs, drop on close).
+            DockThemeManager.RegisterWindow(hostWindow);
 
             _ownerWindow.PositionChanged += _ownerWindow_PositionChanged;
             _ownerWindow.SizeChanged += _ownerWindow_SizeChanged;
@@ -61,10 +67,23 @@ namespace Dock.WinUI3.Controls
                 _dockControl.Layout = dock;
             }
 
-            //if (_titleBar != null)
-            //{
-            //    _titleBar.TitleText = (dock != null ? dock.Title : "");
-            //}
+            if (_titleBar != null && dock != null)
+            {
+                _titleBar.TitleText = ResolveTitle(dock);
+            }
+        }
+
+        // Float windows show the floated content's own title (walk down the
+        // active chain to the leaf tool/document) instead of the parent window's.
+        private static string ResolveTitle(IDock dock)
+        {
+            IDockable current = dock;
+            while (current is IDock d && d.ActiveDockable is not null)
+            {
+                current = d.ActiveDockable;
+            }
+
+            return current?.Title ?? string.Empty;
         }
 
         private void HostWindowControl_LayoutUpdated(object sender, object e)
@@ -107,6 +126,7 @@ namespace Dock.WinUI3.Controls
             _dockControl.Layout = DataContext as IDock;
 
             _titleBar = GetTemplateChild(TitleBarName) as HostWindowTitleBar;
+            _titleBar.Height = DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0);
             _ownerWindow.SetTitleBar(_titleBar);
             UpdateTemplateChilren();
         }
@@ -140,17 +160,22 @@ namespace Dock.WinUI3.Controls
                     Window.Factory?.OnWindowOpened(Window);
                 }
 
-                var ownerDockControl = Window?.Layout?.Factory?.DockControls.FirstOrDefault();
-
-                if (ownerDockControl is Control control && HostWindow.GetWindowForElement(control) is Window parentWindow)
+                // OS-level title (taskbar/alt-tab): use the floated content's own
+                // title when available, falling back to the parent window's.
+                if (DataContext is IDock dock && ResolveTitle(dock) is { Length: > 0 } title)
                 {
-                    _ownerWindow.Title = parentWindow.Title;
-                    _ownerWindow.Show();
+                    _ownerWindow.Title = title;
                 }
                 else
                 {
-                    _ownerWindow.Show();
+                    var ownerDockControl = Window?.Layout?.Factory?.DockControls.FirstOrDefault();
+                    if (ownerDockControl is Control control && HostWindow.GetWindowForElement(control) is Window parentWindow)
+                    {
+                        _ownerWindow.Title = parentWindow.Title;
+                    }
                 }
+
+                _ownerWindow.Show();
             }
         }
 
@@ -213,17 +238,70 @@ namespace Dock.WinUI3.Controls
 
         public void Exit()
         {
-            if (Window is { })
+            // Deferred close: Exit is reached synchronously from pointer-event
+            // handlers of elements living in THIS window (grip drag-dock drop:
+            // DockControlState executes the dock, the emptied float window exits,
+            // then the pointer chain keeps touching this window's objects —
+            // closing immediately yields E_ACCESSDENIED "The caller is not
+            // allowed to perform this operation on this object"). Let the event
+            // chain unwind first.
+            Internal.DockDiag.Log($"HostWindowControl.Exit requested for {Internal.DockDiag.Describe(this)}");
+            var window = Window;
+            var ownerWindow = _ownerWindow;
+            // Low priority: let the post-drop layout pass of the target window
+            // finish before this window tears down — closing mid-pass is the
+            // trigger of the transient E_INVALIDARG measure/arrange race.
+            var enqueued = DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
             {
-                if (Window.OnClose())
+                try
                 {
-                    _ownerWindow.Close();
+                    if (window is { })
+                    {
+                        if (window.OnClose())
+                        {
+                            CloseOwnerWindow(ownerWindow);
+                        }
+                    }
+                    else
+                    {
+                        CloseOwnerWindow(ownerWindow);
+                    }
+                }
+                catch
+                {
+                    // Already closed/closing — nothing left to do.
+                }
+            });
+
+            if (!enqueued)
+            {
+                CloseOwnerWindow(ownerWindow);
+            }
+        }
+
+        private void CloseOwnerWindow(WindowEx ownerWindow)
+        {
+            Internal.DockDiag.Log($"HostWindowControl.CloseOwnerWindow executing for {Internal.DockDiag.Describe(this)}");
+            // Closing a WinUI 3 window does NOT reliably raise Unloaded for its
+            // tree, so the model-owned shared content elements can die attached
+            // to this window and poison their next host (E_INVALIDARG at its
+            // native measure). Force-detach every content presenter while the
+            // tree is still alive, then close.
+            try
+            {
+                foreach (var presenter in this.FindDescendants().OfType<ContentPresenter>())
+                {
+                    if (presenter.Name == ToolContentControl.ContentPresenterName)
+                    {
+                        presenter.Content = null;
+                    }
                 }
             }
-            else
+            catch
             {
-                _ownerWindow.Close();
             }
+
+            ownerWindow.Close();
         }
 
         public void SetPosition(double x, double y)

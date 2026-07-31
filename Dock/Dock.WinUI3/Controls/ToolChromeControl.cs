@@ -1,3 +1,4 @@
+﻿using System;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
@@ -25,8 +26,8 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = TitlePartName, Type = typeof(TextBlock))]
     [TemplatePart(Name = PinButtonPartName, Type = typeof(Button))]
     //[TemplatePart(Name = MaximizeRestoreButtonPartName, Type = typeof(Button))]
-    //[TemplateVisualState(Name = NormalState, GroupName = BorderStates)]
-    //[TemplateVisualState(Name = ActiveState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = NormalState, GroupName = BorderStates)]
+    [TemplateVisualState(Name = ActiveState, GroupName = BorderStates)]
     public sealed class ToolChromeControl : ContentControl
     {
         public const string BorderName = "PART_Border";
@@ -67,7 +68,24 @@ namespace Dock.WinUI3.Controls
                 toolDock.VisibleDockables.CollectionChanged -= VisibleDockables_CollectionChanged;
                 if (_activeDockableToken != 0)
                     toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableToken);
+                if (_gripModeToken != 0)
+                {
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.GripModeProperty, _gripModeToken);
+                    _gripModeToken = 0;
+                }
             }
+        }
+
+        private void UpdateGripVisibility(ToolDock toolDock)
+        {
+            if (_border is null)
+            {
+                return;
+            }
+
+            _border.Visibility = toolDock.GripMode == GripMode.Hidden
+                ? Visibility.Collapsed
+                : Visibility.Visible;
         }
 
         private void ToolChromeControl_Loaded(object sender, RoutedEventArgs e)
@@ -233,6 +251,14 @@ namespace Dock.WinUI3.Controls
                     toolDock.UnregisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, _activeDockableToken);
                 _activeDockableToken = toolDock.RegisterPropertyChangedCallback(ToolDock.ActiveDockableProperty, ActiveDockableChangedCallback);
 
+                // GripMode.Hidden collapses the whole caption (chrome-less panes,
+                // e.g. a game viewport). Serialized model property; track changes.
+                UpdateGripVisibility(toolDock);
+                if (_gripModeToken != 0)
+                    toolDock.UnregisterPropertyChangedCallback(ToolDock.GripModeProperty, _gripModeToken);
+                _gripModeToken = toolDock.RegisterPropertyChangedCallback(ToolDock.GripModeProperty,
+                    (_, _) => UpdateGripVisibility(toolDock));
+
                 AddFlyout();
                 _menuButton.Click += _menuButton_Click;
                 _maximizeRestoreButton.Click += _maximizeRestoreButton_Click;
@@ -253,19 +279,11 @@ namespace Dock.WinUI3.Controls
             if (DataContext is not ToolDock toolDock)
                 return;
 
-            // I have no idea about why VisualStateManager.GotoState does not take effect
-            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
-
-            if (e.Dockable == toolDock.ActiveDockable)
-            {
-                _border.Background = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemPressedBrush"];
-                _title.Foreground = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemPressedForeBrush"];
-            }
-            else
-            {
-                _border.Background = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemRestBrush"];
-                _title.Foreground = (Microsoft.UI.Xaml.Media.Brush)resourceDict["DockChromeTabItemRestForeBrush"];
-            }
+            // State groups live on the template root (WinUI requirement); the previous
+            // imperative brush lookup crashed when the host app registered no
+            // ThemeDictionaries, and bypassed the template's theme resources.
+            var state = e.Dockable == toolDock.ActiveDockable ? ActiveState : NormalState;
+            VisualStateManager.GoToState(this, state, false);
         }
 
         private void ActiveDockableChangedCallback(DependencyObject sender, DependencyProperty dp)
@@ -512,8 +530,57 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            var size = base.MeasureOverride(availableSize);
-            return size;
+            try
+            {
+                return base.MeasureOverride(availableSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                // Cross-window redock can race a measure pass against elements
+                // mid-migration: native measure throws E_INVALIDARG once, and
+                // the very next measure of the same subtree succeeds (proven by
+                // the pinpoint probe re-measuring successfully). Self-heal:
+                // report the last good size now, re-measure next tick.
+                Internal.DockDiag.Log($"ToolChromeControl.MeasureOverride transient failure — retrying inline");
+                try
+                {
+                    // The pinpoint probe proved an immediate re-measure of the
+                    // same subtree succeeds — retry inline so the pass still
+                    // materializes templates/content (skipping it left panes
+                    // empty after redock).
+                    return base.MeasureOverride(availableSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ToolChromeControl.MeasureOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateMeasure);
+                    return DesiredSize;
+                }
+            }
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            try
+            {
+                return base.ArrangeOverride(finalSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                // Same transient close-vs-layout race as MeasureOverride, hit in
+                // the arrange phase of the same pass — self-heal identically.
+                Internal.DockDiag.Log($"ToolChromeControl.ArrangeOverride transient failure on {Internal.DockDiag.Describe(this)}: {ex.Message} — retrying inline");
+                try
+                {
+                    return base.ArrangeOverride(finalSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("ToolChromeControl.ArrangeOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateArrange);
+                    return finalSize;
+                }
+            }
         }
 
         public Grid Grip { get; private set; }
@@ -528,5 +595,6 @@ namespace Dock.WinUI3.Controls
         private Button _menuButton;
         private MenuFlyoutItem _autoHideItem;
         private long _activeDockableToken;
+        private long _gripModeToken;
     }
 }

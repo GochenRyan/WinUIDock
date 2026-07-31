@@ -18,7 +18,10 @@ namespace Dock.WinUI3.Internal
             if (element == null) return;
 
             var window = HostWindow.GetWindowForElement(element);
-            var root = (FrameworkElement)window.Content;
+            if (window?.Content is not FrameworkElement root)
+            {
+                return;
+            }
 
             if (_popup is { } && Adorner is { } && ReferenceEquals(_currentElement, element))
             {
@@ -35,6 +38,10 @@ namespace Dock.WinUI3.Internal
             {
                 Width = root.ActualWidth,
                 Height = root.ActualHeight,
+                // Popups are not part of the themed visual root — inherit the
+                // target window's effective theme explicitly so the guides and
+                // preview use the right palette.
+                RequestedTheme = root.ActualTheme,
             };
 
             Adorner = new DockTarget();

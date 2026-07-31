@@ -178,14 +178,40 @@ public class DockManager : IDockManager
             return false;
         }
 
-        if (factory.FindRoot(sourceDockable, _ => true) is { ActiveDockable: IDock targetWindowOwner })
+        if (factory.FindRoot(sourceDockable, _ => true) is { } sourceRoot
+            && sourceRoot.ActiveDockable is IDock targetWindowOwner)
         {
+            // Dragging the ONLY content of a float window "out" would tear that
+            // window down and immediately rebuild an identical one for the same
+            // dockable (SplitToWindow = RemoveDockable + CreateWindowFrom):
+            // visible flicker, a brand new layout tree, and the window shrinks
+            // because its size gets re-derived from the content bounds. The
+            // dockable already floats on its own — treat it as a no-op.
+            if (sourceRoot.Window is not null && CountDockables(sourceRoot) <= 1)
+            {
+                return false;
+            }
+
             if (bExecute)
             {
                 sourceDockableOwner.GetVisibleBounds(out _, out _, out var ownerWidth, out var ownerHeight);
                 sourceDockable.GetVisibleBounds(out _, out _, out var width, out var height);
                 var x = ScreenPosition.X;
                 var y = ScreenPosition.Y;
+
+                // Splitting out of an existing float window: inherit that
+                // window's size. Deriving it from the dockable's visible bounds
+                // yields the CONTENT size, so the new window loses the chrome
+                // every round (the "height reduction after multiple splits"
+                // TODO in FactoryBase.SplitToWindow).
+                if (sourceRoot.Window is { } sourceWindow
+                    && !double.IsNaN(sourceWindow.WindowWidth) && sourceWindow.WindowWidth > 0
+                    && !double.IsNaN(sourceWindow.WindowHeight) && sourceWindow.WindowHeight > 0)
+                {
+                    width = sourceWindow.WindowWidth;
+                    height = sourceWindow.WindowHeight;
+                }
+
                 if (double.IsNaN(width))
                 {
                     width = double.IsNaN(ownerWidth) ? 300 : ownerWidth;
@@ -203,6 +229,38 @@ public class DockManager : IDockManager
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Counts the leaf dockables (tools/documents) under a dockable. Stops
+    /// early past one — callers only ask "is there more than a single one".
+    /// </summary>
+    private static int CountDockables(IDockable? dockable)
+    {
+        switch (dockable)
+        {
+            case null:
+                return 0;
+            case IDock dock:
+                {
+                    var count = 0;
+                    if (dock.VisibleDockables is { } children)
+                    {
+                        foreach (var child in children)
+                        {
+                            count += CountDockables(child);
+                            if (count > 1)
+                            {
+                                return count;
+                            }
+                        }
+                    }
+
+                    return count;
+                }
+            default:
+                return 1;
+        }
     }
 
     private bool DockDockableIntoDockable(IDockable sourceDockable, IDockable targetDockable, DragAction action, bool bExecute)

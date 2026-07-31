@@ -19,6 +19,11 @@ namespace Dock.WinUI3.Controls
 
         private static void RegisterWindow(AppWindow appWindow, Window window)
         {
+            if (appWindow is null)
+            {
+                return;
+            }
+
             windowMap[appWindow] = window;
             if (_mainWindow != null)
             {
@@ -27,16 +32,14 @@ namespace Dock.WinUI3.Controls
                     window.Close();
                 };
             }
-            window.Closed += Window_Closed;
-        }
 
-        private static void Window_Closed(object sender, WindowEventArgs args)
-        {
-            Window window = sender as Window;
-            if (window != null && window.AppWindow != null)
-            {
-                windowMap.Remove(window.AppWindow);
-            }
+            // Remove by the CAPTURED key: Window.AppWindow is not reliably
+            // accessible once the window has closed, so re-fetching it inside a
+            // Closed handler could leave a zombie entry behind. Touching members
+            // of such a closed window later (e.g. Content in GetWindowForElement)
+            // throws E_INVALIDARG ("Value does not fall within the expected
+            // range") on whatever unrelated code path calls in next.
+            window.Closed += (_, _) => windowMap.Remove(appWindow);
         }
 
         public static Window GetWindow(AppWindow appWindow)
@@ -49,16 +52,39 @@ namespace Dock.WinUI3.Controls
         {
             if (element.XamlRoot != null)
             {
-                foreach (Window window in windowMap.Values)
+                List<AppWindow> broken = null;
+
+                foreach (var entry in windowMap)
                 {
-                    if (element.XamlRoot == window.Content.XamlRoot)
+                    UIElement content;
+                    try
                     {
-                        return window;
+                        content = entry.Value.Content;
+                    }
+                    catch
+                    {
+                        // Closed window that escaped unregistration — prune it
+                        // instead of letting the failure surface here.
+                        (broken ??= new List<AppWindow>()).Add(entry.Key);
+                        continue;
+                    }
+
+                    if (content?.XamlRoot == element.XamlRoot)
+                    {
+                        return entry.Value;
+                    }
+                }
+
+                if (broken != null)
+                {
+                    foreach (var key in broken)
+                    {
+                        windowMap.Remove(key);
                     }
                 }
             }
 
-            if (_mainWindow != null && element.XamlRoot == _mainWindow.Content.XamlRoot)
+            if (_mainWindow != null && element.XamlRoot == _mainWindow.Content?.XamlRoot)
             {
                 return _mainWindow;
             }

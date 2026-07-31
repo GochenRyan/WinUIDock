@@ -4,6 +4,31 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Dock.WinUI3.Controls">
 
+    <!-- A single vector dock guide: themed rounded plate + glyph. The glyph
+         geometry is assigned in code from GlyphData (Geometry cannot be shared
+         between elements); highlight brushes are applied in code too. The plate
+         Background makes the whole guide hit-testable (DockTarget accepts a hit
+         on the guide or any descendant). -->
+    <Style TargetType="local:DockTargetGuide">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:DockTargetGuide">
+                    <Border x:Name="PART_Plate"
+                            Background="{ThemeResource DockGuideBackgroundBrush}"
+                            BorderBrush="{ThemeResource DockGuideBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Viewbox Stretch="Uniform">
+                            <Path x:Name="PART_Glyph"
+                                  Width="40" Height="40"
+                                  Fill="{ThemeResource DockGuideGlyphBrush}"/>
+                        </Viewbox>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="local:DockTarget">
         <Setter Property="Template">
             <Setter.Value>
@@ -12,41 +37,41 @@
                         <Grid x:Name="PART_RootSelectorsLayer"
                               IsHitTestVisible="True">
 
-                            <Image x:Name="PART_RootTopSelector"
-                                   Width="32"
-                                   Height="32"
-                                   Visibility="Collapsed"
-                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableTop.png"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Top"
-                                   Margin="0,12,0,0"/>
+                            <local:DockTargetGuide x:Name="PART_RootTopSelector"
+                                                   Width="{ThemeResource DockRootGuideSize}"
+                                                   Height="{ThemeResource DockRootGuideSize}"
+                                                   GlyphData="{StaticResource DockGuideGlyphTopData}"
+                                                   Visibility="Collapsed"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Top"
+                                                   Margin="0,16,0,0"/>
 
-                            <Image x:Name="PART_RootBottomSelector"
-                                   Width="32"
-                                   Height="32"
-                                   Visibility="Collapsed"
-                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableBottom.png"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Bottom"
-                                   Margin="0,0,0,12"/>
+                            <local:DockTargetGuide x:Name="PART_RootBottomSelector"
+                                                   Width="{ThemeResource DockRootGuideSize}"
+                                                   Height="{ThemeResource DockRootGuideSize}"
+                                                   GlyphData="{StaticResource DockGuideGlyphBottomData}"
+                                                   Visibility="Collapsed"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Margin="0,0,0,16"/>
 
-                            <Image x:Name="PART_RootLeftSelector"
-                                   Width="32"
-                                   Height="32"
-                                   Visibility="Collapsed"
-                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableLeft.png"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Center"
-                                   Margin="12,0,0,0"/>
+                            <local:DockTargetGuide x:Name="PART_RootLeftSelector"
+                                                   Width="{ThemeResource DockRootGuideSize}"
+                                                   Height="{ThemeResource DockRootGuideSize}"
+                                                   GlyphData="{StaticResource DockGuideGlyphLeftData}"
+                                                   Visibility="Collapsed"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Center"
+                                                   Margin="16,0,0,0"/>
 
-                            <Image x:Name="PART_RootRightSelector"
-                                   Width="32"
-                                   Height="32"
-                                   Visibility="Collapsed"
-                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableRight.png"
-                                   HorizontalAlignment="Right"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0"/>
+                            <local:DockTargetGuide x:Name="PART_RootRightSelector"
+                                                   Width="{ThemeResource DockRootGuideSize}"
+                                                   Height="{ThemeResource DockRootGuideSize}"
+                                                   GlyphData="{StaticResource DockGuideGlyphRightData}"
+                                                   Visibility="Collapsed"
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,16,0"/>
                         </Grid>
 
                         <Canvas x:Name="PART_LocalCanvas"
@@ -66,28 +91,36 @@
                                           Grid.Row="0"
                                           Grid.Column="0"
                                           Grid.ColumnSpan="2"
-                                          Background="Blue"
+                                          Background="{ThemeResource DockDropPreviewFillBrush}"
+                                          BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                          BorderThickness="1"
                                           Opacity="0"/>
 
                                     <Grid x:Name="PART_BottomIndicator"
                                           Grid.Row="1"
                                           Grid.Column="0"
                                           Grid.ColumnSpan="2"
-                                          Background="Blue"
+                                          Background="{ThemeResource DockDropPreviewFillBrush}"
+                                          BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                          BorderThickness="1"
                                           Opacity="0"/>
 
                                     <Grid x:Name="PART_LeftIndicator"
                                           Grid.Row="0"
                                           Grid.RowSpan="2"
                                           Grid.Column="0"
-                                          Background="Blue"
+                                          Background="{ThemeResource DockDropPreviewFillBrush}"
+                                          BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                          BorderThickness="1"
                                           Opacity="0"/>
 
                                     <Grid x:Name="PART_RightIndicator"
                                           Grid.Row="0"
                                           Grid.RowSpan="2"
                                           Grid.Column="1"
-                                          Background="Blue"
+                                          Background="{ThemeResource DockDropPreviewFillBrush}"
+                                          BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                          BorderThickness="1"
                                           Opacity="0"/>
 
                                     <Grid x:Name="PART_CenterIndicator"
@@ -95,7 +128,9 @@
                                           Grid.RowSpan="2"
                                           Grid.Column="0"
                                           Grid.ColumnSpan="2"
-                                          Background="Blue"
+                                          Background="{ThemeResource DockDropPreviewFillBrush}"
+                                          BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                          BorderThickness="1"
                                           Opacity="0"/>
 
                                     <Grid x:Name="PART_SelectorPanel"
@@ -104,54 +139,65 @@
                                           Grid.Column="0"
                                           Grid.ColumnSpan="2">
 
-                                        <Grid x:Name="PART_SelectorGrid"
-                                              RowDefinitions="*,*,*"
-                                              ColumnDefinitions="*,*,*"
-                                              MaxWidth="125"
-                                              MaxHeight="125"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center">
+                                        <!-- Cluster container. Deliberately has NO backing plate:
+                                             each guide already carries its own plate, and a second
+                                             one behind them read as visual noise. Code applies a
+                                             translate here to keep the cluster clear of the
+                                             window-edge root guides. -->
+                                        <Border x:Name="PART_ClusterPlate"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Visibility="Collapsed"
+                                                RenderTransformOrigin="0.5,0.5">
+                                            <Grid x:Name="PART_SelectorGrid"
+                                                  RowDefinitions="Auto,Auto,Auto"
+                                                  ColumnDefinitions="Auto,Auto,Auto">
 
-                                            <Image x:Name="PART_TopSelector"
-                                                   Grid.Row="0"
-                                                   Grid.Column="1"
-                                                   Width="40"
-                                                   Height="40"
-                                                   Visibility="Collapsed"
-                                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableTop.png"/>
+                                                <local:DockTargetGuide x:Name="PART_TopSelector"
+                                                                       Grid.Row="0"
+                                                                       Grid.Column="1"
+                                                                       Width="{ThemeResource DockGuideSize}"
+                                                                       Height="{ThemeResource DockGuideSize}"
+                                                                       GlyphData="{StaticResource DockGuideGlyphTopData}"
+                                                                       Margin="0,0,0,2"
+                                                                       Visibility="Collapsed"/>
 
-                                            <Image x:Name="PART_BottomSelector"
-                                                   Grid.Row="2"
-                                                   Grid.Column="1"
-                                                   Width="40"
-                                                   Height="40"
-                                                   Visibility="Collapsed"
-                                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableBottom.png"/>
+                                                <local:DockTargetGuide x:Name="PART_BottomSelector"
+                                                                       Grid.Row="2"
+                                                                       Grid.Column="1"
+                                                                       Width="{ThemeResource DockGuideSize}"
+                                                                       Height="{ThemeResource DockGuideSize}"
+                                                                       GlyphData="{StaticResource DockGuideGlyphBottomData}"
+                                                                       Margin="0,2,0,0"
+                                                                       Visibility="Collapsed"/>
 
-                                            <Image x:Name="PART_LeftSelector"
-                                                   Grid.Row="1"
-                                                   Grid.Column="0"
-                                                   Width="40"
-                                                   Height="40"
-                                                   Visibility="Collapsed"
-                                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableLeft.png"/>
+                                                <local:DockTargetGuide x:Name="PART_LeftSelector"
+                                                                       Grid.Row="1"
+                                                                       Grid.Column="0"
+                                                                       Width="{ThemeResource DockGuideSize}"
+                                                                       Height="{ThemeResource DockGuideSize}"
+                                                                       GlyphData="{StaticResource DockGuideGlyphLeftData}"
+                                                                       Margin="0,0,2,0"
+                                                                       Visibility="Collapsed"/>
 
-                                            <Image x:Name="PART_RightSelector"
-                                                   Grid.Row="1"
-                                                   Grid.Column="2"
-                                                   Width="40"
-                                                   Height="40"
-                                                   Visibility="Collapsed"
-                                                   Source="ms-appx:///Dock.WinUI3/Assets/DockAnchorableRight.png"/>
+                                                <local:DockTargetGuide x:Name="PART_RightSelector"
+                                                                       Grid.Row="1"
+                                                                       Grid.Column="2"
+                                                                       Width="{ThemeResource DockGuideSize}"
+                                                                       Height="{ThemeResource DockGuideSize}"
+                                                                       GlyphData="{StaticResource DockGuideGlyphRightData}"
+                                                                       Margin="2,0,0,0"
+                                                                       Visibility="Collapsed"/>
 
-                                            <Image x:Name="PART_CenterSelector"
-                                                   Grid.Row="1"
-                                                   Grid.Column="1"
-                                                   Width="40"
-                                                   Height="40"
-                                                   Visibility="Collapsed"
-                                                   Source="ms-appx:///Dock.WinUI3/Assets/DockDocumentInside.png"/>
-                                        </Grid>
+                                                <local:DockTargetGuide x:Name="PART_CenterSelector"
+                                                                       Grid.Row="1"
+                                                                       Grid.Column="1"
+                                                                       Width="{ThemeResource DockGuideSize}"
+                                                                       Height="{ThemeResource DockGuideSize}"
+                                                                       GlyphData="{StaticResource DockGuideGlyphCenterData}"
+                                                                       Visibility="Collapsed"/>
+                                            </Grid>
+                                        </Border>
                                     </Grid>
                                 </Grid>
                             </Grid>

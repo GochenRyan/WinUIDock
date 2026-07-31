@@ -14,11 +14,13 @@
                 <ControlTemplate TargetType="local:ToolControl">
                     <local:DockPanel x:Name="PART_DockPanel">
                         <local:ToolTabStrip x:Name="PART_TabStrip"
-                                            MaxHeight="40"
+                                            MaxHeight="{ThemeResource DockToolTabStripHeight}"
                                             local:DockPanel.Dock="Bottom"/>
-                        <Border x:Name="PART_Border" 
+                        <Border x:Name="PART_Border"
                                 local:DockPanel.Dock="Top"
-                                Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                Background="{ThemeResource DockPaneBackgroundBrush}"
+                                BorderBrush="{ThemeResource DockPaneBorderBrush}"
+                                BorderThickness="1">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
                                 <ContentControl x:Name="PART_ToolContentControl">

@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Themes/DockDefaults.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DockControl.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DockTarget.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentControl.xaml" />
@@ -22,7 +23,6 @@
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStrip.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStripItem.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentContentControl.xaml" />
-        <!--<ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindow.xaml" />-->
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowTitleBar.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowControl.xaml" />
     </ResourceDictionary.MergedDictionaries>

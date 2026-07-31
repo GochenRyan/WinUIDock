@@ -51,6 +51,36 @@ namespace Dock.WinUI3.Controls
                 _thumb.DragDelta += Thumb_DragDelta;
                 _thumb.DragStarted += Thumb_DragStarted;
                 _thumb.KeyDown += Thumb_KeyDown;
+                _thumb.PointerEntered += Thumb_PointerEntered;
+                _thumb.PointerExited += Thumb_PointerExited;
+            }
+        }
+
+        // Splitters are invisible at rest (game-editor style) and light up on
+        // hover / while dragging. Theme-aware lookup so overrides apply.
+        private void Thumb_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (!_dragging)
+            {
+                SetThumbBrush("DockSplitterHoverBrush");
+            }
+        }
+
+        private void Thumb_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (!_dragging)
+            {
+                SetThumbBrush("DockSplitterBackgroundBrush");
+            }
+        }
+
+        private void SetThumbBrush(string key)
+        {
+            if (_thumb != null
+                && DockThemeManager.TryGetResource(key, out var value)
+                && value is Brush brush)
+            {
+                _thumb.Background = brush;
             }
         }
 
@@ -60,6 +90,8 @@ namespace Dock.WinUI3.Controls
 
         private void Thumb_DragStarted(object sender, DragStartedEventArgs e)
         {
+            _dragging = true;
+            SetThumbBrush("DockSplitterPressedBrush");
             ThumbDragStarted?.Invoke(sender, e);
         }
 
@@ -74,6 +106,8 @@ namespace Dock.WinUI3.Controls
 
         private void Thumb_DragCompleted(object sender, DragCompletedEventArgs e)
         {
+            _dragging = false;
+            SetThumbBrush("DockSplitterBackgroundBrush");
             ThumbDragCompleted?.Invoke(sender, e);
         }
 
@@ -90,15 +124,16 @@ namespace Dock.WinUI3.Controls
         {
             if (GetPanel() is { } panel)
             {
+                var thickness = EffectiveThickness();
                 if (panel.Orientation == Orientation.Vertical)
                 {
-                    _thumb.Height = Thickness;
+                    _thumb.Height = thickness;
                     _thumb.Width = double.NaN;
                     ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeNorthSouth);
                 }
                 else
                 {
-                    _thumb.Width = Thickness;
+                    _thumb.Width = thickness;
                     _thumb.Height = double.NaN;
                     ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
                 }
@@ -243,12 +278,15 @@ namespace Dock.WinUI3.Controls
         public event DragDeltaEventHandler ThumbDragDelta;
 
         private Thumb _thumb;
+        private bool _dragging;
 
+        // 0 = "not explicitly set": EffectiveThickness resolves the model value or
+        // the DockSplitterThickness theme metric.
         public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
             nameof(Thickness),
             typeof(double),
             typeof(ProportionalStackPanelSplitter),
-            new PropertyMetadata(8.0));
+            new PropertyMetadata(0.0));
 
         public static readonly DependencyProperty MinimumProportionSizeProperty = DependencyProperty.RegisterAttached(
             "MinimumProportionSize",
@@ -258,12 +296,26 @@ namespace Dock.WinUI3.Controls
 
         /// <summary>
         /// Gets or sets the thickness (height or width, depending on orientation).
+        /// 0 means "unset" — the model splitter's value or the DockSplitterThickness
+        /// theme metric applies.
         /// </summary>
         /// <value>The thickness.</value>
         public double Thickness
         {
             get => (double)GetValue(ThicknessProperty);
             set => SetValue(ThicknessProperty, value);
+        }
+
+        private double EffectiveThickness()
+        {
+            var own = Thickness;
+            if (own > 0)
+            {
+                return own;
+            }
+
+            var model = DataContext as ProportionalDockSplitter;
+            return ProportionalStackPanel.ResolveSplitterThickness(model?.Thickness ?? 0);
         }
     }
 }

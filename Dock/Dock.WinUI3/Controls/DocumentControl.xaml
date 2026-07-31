@@ -15,12 +15,14 @@
                     <local:DockPanel x:Name="PART_DockPanel">
                         <local:DocumentTabStrip x:Name="PART_TabStrip"
                                                 local:DockPanel.Dock="Top"
-                                                MaxHeight="30">
+                                                MaxHeight="{ThemeResource DockDocumentTabStripHeight}">
 
                         </local:DocumentTabStrip>
-                        <Border x:Name="PART_Border" 
+                        <Border x:Name="PART_Border"
                                 local:DockPanel.Dock="Bottom"
-                                Background="{ThemeResource ControlFillColorDefaultBrush}">
+                                Background="{ThemeResource DockPaneBackgroundBrush}"
+                                BorderBrush="{ThemeResource DockPaneBorderBrush}"
+                                BorderThickness="1">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
                                 <local:DocumentContentControl x:Name="PART_DocumentContentControl"

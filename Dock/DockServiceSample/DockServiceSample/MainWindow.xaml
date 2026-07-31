@@ -10,6 +10,7 @@
     xmlns:controls="using:Dock.WinUI3.Controls" 
     xmlns:modewinui3="using:Dock.Model.WinUI3" 
     xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    Title="WinUIDock Service Sample"
     mc:Ignorable="d">
 
     <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">

@@ -1,4 +1,4 @@
-using CommunityToolkit.WinUI.UI;
+﻿using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -17,7 +17,7 @@ namespace Dock.WinUI3.Controls
         private static void DockChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             var senderElement = sender as FrameworkElement;
-            var dockPanel = senderElement?.FindParent<DockPanel>();
+            var dockPanel = senderElement?.FindAscendant<DockPanel>();
 
             dockPanel?.InvalidateArrange();
         }
@@ -36,6 +36,28 @@ namespace Dock.WinUI3.Controls
 
         /// <inheritdoc />
         protected override Size ArrangeOverride(Size finalSize)
+        {
+            try
+            {
+                return ArrangeCore(finalSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                Internal.DockDiag.Log($"DockPanel.ArrangeOverride transient failure: {ex.Message} — retrying inline");
+                try
+                {
+                    return ArrangeCore(finalSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("DockPanel.ArrangeOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateArrange);
+                    return finalSize;
+                }
+            }
+        }
+
+        private Size ArrangeCore(Size finalSize)
         {
             if (Children.Count == 0)
             {
@@ -97,6 +119,28 @@ namespace Dock.WinUI3.Controls
 
         /// <inheritdoc />
         protected override Size MeasureOverride(Size availableSize)
+        {
+            try
+            {
+                return MeasureCore(availableSize);
+            }
+            catch (Exception ex) when (Internal.DockDiag.IsTransientLayoutError(ex))
+            {
+                Internal.DockDiag.Log($"DockPanel.MeasureOverride transient failure: {ex.Message} — retrying inline");
+                try
+                {
+                    return MeasureCore(availableSize);
+                }
+                catch (Exception retryEx) when (Internal.DockDiag.IsTransientLayoutError(retryEx))
+                {
+                    Internal.DockDiag.Log("DockPanel.MeasureOverride retry also failed — deferring");
+                    DispatcherQueue?.TryEnqueue(InvalidateMeasure);
+                    return DesiredSize;
+                }
+            }
+        }
+
+        private Size MeasureCore(Size availableSize)
         {
             var parentWidth = 0.0;
             var parentHeight = 0.0;

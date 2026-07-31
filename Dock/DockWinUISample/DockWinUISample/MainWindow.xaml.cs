@@ -1,6 +1,7 @@
 using Dock.Model;
 using Dock.Model.Core;
 using Dock.Serializer;
+using Dock.WinUI3;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using System;
@@ -27,9 +28,11 @@ namespace DockWinUISample
         {
             this.InitializeComponent();
 
-            ResourceDictionary resourceDict = Application.Current.Resources.ThemeDictionaries[ApplicationTheme.GetName(Application.Current.RequestedTheme)].As<ResourceDictionary>();
-            var brush = (Microsoft.UI.Xaml.Media.SolidColorBrush)resourceDict["DockBackgroundBrush"];
-            this.SetTitleBarBackgroundColors(brush.Color);
+            // Registers the content root AND the OS title bar for theming.
+            DockThemeManager.RegisterWindow(this);
+            // The black theme is the primary look; opt into it regardless of the
+            // OS light/dark setting. Remove this to follow the OS theme instead.
+            DockThemeManager.SetTheme(ElementTheme.Dark);
 
             _serializer = new DockSerializer(typeof(List<>));
             _dockState = new DockState();
@@ -44,6 +47,43 @@ namespace DockWinUISample
             }
         }
 
+
+        private void ThemeDark_Click(object sender, RoutedEventArgs e)
+        {
+            DockThemeManager.SetTheme(ElementTheme.Dark);
+        }
+
+        private void ThemeLight_Click(object sender, RoutedEventArgs e)
+        {
+            DockThemeManager.SetTheme(ElementTheme.Light);
+        }
+
+        private void AcrylicToggle_Click(object sender, RoutedEventArgs e)
+        {
+            DockThemeManager.SetAcrylicEnabled(AcrylicToggleItem.IsChecked);
+        }
+
+        private void BackdropNone_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyBackdrop(DockBackdrop.None);
+        }
+
+        private void BackdropMica_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyBackdrop(DockBackdrop.Mica);
+        }
+
+        private void BackdropAcrylic_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyBackdrop(DockBackdrop.Acrylic);
+        }
+
+        private void ApplyBackdrop(DockBackdrop backdrop)
+        {
+            // Main window now; float windows created later pick up the default.
+            DockThemeManager.DefaultBackdrop = backdrop;
+            DockThemeManager.SetBackdrop(this, backdrop);
+        }
 
         private async void Save_Click(object sender, RoutedEventArgs e)
         {
