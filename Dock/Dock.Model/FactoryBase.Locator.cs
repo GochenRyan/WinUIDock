@@ -24,14 +24,14 @@ public abstract partial class FactoryBase
     public virtual IDictionary<string, Func<IDockable?>>? DockableLocator { get; set; }
 
     /// <inheritdoc/>
-    public virtual object? GetContext(string id)
+    public virtual object? GetContext(string kind)
     {
-        if (string.IsNullOrEmpty(id))
+        if (string.IsNullOrEmpty(kind))
         {
             return null;
         }
 
-        if (ContextLocator?.TryGetValue(id, out var locator) == true)
+        if (ContextLocator?.TryGetValue(kind, out var locator) == true)
         {
             return locator?.Invoke();
         }
@@ -40,14 +40,14 @@ public abstract partial class FactoryBase
     }
 
     /// <inheritdoc/>
-    public virtual IHostWindow? GetHostWindow(string id)
+    public virtual IHostWindow? GetHostWindow(string kind)
     {
-        if (string.IsNullOrEmpty(id))
+        if (string.IsNullOrEmpty(kind))
         {
             return null;
         }
 
-        if (HostWindowLocator?.TryGetValue(id, out var locator) == true)
+        if (HostWindowLocator?.TryGetValue(kind, out var locator) == true)
         {
             return locator?.Invoke();
         }
@@ -56,14 +56,14 @@ public abstract partial class FactoryBase
     }
 
     /// <inheritdoc/>
-    public virtual T? GetDockable<T>(string id) where T : class, IDockable
+    public virtual T? GetDockable<T>(string kind) where T : class, IDockable
     {
-        if (string.IsNullOrEmpty(id))
+        if (string.IsNullOrEmpty(kind))
         {
             return default;
         }
 
-        if (DockableLocator?.TryGetValue(id, out var locator) == true)
+        if (DockableLocator?.TryGetValue(kind, out var locator) == true)
         {
             return locator?.Invoke() as T;
         }
@@ -156,7 +156,20 @@ public abstract partial class FactoryBase
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Enumerates the dockables under <paramref name="dock"/> matching the predicate.
+    ///
+    /// Covers VisibleDockables recursively plus a root's pinned and hidden
+    /// collections — a pinned tool is still a live dockable that owns its Id, and
+    /// leaving it out made callers believe it was gone (and re-create it under the
+    /// same Id).
+    ///
+    /// Deliberately does NOT descend into <see cref="IRootDock.Windows"/>: every
+    /// floating window registers its own DockControl, so <see cref="Find(Func{IDockable, bool})"/>
+    /// already reaches those dockables through <see cref="IFactory.DockControls"/>.
+    /// Walking Windows here as well would yield the same instance twice and make
+    /// uniqueness checks report phantom duplicates.
+    /// </summary>
     public IEnumerable<IDockable> Find(IDock dock, Func<IDockable, bool> predicate)
     {
         if (predicate(dock))
@@ -168,11 +181,8 @@ public abstract partial class FactoryBase
         {
             foreach (var dockable in dock.VisibleDockables)
             {
-                if (predicate(dockable))
-                {
-                    yield return dockable;
-                }
-
+                // A child dock is yielded by the recursive call's first statement,
+                // so testing it here as well would emit the same instance twice.
                 if (dockable is IDock childDock)
                 {
                     foreach (var result in Find(childDock, predicate))
@@ -180,7 +190,178 @@ public abstract partial class FactoryBase
                         yield return result;
                     }
                 }
+                else if (predicate(dockable))
+                {
+                    yield return dockable;
+                }
             }
         }
+
+        if (dock is IRootDock rootDock)
+        {
+            foreach (var result in FindInDetached(rootDock.LeftPinnedDockables, predicate))
+            {
+                yield return result;
+            }
+
+            foreach (var result in FindInDetached(rootDock.RightPinnedDockables, predicate))
+            {
+                yield return result;
+            }
+
+            foreach (var result in FindInDetached(rootDock.TopPinnedDockables, predicate))
+            {
+                yield return result;
+            }
+
+            foreach (var result in FindInDetached(rootDock.BottomPinnedDockables, predicate))
+            {
+                yield return result;
+            }
+
+            foreach (var result in FindInDetached(rootDock.HiddenDockables, predicate))
+            {
+                yield return result;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Walks a collection that sits outside VisibleDockables (pinned / hidden).
+    /// A pinned dockable is normally a leaf, but recurse anyway so a pinned dock
+    /// carrying children is covered too.
+    /// </summary>
+    private IEnumerable<IDockable> FindInDetached(
+        IEnumerable<IDockable>? dockables,
+        Func<IDockable, bool> predicate)
+    {
+        if (dockables is null)
+        {
+            yield break;
+        }
+
+        foreach (var dockable in dockables)
+        {
+            if (dockable is IDock childDock)
+            {
+                foreach (var result in Find(childDock, predicate))
+                {
+                    yield return result;
+                }
+            }
+            else if (predicate(dockable))
+            {
+                yield return dockable;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual IDockable? FindDockableById(string id, IDock? scope = null)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return null;
+        }
+
+        var matches = scope is null ? Find(x => x.Id == id) : Find(scope, x => x.Id == id);
+
+        IDockable? match = null;
+        var duplicates = 0;
+
+        foreach (var dockable in matches)
+        {
+            if (match is null)
+            {
+                match = dockable;
+            }
+            else if (!ReferenceEquals(match, dockable))
+            {
+                duplicates++;
+            }
+        }
+
+        if (duplicates > 0)
+        {
+            OnIdViolation(
+                $"Duplicate dockable id '{id}': {duplicates + 1} instances share it. " +
+                "Id must be unique within a factory; use Kind for category matching.");
+        }
+
+        return match;
+    }
+
+    /// <inheritdoc/>
+    public virtual void ValidateId(IDockable dockable)
+    {
+        if (string.IsNullOrEmpty(dockable.Id))
+        {
+            return;
+        }
+
+        foreach (var other in Find(x => x.Id == dockable.Id))
+        {
+            if (ReferenceEquals(other, dockable))
+            {
+                continue;
+            }
+
+            OnIdViolation(
+                $"Duplicate dockable id '{dockable.Id}': '{dockable.Title}' collides with " +
+                $"'{other.Title}'. Id must be unique within a factory; use Kind for category matching.");
+            return;
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual IReadOnlyList<(string Id, IReadOnlyList<IDockable> Dockables)> ValidateIds(IDock? scope = null)
+    {
+        var byId = new Dictionary<string, List<IDockable>>();
+        var matches = scope is null ? Find(_ => true) : Find(scope, _ => true);
+
+        foreach (var dockable in matches)
+        {
+            // Empty ids mean "does not participate in id-based matching", so they
+            // must not be reported as colliding with each other.
+            if (string.IsNullOrEmpty(dockable.Id))
+            {
+                continue;
+            }
+
+            if (!byId.TryGetValue(dockable.Id, out var list))
+            {
+                byId[dockable.Id] = list = new List<IDockable>();
+            }
+
+            if (!list.Any(x => ReferenceEquals(x, dockable)))
+            {
+                list.Add(dockable);
+            }
+        }
+
+        var violations = new List<(string, IReadOnlyList<IDockable>)>();
+        foreach (var pair in byId)
+        {
+            if (pair.Value.Count > 1)
+            {
+                violations.Add((pair.Key, pair.Value));
+            }
+        }
+
+        return violations;
+    }
+
+    /// <summary>
+    /// Called when the Id uniqueness contract is broken. Throws in Debug so the
+    /// violation surfaces during development, and traces in Release so a shipped
+    /// app keeps running. Override to route violations to a host logger.
+    /// </summary>
+    protected virtual void OnIdViolation(string message)
+    {
+#if DEBUG
+        throw new InvalidOperationException(message);
+#else
+        System.Diagnostics.Trace.WriteLine($"[WinUIDock] {message}");
+#endif
     }
 }

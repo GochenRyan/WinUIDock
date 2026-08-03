@@ -98,7 +98,9 @@ public class DockManager : IDockManager
         targetDocumentDock.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>());
         if (sourceDockableOwner is IDocumentDock sourceDocumentDock)
         {
-            targetDocumentDock.Id = sourceDocumentDock.Id;
+            // Carry the category over, not the instance identity — the split
+            // creates a new dock instance.
+            targetDocumentDock.Kind = sourceDocumentDock.Kind;
             targetDocumentDock.CanCreateDocument = sourceDocumentDock.CanCreateDocument;
 
             if (sourceDocumentDock is IDocumentDockContent sourceDocumentDockContent
@@ -263,6 +265,57 @@ public class DockManager : IDockManager
         }
     }
 
+    /// <summary>
+    /// True when moving <paramref name="sourceDockable"/> out would collapse the
+    /// root's layout node away entirely: the source's dock is left empty and gets
+    /// collapsed, which empties ITS container, and so on up to the root. Once the
+    /// root layout is gone there is nothing left to insert an edge region beside,
+    /// and the dockable ends up in a dock attached to nothing.
+    ///
+    /// Walks the owner chain rather than counting leaves — the cascade is
+    /// structural, and one surviving sibling anywhere along the chain stops it
+    /// (even an empty dock, which is a node the layout keeps).
+    /// </summary>
+    private static bool WouldEmptyRootLayout(IDockable sourceDockable, IRootDock rootDock)
+    {
+        IDockable node = sourceDockable;
+
+        for (var owner = node.Owner as IDock; owner is not null; owner = owner.Owner as IDock)
+        {
+            var keepsContent = false;
+
+            if (owner.VisibleDockables is { } children)
+            {
+                foreach (var child in children)
+                {
+                    // Splitters do not keep a dock alive — RemoveDockable strips the
+                    // orphaned ones as the neighbours go.
+                    if (!ReferenceEquals(child, node) && child is not IProportionalDockSplitter)
+                    {
+                        keepsContent = true;
+                        break;
+                    }
+                }
+            }
+
+            if (keepsContent)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(owner, rootDock))
+            {
+                return true;
+            }
+
+            node = owner;
+        }
+
+        // The source does not live under this root — dragging in from another
+        // window empties nothing here.
+        return false;
+    }
+
     private bool DockDockableIntoDockable(IDockable sourceDockable, IDockable targetDockable, DragAction action, bool bExecute)
     {
         if (sourceDockable.Owner is not IDock sourceDockableOwner || targetDockable.Owner is not IDock targetDockableOwner)
@@ -360,73 +413,232 @@ public class DockManager : IDockManager
         return DockDockable(sourceDock, targetDock, targetDock, action, operation, bExecute);
     }
 
-    private static DockOperation NormalizeRootOperation(DockOperation operation)
+    private static bool IsRootOperation(DockOperation operation)
     {
-        return operation switch
-        {
-            DockOperation.RootLeft => DockOperation.Fill,
-            DockOperation.RootRight => DockOperation.Fill,
-            DockOperation.RootTop => DockOperation.Fill,
-            DockOperation.RootBottom => DockOperation.Fill,
-            _ => operation
-        };
+        return operation is DockOperation.RootLeft or DockOperation.RootRight or DockOperation.RootTop or DockOperation.RootBottom;
     }
 
-    private bool TryResolveRootTarget(IDockable targetDockable, DockOperation operation, out IDock targetDock)
+    private static IRootDock? ResolveRootDock(IDockable targetDockable)
     {
-        targetDock = null;
-
-        if (operation is not (DockOperation.RootLeft or DockOperation.RootRight or DockOperation.RootTop or DockOperation.RootBottom))
-        {
-            return false;
-        }
-
-        var rootDock = targetDockable switch
+        return targetDockable switch
         {
             IRootDock root => root,
             _ => targetDockable.Factory?.FindRoot(targetDockable, _ => true)
                  ?? targetDockable.Owner?.Factory?.FindRoot(targetDockable, _ => true)
         };
-
-        if (rootDock is null)
-        {
-            return false;
-        }
-
-        targetDock = operation switch
-        {
-            DockOperation.RootLeft => rootDock.RootLeftDock,
-            DockOperation.RootRight => rootDock.RootRightDock,
-            DockOperation.RootTop => rootDock.RootTopDock,
-            DockOperation.RootBottom => rootDock.RootBottomDock,
-            _ => null
-        };
-
-        return targetDock is not null;
     }
 
+    /// <summary>
+    /// The four window-edge guides. The dropped dockable gets a region of its own
+    /// spanning the whole window edge, inserted at the ROOT level — so every
+    /// existing pane gives way proportionally. That is the one thing the inner
+    /// guides cannot express: they only subdivide the rectangle of the pane under
+    /// the cursor.
+    ///
+    /// Returns false when this is not an edge operation, in which case the caller
+    /// falls through to normal docking. When it returns true the operation was
+    /// claimed, and <paramref name="result"/> says whether it can be / was done.
+    /// </summary>
     private bool TryDockToRoot(IDockable sourceDockable, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute, out bool result)
     {
         result = false;
 
-        if (!TryResolveRootTarget(targetDockable, operation, out var targetDock))
+        if (!IsRootOperation(operation))
         {
             return false;
         }
 
-        var normalizedOperation = NormalizeRootOperation(operation);
-
-        result = sourceDockable switch
+        // A proportional dock is a container of panes, not a pane. Leave it to the
+        // caller's normal path, which recurses into its children — each child then
+        // arrives here on its own and gets its own edge region.
+        if (sourceDockable is IProportionalDock)
         {
-            ITool tool => DockDockableIntoDock(tool, targetDock, action, normalizedOperation, bExecute),
-            IDocument document => DockDockableIntoDock(document, targetDock, action, normalizedOperation, bExecute),
-            IToolDock toolDock => DockDockable(toolDock, targetDock, action, normalizedOperation, bExecute),
-            IDocumentDock documentDock => DockDockable(documentDock, targetDock, action, normalizedOperation, bExecute),
-            IProportionalDock proportionalDock => DockDockable(proportionalDock, targetDock, action, normalizedOperation, bExecute),
-            _ => false
-        };
+            return false;
+        }
+
+        // Copy has no docking meaning at all, and swapping with a region that does
+        // not exist yet is meaningless too.
+        if (action != DragAction.Move)
+        {
+            return true;
+        }
+
+        if (ResolveRootDock(targetDockable) is not { } rootDock)
+        {
+            return true;
+        }
+
+        result = DockToRootEdge(sourceDockable, rootDock, operation, bExecute);
+        return true;
+    }
+
+    /// <summary>True when <paramref name="dockable"/> is, or lives under, <paramref name="branch"/>.</summary>
+    private static bool IsInside(IDockable dockable, IDockable branch)
+    {
+        for (IDockable? node = dockable; node is not null; node = node.Owner)
+        {
+            if (ReferenceEquals(node, branch))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool DockToRootEdge(IDockable sourceDockable, IRootDock rootDock, DockOperation operation, bool bExecute)
+    {
+        var factory = rootDock.Factory ?? sourceDockable.Factory ?? sourceDockable.Owner?.Factory;
+        if (factory is null || rootDock.VisibleDockables is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        // Refuse when nothing would be left behind. Moving the source out empties
+        // its dock, which collapses; that empties the container, which collapses
+        // too; and by the time the insert looks for a layout to sit beside there is
+        // none — so the dockable ends up in a dock attached to nothing and vanishes
+        // from the UI. A float window holding a single tool is the everyday case.
+        // DockDockableIntoWindow already refuses the same situation.
+        if (WouldEmptyRootLayout(sourceDockable, rootDock))
+        {
+            return false;
+        }
+
+        return DockToEdge(
+            sourceDockable,
+            factory,
+            operation,
+            dock => factory.SplitToRootEdge(rootDock, dock, operation),
+            bExecute);
+    }
+
+    /// <summary>
+    /// Turns the source into a dock and hands it to <paramref name="insert"/>, which
+    /// knows where the finished dock goes. Written as a callback because the source
+    /// side is identical no matter which container receives it.
+    /// </summary>
+    private bool DockToEdge(
+        IDockable sourceDockable,
+        IFactory factory,
+        DockOperation operation,
+        Func<IDock, bool> insert,
+        bool bExecute)
+    {
+        switch (sourceDockable)
+        {
+            case ITool tool:
+                {
+                    if (tool.Owner is not IDock owner)
+                    {
+                        return false;
+                    }
+
+                    if (bExecute)
+                    {
+                        var edgeDock = CreateEdgeToolDock(factory, operation);
+                        factory.MoveDockable(owner, edgeDock, tool, null);
+                        insert(edgeDock);
+                    }
+
+                    return true;
+                }
+            case IDocument document:
+                {
+                    if (document.Owner is not IDock owner)
+                    {
+                        return false;
+                    }
+
+                    if (bExecute)
+                    {
+                        var edgeDock = CreateEdgeDocumentDock(factory, owner as IDocumentDock);
+                        factory.MoveDockable(owner, edgeDock, document, null);
+                        insert(edgeDock);
+                    }
+
+                    return true;
+                }
+            case IRootDock:
+                {
+                    return false;
+                }
+            case IDock sourceDock:
+                {
+                    return DockNodeToEdge(factory, sourceDock, operation, insert, bExecute);
+                }
+            default:
+                {
+                    return false;
+                }
+        }
+    }
+
+    /// <summary>
+    /// Dragging a WHOLE dock onto a window edge (D18) — the dock node becomes the
+    /// edge region itself, keeping its Id and Proportion.
+    /// </summary>
+    private static bool DockNodeToEdge(IFactory factory, IDock sourceDock, DockOperation operation, Func<IDock, bool> insert, bool bExecute)
+    {
+        if (sourceDock.Owner is not IDock || sourceDock.VisibleDockables is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        if (bExecute)
+        {
+            DockDiagnostics.Log(() =>
+                $"edge-node op={operation} source={DockDiagnostics.Describe(sourceDock)} "
+                + $"from={DockDiagnostics.Describe(sourceDock.Owner)}");
+
+            // The alignment describes which edge the dock now lives on, so it follows
+            // the drop even though everything else about the node is preserved.
+            if (sourceDock is IToolDock toolDock)
+            {
+                toolDock.Alignment = operation.ToAlignment();
+            }
+
+            factory.RemoveDockable(sourceDock, true);
+
+            // Drop the old share. It was measured against different siblings, and a
+            // dock coming out of a float window carries 1.0.
+            sourceDock.Proportion = double.NaN;
+
+            insert(sourceDock);
+        }
 
         return true;
+    }
+
+    private static IToolDock CreateEdgeToolDock(IFactory factory, DockOperation operation)
+    {
+        var edgeDock = factory.CreateToolDock();
+        edgeDock.Title = nameof(IToolDock);
+        edgeDock.Alignment = operation.ToAlignment();
+        edgeDock.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>());
+        return edgeDock;
+    }
+
+    private static IDocumentDock CreateEdgeDocumentDock(IFactory factory, IDocumentDock? source)
+    {
+        var edgeDock = factory.CreateDocumentDock();
+        edgeDock.Title = nameof(IDocumentDock);
+        edgeDock.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>());
+
+        if (source is not null)
+        {
+            // Carry the category over, not the instance identity — this is a new
+            // dock instance, same as in SplitDocumentDockable.
+            edgeDock.Kind = source.Kind;
+            edgeDock.CanCreateDocument = source.CanCreateDocument;
+
+            if (source is IDocumentDockContent sourceContent && edgeDock is IDocumentDockContent targetContent)
+            {
+                targetContent.DocumentTemplate = sourceContent.DocumentTemplate;
+            }
+        }
+
+        return edgeDock;
     }
 
     private bool DockDockableIntoDock(IDockable sourceDockable, IDock targetDock, DragAction action, DockOperation operation, bool bExecute)
@@ -509,10 +721,77 @@ public class DockManager : IDockManager
     {
         return operation switch
         {
+            // Fill means "become tabs of the target", and a dock cannot be a tab —
+            // this is the one case where the contents really do have to be moved.
             DockOperation.Fill => DockDockableIntoDockVisible(sourceDock, targetDock, action, operation, bExecute),
             DockOperation.Window => DockDockableIntoWindow(sourceDock, targetDockable, bExecute),
-            _ => DockDockIntoDock(sourceDock, targetDock, action, operation, bExecute)
+            _ => SplitDockNode(sourceDock, targetDock, operation, bExecute)
         };
+    }
+
+    /// <summary>
+    /// Directional drop of a WHOLE dock (D18): the dock node is re-parented rather
+    /// than having its contents shovelled into a freshly created dock, so its Id,
+    /// Alignment and Proportion survive the move.
+    /// </summary>
+    private static bool SplitDockNode(IDock sourceDock, IDock targetDock, DockOperation operation, bool bExecute)
+    {
+        if (ReferenceEquals(sourceDock, targetDock))
+        {
+            return false;
+        }
+
+        // Dropping a dock into its own subtree would detach that whole branch.
+        if (IsSelfOrDescendant(sourceDock, targetDock))
+        {
+            return false;
+        }
+
+        if (sourceDock.Owner is not IDock || targetDock.Owner is not IDock)
+        {
+            return false;
+        }
+
+        if ((targetDock.Factory ?? sourceDock.Factory) is not { } factory)
+        {
+            return false;
+        }
+
+        if (bExecute)
+        {
+            // Detach FIRST: SplitToDock replaces the target inside its owner, and the
+            // source must not still be listed under its old owner when that happens.
+            factory.RemoveDockable(sourceDock, true);
+
+            // Drop the old share. It was measured against different siblings, and a
+            // dock coming out of a float window carries 1.0 (ProportionalStackPanel
+            // assigns the whole container to a lone child), which would squeeze
+            // everything else in the new container down to nothing. NaN means "give
+            // me an equal share of what is left", which is what a newly arrived pane
+            // should get.
+            sourceDock.Proportion = double.NaN;
+
+            factory.SplitToDock(targetDock, sourceDock, operation);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// True when <paramref name="candidate"/> is <paramref name="dock"/> itself or
+    /// sits underneath it.
+    /// </summary>
+    private static bool IsSelfOrDescendant(IDock dock, IDockable candidate)
+    {
+        for (IDockable? node = candidate; node is not null; node = node.Owner)
+        {
+            if (ReferenceEquals(node, dock))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
@@ -563,13 +842,30 @@ public class DockManager : IDockManager
         return targetDockable switch
         {
             IRootDock _ => DockDockableIntoWindow(sourceDock, targetDockable, bExecute),
-            IToolDock toolDock => sourceDock != toolDock &&
-                                  DockDockable(sourceDock, targetDockable, toolDock, action, operation, bExecute),
-            IDocumentDock documentDock => sourceDock != documentDock &&
-                                          DockDockable(sourceDock, targetDockable, documentDock, action, operation, bExecute),
+            IToolDock toolDock => sourceDock == toolDock
+                ? ValidateSelfDrop(operation)
+                : DockDockable(sourceDock, targetDockable, toolDock, action, operation, bExecute),
+            IDocumentDock documentDock => sourceDock == documentDock
+                ? ValidateSelfDrop(operation)
+                : DockDockable(sourceDock, targetDockable, documentDock, action, operation, bExecute),
             _ => false
         };
     }
+
+    /// <summary>
+    /// Dropping a dock back onto itself is how a drag gets cancelled, so the whole
+    /// self-drop must not be refused: with no guide over the source there is nowhere
+    /// to let go, and the user is forced to commit the drag somewhere else.
+    ///
+    /// Only Fill validates: the centre guide appears over the source and accepts the
+    /// drop. A directional operation on oneself has no meaning (a dock cannot be
+    /// split against itself), so those stay refused.
+    ///
+    /// Nothing is executed either way — the dockable is already exactly where the
+    /// drop would put it, so "success" here means "leave the layout alone".
+    /// </summary>
+    private static bool ValidateSelfDrop(DockOperation operation)
+        => operation == DockOperation.Fill;
 
     private bool ValidateProportionalDock(IProportionalDock sourceDock, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {

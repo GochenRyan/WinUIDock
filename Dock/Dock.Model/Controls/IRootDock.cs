@@ -45,26 +45,6 @@ public interface IRootDock : IDock
     IToolDock? PinnedDock { get; set; }
 
     /// <summary>
-    /// Gets or sets root left dock.
-    /// </summary>
-    IDock? RootLeftDock { get; set; }
-
-    /// <summary>
-    /// Gets or sets root right dock.
-    /// </summary>
-    IDock? RootRightDock { get; set; }
-
-    /// <summary>
-    /// Gets or sets root top dock.
-    /// </summary>
-    IDock? RootTopDock { get; set; }
-
-    /// <summary>
-    /// Gets or sets root bottom dock.
-    /// </summary>
-    IDock? RootBottomDock { get; set; }
-
-    /// <summary>
     /// Gets or sets owner window.
     /// </summary>
     IDockWindow? Window { get; set; }

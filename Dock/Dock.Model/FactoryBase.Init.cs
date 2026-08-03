@@ -35,7 +35,7 @@ public abstract partial class FactoryBase
     {
         if (dockable.Context is null)
         {
-            if (GetContext(dockable.Id) is { } context)
+            if (GetContext(dockable.Kind) is { } context)
             {
                 dockable.Context = context;
             }
@@ -75,7 +75,7 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public virtual void InitDockWindow(IDockWindow window, IDockable? owner)
     {
-        window.Host = GetHostWindow(window.Id);
+        window.Host = GetHostWindow(window.Kind);
         if (window.Host is not null)
         {
             window.Host.Window = window;

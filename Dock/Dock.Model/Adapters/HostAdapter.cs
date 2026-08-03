@@ -44,7 +44,7 @@ public class HostAdapter : IHostAdapter
 
         if (_window.Host is null)
         {
-            _window.Host = _window.Factory?.GetHostWindow(_window.Id);
+            _window.Host = _window.Factory?.GetHostWindow(_window.Kind);
             if (_window.Host is not null)
             {
                 _window.Host.Window = _window;

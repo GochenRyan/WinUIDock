@@ -104,7 +104,30 @@ public abstract partial class FactoryBase : IFactory
         }
         else
         {
+            // Note where it sat BEFORE removing it — afterwards the owner link and
+            // the index are gone.
+            var collapseOwner = dock.Owner as IDock;
+            var collapseIndex = collapseOwner?.VisibleDockables?.IndexOf(dock) ?? -1;
+
             RemoveDockable(dock, true);
+
+            // Park it in HiddenDockables rather than dropping it, so reopening one
+            // of its tools can bring the whole dock back to this spot. Without this
+            // the position is simply lost and the tool has nowhere to return to.
+            if (collapseOwner is not null && collapseIndex >= 0)
+            {
+                dock.RestoreOwner = collapseOwner;
+                dock.RestoreIndex = collapseIndex;
+
+                if (FindRoot(collapseOwner, _ => true) is { } collapseRoot)
+                {
+                    collapseRoot.HiddenDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
+                    if (!collapseRoot.HiddenDockables.Contains(dock))
+                    {
+                        collapseRoot.HiddenDockables.Add(dock);
+                    }
+                }
+            }
         }
     }
 
@@ -250,6 +273,147 @@ public abstract partial class FactoryBase : IFactory
         }
     }
 
+    /// <summary>
+    /// Share of the window handed to a freshly created edge region. Kept in sync
+    /// with <c>DockRootEdgeProportion</c> on the WinUI3 side so the drop preview
+    /// and the resulting layout agree.
+    /// </summary>
+    private const double RootEdgeProportion = 0.2;
+
+    /// <inheritdoc/>
+    public virtual bool SplitToRootEdge(IRootDock rootDock, IDock dock, DockOperation operation)
+    {
+        var orientation = operation switch
+        {
+            DockOperation.RootLeft or DockOperation.RootRight => Orientation.Horizontal,
+            DockOperation.RootTop or DockOperation.RootBottom => Orientation.Vertical,
+            _ => throw new NotSupportedException($"Not supported root edge operation: {operation}.")
+        };
+
+        // Resolve the layout LAST — moving the source out of its old owner can
+        // collapse an emptied dock and reshape the tree in the meantime.
+        if (GetRootLayout(rootDock) is not { } layout)
+        {
+            return false;
+        }
+
+        var index = rootDock.VisibleDockables?.IndexOf(layout) ?? -1;
+
+        if (!InsertAtContainerEdge(layout, dock, operation, orientation))
+        {
+            return false;
+        }
+
+        // RootDockControl renders DefaultDockable, NOT VisibleDockables. If the
+        // layout was wrapped, leaving it pointing at the node we just wrapped would
+        // put the new edge region in the tree but keep it off screen.
+        if (index >= 0 && rootDock.VisibleDockables is { } rootDockables && index < rootDockables.Count)
+        {
+            rootDock.DefaultDockable = rootDockables[index];
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Puts <paramref name="dock"/> at one end of <paramref name="container"/> so it
+    /// spans that container.
+    /// </summary>
+    private bool InsertAtContainerEdge(IDock container, IDock dock, DockOperation operation, Orientation orientation)
+    {
+        var atStart = operation is DockOperation.RootLeft or DockOperation.RootTop;
+
+        // Unconditional: a proportion only means anything relative to the siblings
+        // it was measured against. Carrying one across containers is what let a dock
+        // arriving from a float window take the whole edge — ProportionalStackPanel
+        // writes 1.0 back into the model for the lone child of a container, which is
+        // exactly the shape a float window has.
+        dock.Proportion = RootEdgeProportion;
+
+        // Container already runs along the required axis: insert in place. Going
+        // through CreateSplitLayout here would wrap it again, so three drops on the
+        // same edge would nest three levels deep for nothing.
+        if (container is IProportionalDock proportional
+            && proportional.Orientation == orientation
+            && proportional.VisibleDockables is { })
+        {
+            var splitter = CreateProportionalDockSplitter();
+            splitter.Title = nameof(IProportionalDockSplitter);
+
+            if (atStart)
+            {
+                InsertVisibleDockable(proportional, 0, splitter);
+                OnDockableAdded(splitter);
+                InsertVisibleDockable(proportional, 0, dock);
+                OnDockableAdded(dock);
+            }
+            else
+            {
+                AddVisibleDockable(proportional, splitter);
+                OnDockableAdded(splitter);
+                AddVisibleDockable(proportional, dock);
+                OnDockableAdded(dock);
+            }
+
+            InitDockable(splitter, proportional);
+            InitDockable(dock, proportional);
+            proportional.ActiveDockable = dock;
+            return true;
+        }
+
+        // Otherwise wrap the container in one of the required orientation.
+        SplitToDock(container, dock, ToLocalOperation(operation));
+        return true;
+    }
+
+    private static DockOperation ToLocalOperation(DockOperation operation)
+    {
+        return operation switch
+        {
+            DockOperation.RootLeft => DockOperation.Left,
+            DockOperation.RootRight => DockOperation.Right,
+            DockOperation.RootTop => DockOperation.Top,
+            DockOperation.RootBottom => DockOperation.Bottom,
+            _ => operation
+        };
+    }
+
+    /// <summary>
+    /// The single layout node a root dock hosts. Edge docking inserts next to
+    /// this node, which is what makes the new region span the whole window.
+    ///
+    /// DefaultDockable comes first because that is what RootDockControl actually
+    /// binds its content to — anchoring anywhere else would build a correct tree
+    /// that never reaches the screen.
+    /// </summary>
+    private static IDock? GetRootLayout(IRootDock rootDock)
+    {
+        if (rootDock.VisibleDockables is not { } dockables)
+        {
+            return null;
+        }
+
+        if (rootDock.DefaultDockable is IDock defaultDock && dockables.Contains(defaultDock))
+        {
+            return defaultDock;
+        }
+
+        if (rootDock.ActiveDockable is IDock active && dockables.Contains(active))
+        {
+            return active;
+        }
+
+        foreach (var dockable in dockables)
+        {
+            if (dockable is IDock dock)
+            {
+                return dock;
+            }
+        }
+
+        return null;
+    }
+
     /// <inheritdoc/>
     public virtual IDockWindow? CreateWindowFrom(IDockable dockable)
     {
@@ -259,8 +423,9 @@ public abstract partial class FactoryBase : IFactory
         {
             case ITool:
                 {
+                    // Kind is left to the concrete dockable's constructor so a host
+                    // that overrides CreateToolDock keeps its own kind.
                     target = CreateToolDock();
-                    target.Id = nameof(IToolDock);
                     target.Title = nameof(IToolDock);
                     if (target is IDock dock)
                     {
@@ -277,7 +442,6 @@ public abstract partial class FactoryBase : IFactory
             case IDocument:
                 {
                     target = CreateDocumentDock();
-                    target.Id = nameof(IDocumentDock);
                     target.Title = nameof(IDocumentDock);
                     if (target is IDock dock)
                     {
@@ -286,7 +450,9 @@ public abstract partial class FactoryBase : IFactory
                         {
                             if (target is IDocumentDock targetDocumentDock)
                             {
-                                targetDocumentDock.Id = sourceDocumentDock.Id;
+                                // Carry the category over, not the instance identity —
+                                // the floated dock is a new instance.
+                                targetDocumentDock.Kind = sourceDocumentDock.Kind;
                                 targetDocumentDock.CanCreateDocument = sourceDocumentDock.CanCreateDocument;
 
                                 if (sourceDocumentDock is IDocumentDockContent sourceDocumentDockContent
@@ -339,14 +505,12 @@ public abstract partial class FactoryBase : IFactory
 
         var root = CreateRootDock();
         root.Title = nameof(IRootDock);
-        root.Id = nameof(IRootDock);
         root.VisibleDockables = new ObservableCollection<IDockable>(CreateList<IDockable>());
         if (root.VisibleDockables is not null && target is not null)
         {
             if (target is not IProportionalDock proportionDock)
             {
                 proportionDock = CreateProportionalDock();
-                proportionDock.Id = nameof(proportionDock);
             }
 
             AddVisibleDockable(root, proportionDock);
@@ -359,7 +523,6 @@ public abstract partial class FactoryBase : IFactory
         root.Owner = null;
 
         var window = CreateDockWindow();
-        window.Id = nameof(IDockWindow);
         window.Title = "";
         window.WindowWidth = double.NaN;
         window.WindowHeight = double.NaN;

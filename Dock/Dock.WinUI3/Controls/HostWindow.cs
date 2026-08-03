@@ -1,5 +1,6 @@
-using Microsoft.UI.Windowing;
+﻿using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Windows.Foundation;
 using System.Collections.Generic;
 using WinUIEx;
 
@@ -25,12 +26,29 @@ namespace Dock.WinUI3.Controls
             }
 
             windowMap[appWindow] = window;
+
+            // Float windows do not outlive the main window. The subscription must be
+            // removed again when this window closes on its own — otherwise every
+            // float window ever created leaves a handler behind that still captures
+            // it, and closing the main window then calls Close() on a long-dead
+            // window: "The WinUI Desktop Window object has already been closed."
+            TypedEventHandler<object, WindowEventArgs> closeWithMain = null;
+
             if (_mainWindow != null)
             {
-                _mainWindow.Closed += (_, _) =>
+                closeWithMain = (_, _) =>
                 {
-                    window.Close();
+                    try
+                    {
+                        window.Close();
+                    }
+                    catch
+                    {
+                        // Already gone — nothing to do.
+                    }
                 };
+
+                _mainWindow.Closed += closeWithMain;
             }
 
             // Remove by the CAPTURED key: Window.AppWindow is not reliably
@@ -39,7 +57,15 @@ namespace Dock.WinUI3.Controls
             // of such a closed window later (e.g. Content in GetWindowForElement)
             // throws E_INVALIDARG ("Value does not fall within the expected
             // range") on whatever unrelated code path calls in next.
-            window.Closed += (_, _) => windowMap.Remove(appWindow);
+            window.Closed += (_, _) =>
+            {
+                windowMap.Remove(appWindow);
+
+                if (closeWithMain is not null && _mainWindow is not null)
+                {
+                    _mainWindow.Closed -= closeWithMain;
+                }
+            };
         }
 
         public static Window GetWindow(AppWindow appWindow)

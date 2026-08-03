@@ -8,9 +8,19 @@ namespace Dock.Model.Core;
 public interface IDockWindow
 {
     /// <summary>
-    /// Gets or sets id.
+    /// Gets or sets the unique instance identity of this window.
+    /// Supplied by the host application; the framework never writes it.
+    /// For the key HostWindowLocator is keyed by, see <see cref="Kind"/>.
     /// </summary>
     string Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the locator key / category of this window.
+    /// The framework writes a default (the contract type name); hosts may override it.
+    /// Used to look up HostWindowLocator, so it may repeat across windows that
+    /// should share the same host factory.
+    /// </summary>
+    string Kind { get; set; }
 
     /// <summary>
     /// Gets or sets window X coordinate.

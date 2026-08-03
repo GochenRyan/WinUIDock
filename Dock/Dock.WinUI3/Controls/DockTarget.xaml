@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -34,13 +34,65 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:DockTarget">
                     <Grid x:Name="PART_WindowLayer">
+                        <!-- The four edge guides belong to the DOCKABLE area, not to
+                             the window: the region they create is inserted into the
+                             root layout, which lives inside the DockControl. Anchored
+                             to window.Content instead, the top guide landed on the
+                             float window's caption band (SetTitleBar registers y 0-32
+                             as non-client, and a Popup drawn over a non-client
+                             rectangle does not make it clickable) — the guide was
+                             visible but only its lower 20px could be hit. The root
+                             previews had the matching lie: they covered the menu bar
+                             while the drop never touches it. -->
+                        <Canvas x:Name="PART_RootCanvas" IsHitTestVisible="True">
+                        <Grid x:Name="PART_RootHost"
+                              Canvas.Left="{TemplateBinding RootX}"
+                              Canvas.Top="{TemplateBinding RootY}"
+                              Width="{TemplateBinding RootWidth}"
+                              Height="{TemplateBinding RootHeight}">
+
+                        <!-- Drop previews first, so every guide draws on top of them.
+                             Their thickness is set in code from the same proportion
+                             the layout insert will use. -->
+                        <Grid x:Name="PART_RootIndicatorLayer"
+                              IsHitTestVisible="False">
+
+                            <Grid x:Name="PART_RootTopIndicator"
+                                  VerticalAlignment="Top"
+                                  Background="{ThemeResource DockDropPreviewFillBrush}"
+                                  BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                  BorderThickness="1"
+                                  Opacity="0"/>
+
+                            <Grid x:Name="PART_RootBottomIndicator"
+                                  VerticalAlignment="Bottom"
+                                  Background="{ThemeResource DockDropPreviewFillBrush}"
+                                  BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                  BorderThickness="1"
+                                  Opacity="0"/>
+
+                            <Grid x:Name="PART_RootLeftIndicator"
+                                  HorizontalAlignment="Left"
+                                  Background="{ThemeResource DockDropPreviewFillBrush}"
+                                  BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                  BorderThickness="1"
+                                  Opacity="0"/>
+
+                            <Grid x:Name="PART_RootRightIndicator"
+                                  HorizontalAlignment="Right"
+                                  Background="{ThemeResource DockDropPreviewFillBrush}"
+                                  BorderBrush="{ThemeResource DockDropPreviewStrokeBrush}"
+                                  BorderThickness="1"
+                                  Opacity="0"/>
+                        </Grid>
+
                         <Grid x:Name="PART_RootSelectorsLayer"
                               IsHitTestVisible="True">
 
                             <local:DockTargetGuide x:Name="PART_RootTopSelector"
                                                    Width="{ThemeResource DockRootGuideSize}"
                                                    Height="{ThemeResource DockRootGuideSize}"
-                                                   GlyphData="{StaticResource DockGuideGlyphTopData}"
+                                                   GlyphData="{StaticResource DockGuideGlyphRootTopData}"
                                                    Visibility="Collapsed"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Top"
@@ -49,7 +101,7 @@
                             <local:DockTargetGuide x:Name="PART_RootBottomSelector"
                                                    Width="{ThemeResource DockRootGuideSize}"
                                                    Height="{ThemeResource DockRootGuideSize}"
-                                                   GlyphData="{StaticResource DockGuideGlyphBottomData}"
+                                                   GlyphData="{StaticResource DockGuideGlyphRootBottomData}"
                                                    Visibility="Collapsed"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Bottom"
@@ -58,7 +110,7 @@
                             <local:DockTargetGuide x:Name="PART_RootLeftSelector"
                                                    Width="{ThemeResource DockRootGuideSize}"
                                                    Height="{ThemeResource DockRootGuideSize}"
-                                                   GlyphData="{StaticResource DockGuideGlyphLeftData}"
+                                                   GlyphData="{StaticResource DockGuideGlyphRootLeftData}"
                                                    Visibility="Collapsed"
                                                    HorizontalAlignment="Left"
                                                    VerticalAlignment="Center"
@@ -67,15 +119,27 @@
                             <local:DockTargetGuide x:Name="PART_RootRightSelector"
                                                    Width="{ThemeResource DockRootGuideSize}"
                                                    Height="{ThemeResource DockRootGuideSize}"
-                                                   GlyphData="{StaticResource DockGuideGlyphRightData}"
+                                                   GlyphData="{StaticResource DockGuideGlyphRootRightData}"
                                                    Visibility="Collapsed"
                                                    HorizontalAlignment="Right"
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,16,0"/>
                         </Grid>
+                        </Grid>
+                        </Canvas>
 
+                        <!-- Previews only — never a drop target. The drop preview
+                             Grids carry a Background and sit at Opacity 0, and an
+                             Opacity-0 element with a Background still takes hits, so
+                             this layer covers the whole pane with something invisible
+                             yet clickable. If the adorner is ever left open (a drag
+                             whose release did not come back to this DockControl), that
+                             swallows every click in the window while showing nothing:
+                             the window still moves by its title bar, but the content
+                             is dead. The guides live in PART_ClusterPlate, a sibling,
+                             so nothing here needs to be hit-testable. -->
                         <Canvas x:Name="PART_LocalCanvas"
-                                IsHitTestVisible="True">
+                                IsHitTestVisible="False">
 
                             <Grid x:Name="PART_LocalHost"
                                   Canvas.Left="{TemplateBinding LocalX}"
@@ -84,6 +148,7 @@
                                   Height="{TemplateBinding LocalHeight}">
 
                                 <Grid x:Name="PART_IndicatorGrid"
+                                      IsHitTestVisible="False"
                                       RowDefinitions="*,*"
                                       ColumnDefinitions="*,*">
 
@@ -133,75 +198,74 @@
                                           BorderThickness="1"
                                           Opacity="0"/>
 
-                                    <Grid x:Name="PART_SelectorPanel"
-                                          Grid.Row="0"
-                                          Grid.RowSpan="2"
-                                          Grid.Column="0"
-                                          Grid.ColumnSpan="2">
-
-                                        <!-- Cluster container. Deliberately has NO backing plate:
-                                             each guide already carries its own plate, and a second
-                                             one behind them read as visual noise. Code applies a
-                                             translate here to keep the cluster clear of the
-                                             window-edge root guides. -->
-                                        <Border x:Name="PART_ClusterPlate"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Visibility="Collapsed"
-                                                RenderTransformOrigin="0.5,0.5">
-                                            <Grid x:Name="PART_SelectorGrid"
-                                                  RowDefinitions="Auto,Auto,Auto"
-                                                  ColumnDefinitions="Auto,Auto,Auto">
-
-                                                <local:DockTargetGuide x:Name="PART_TopSelector"
-                                                                       Grid.Row="0"
-                                                                       Grid.Column="1"
-                                                                       Width="{ThemeResource DockGuideSize}"
-                                                                       Height="{ThemeResource DockGuideSize}"
-                                                                       GlyphData="{StaticResource DockGuideGlyphTopData}"
-                                                                       Margin="0,0,0,2"
-                                                                       Visibility="Collapsed"/>
-
-                                                <local:DockTargetGuide x:Name="PART_BottomSelector"
-                                                                       Grid.Row="2"
-                                                                       Grid.Column="1"
-                                                                       Width="{ThemeResource DockGuideSize}"
-                                                                       Height="{ThemeResource DockGuideSize}"
-                                                                       GlyphData="{StaticResource DockGuideGlyphBottomData}"
-                                                                       Margin="0,2,0,0"
-                                                                       Visibility="Collapsed"/>
-
-                                                <local:DockTargetGuide x:Name="PART_LeftSelector"
-                                                                       Grid.Row="1"
-                                                                       Grid.Column="0"
-                                                                       Width="{ThemeResource DockGuideSize}"
-                                                                       Height="{ThemeResource DockGuideSize}"
-                                                                       GlyphData="{StaticResource DockGuideGlyphLeftData}"
-                                                                       Margin="0,0,2,0"
-                                                                       Visibility="Collapsed"/>
-
-                                                <local:DockTargetGuide x:Name="PART_RightSelector"
-                                                                       Grid.Row="1"
-                                                                       Grid.Column="2"
-                                                                       Width="{ThemeResource DockGuideSize}"
-                                                                       Height="{ThemeResource DockGuideSize}"
-                                                                       GlyphData="{StaticResource DockGuideGlyphRightData}"
-                                                                       Margin="2,0,0,0"
-                                                                       Visibility="Collapsed"/>
-
-                                                <local:DockTargetGuide x:Name="PART_CenterSelector"
-                                                                       Grid.Row="1"
-                                                                       Grid.Column="1"
-                                                                       Width="{ThemeResource DockGuideSize}"
-                                                                       Height="{ThemeResource DockGuideSize}"
-                                                                       GlyphData="{StaticResource DockGuideGlyphCenterData}"
-                                                                       Visibility="Collapsed"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
                                 </Grid>
                             </Grid>
                         </Canvas>
+
+                        <!-- Cluster container. Deliberately has NO backing plate:
+                             each guide already carries its own plate, and a second
+                             one behind them read as visual noise.
+
+                             Lives in the WINDOW layer, not inside PART_LocalHost:
+                             anchored to the pane it was cut off whenever the pane
+                             was smaller than the 3x3 grid, which is exactly when a
+                             user most needs to see all five targets. Code
+                             translates it onto the pane centre and clamps it to the
+                             window. Last child, so it draws above the previews. -->
+                        <Border x:Name="PART_ClusterPlate"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="Collapsed"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Grid x:Name="PART_SelectorGrid"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="Auto,Auto,Auto">
+
+                                <local:DockTargetGuide x:Name="PART_TopSelector"
+                                                       Grid.Row="0"
+                                                       Grid.Column="1"
+                                                       Width="{ThemeResource DockGuideSize}"
+                                                       Height="{ThemeResource DockGuideSize}"
+                                                       GlyphData="{StaticResource DockGuideGlyphTopData}"
+                                                       Margin="0,0,0,2"
+                                                       Visibility="Collapsed"/>
+
+                                <local:DockTargetGuide x:Name="PART_BottomSelector"
+                                                       Grid.Row="2"
+                                                       Grid.Column="1"
+                                                       Width="{ThemeResource DockGuideSize}"
+                                                       Height="{ThemeResource DockGuideSize}"
+                                                       GlyphData="{StaticResource DockGuideGlyphBottomData}"
+                                                       Margin="0,2,0,0"
+                                                       Visibility="Collapsed"/>
+
+                                <local:DockTargetGuide x:Name="PART_LeftSelector"
+                                                       Grid.Row="1"
+                                                       Grid.Column="0"
+                                                       Width="{ThemeResource DockGuideSize}"
+                                                       Height="{ThemeResource DockGuideSize}"
+                                                       GlyphData="{StaticResource DockGuideGlyphLeftData}"
+                                                       Margin="0,0,2,0"
+                                                       Visibility="Collapsed"/>
+
+                                <local:DockTargetGuide x:Name="PART_RightSelector"
+                                                       Grid.Row="1"
+                                                       Grid.Column="2"
+                                                       Width="{ThemeResource DockGuideSize}"
+                                                       Height="{ThemeResource DockGuideSize}"
+                                                       GlyphData="{StaticResource DockGuideGlyphRightData}"
+                                                       Margin="2,0,0,0"
+                                                       Visibility="Collapsed"/>
+
+                                <local:DockTargetGuide x:Name="PART_CenterSelector"
+                                                       Grid.Row="1"
+                                                       Grid.Column="1"
+                                                       Width="{ThemeResource DockGuideSize}"
+                                                       Height="{ThemeResource DockGuideSize}"
+                                                       GlyphData="{StaticResource DockGuideGlyphCenterData}"
+                                                       Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

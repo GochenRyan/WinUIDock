@@ -1,4 +1,4 @@
-using Dock.Model.WinUI3.Controls;
+﻿using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -100,14 +100,7 @@ namespace Dock.WinUI3.Controls
                 _leftPinnedControl.ItemsSource = rootDock.LeftPinnedDockables;
             }
             _leftPinnedControl.DataContextChanged += _leftPinnedControl_DataContextChanged;
-            //_leftPinnedControl.SizeChanged += PinnedControl_SizeChanged;
         }
-
-        //private void PinnedControl_SizeChanged(object sender, SizeChangedEventArgs e)
-        //{
-        //    // Force refresh the layout
-        //    InvalidateMeasure();
-        //}
 
         private void _leftPinnedControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
@@ -167,33 +160,8 @@ namespace Dock.WinUI3.Controls
                     Path = new PropertyPath("DefaultDockable"),
                     Mode = BindingMode.OneWay
                 });
-
-                //rootDock.LeftPinnedDockables.CollectionChanged += PinnedDockables_CollectionChanged;
-                //rootDock.RightPinnedDockables.CollectionChanged += PinnedDockables_CollectionChanged;
-                //rootDock.TopPinnedDockables.CollectionChanged += PinnedDockables_CollectionChanged;
-                //rootDock.BottomPinnedDockables.CollectionChanged += PinnedDockables_CollectionChanged;
             }
         }
-
-        //private void PinnedDockables_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        //{
-        //    // Force refresh the layout
-        //    InvalidateMeasure();
-        //}
-
-        //protected override Size MeasureOverride(Size availableSize)
-        //{
-        //    var cnt = VisualTreeHelper.GetChildrenCount(this);
-        //    for (int i = 0; i < cnt; ++i)
-        //    {
-        //        var child = VisualTreeHelper.GetChild(this, i) as FrameworkElement;
-        //        if (child != null)
-        //        {
-        //            child.Measure(availableSize);
-        //        }
-        //    }
-        //    return availableSize;
-        //}
 
         private ToolPinnedControl _leftPinnedControl;
         private ToolPinnedControl _rightPinnedControl;

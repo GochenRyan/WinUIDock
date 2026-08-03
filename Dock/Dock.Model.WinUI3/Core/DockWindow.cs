@@ -15,7 +15,9 @@ namespace Dock.Model.WinUI3.Core
     {
         public DockWindow()
         {
-            Id = nameof(IDockWindow);
+            // Kind is the HostWindowLocator key, so every window shares the same
+            // default. Id stays empty — it is the host's to assign.
+            Kind = nameof(IDockWindow);
             Title = nameof(IDockWindow);
             _hostAdapter = new HostAdapter(this);
         }
@@ -25,6 +27,10 @@ namespace Dock.Model.WinUI3.Core
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Id")]
         public string Id { get => (string)GetValue(IDProperty); set => SetValue(IDProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Kind")]
+        public string Kind { get => (string)GetValue(KindProperty); set => SetValue(KindProperty, value); }
 
         [DataMember(IsRequired = true, EmitDefaultValue = true)]
         [JsonPropertyName("X")]
@@ -68,6 +74,12 @@ namespace Dock.Model.WinUI3.Core
 
         DependencyProperty IDProperty = DependencyProperty.Register(
             nameof(Id),
+            typeof(string),
+            typeof(DockWindow),
+            new PropertyMetadata(string.Empty));
+
+        static readonly DependencyProperty KindProperty = DependencyProperty.Register(
+            nameof(Kind),
             typeof(string),
             typeof(DockWindow),
             new PropertyMetadata(string.Empty));

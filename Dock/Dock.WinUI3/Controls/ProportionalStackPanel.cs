@@ -19,29 +19,8 @@ namespace Dock.WinUI3.Controls
     {
         public ProportionalStackPanel() : base()
         {
-            //Loaded += ProportionalStackPanel_Loaded;
             DataContextChanged += ProportionalStackPanel_DataContextChanged;
         }
-
-
-        //private void ProportionalStackPanel_Loaded(object sender, RoutedEventArgs e)
-        //{
-        //    /*
-        //     * Orientation="{Binding Orientation, Converter={StaticResource OrientationConverter}, FallbackValue=Vertical}"
-        //                                          IsCollapsable="{Binding IsCollapsable, Mode=OneWay}"
-        //                                          IsEmpty ="{Binding IsEmpty, Mode=OneWay}"
-        //     * 
-        //     */
-
-        //    //if (DataContext is ProportionalDock proportionalDock)
-        //    //{
-
-        //    //    Orientation = proportionalDock.Orientation == Model.Core.Orientation.Horizontal ? Orientation.Horizontal : Orientation.Vertical;
-        //    //    IsCollapsable = proportionalDock.IsCollapsable;
-        //    //    IsEmpty = proportionalDock.IsEmpty;
-        //    //}
-        //    DataContextChanged += ProportionalStackPanel_DataContextChanged;
-        //}
 
         private void ProportionalStackPanel_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {

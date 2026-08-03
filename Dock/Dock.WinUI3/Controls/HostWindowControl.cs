@@ -3,6 +3,7 @@ using Dock.Model;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Microsoft.UI.Xaml;
+using System;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace Dock.WinUI3.Controls
             this.DefaultStyleKey = typeof(HostWindowControl);
             _ownerWindow = hostWindow;
             _ownerWindow.WindowContent = this;
-            _ownerWindow.ExtendsContentIntoTitleBar = true;
+            // ExtendsContentIntoTitleBar is deliberately NOT set here — see Present().
 
             // Float windows are created dynamically and must follow the dock theme
             // (content root + OS caption buttons; applied immediately and kept in
@@ -35,11 +36,28 @@ namespace Dock.WinUI3.Controls
             _ownerWindow.PositionChanged += _ownerWindow_PositionChanged;
             _ownerWindow.SizeChanged += _ownerWindow_SizeChanged;
 
+            // The one reliable "is this window still usable" signal. Every member of
+            // a closed WinUI window throws, so it cannot be probed after the fact —
+            // it has to be recorded when it happens. Covers closes we do not
+            // initiate too: the user's X button, and the main window taking its
+            // float windows down with it.
+            _ownerWindow.Closed += OnOwnerWindowClosed;
+
             LayoutUpdated += HostWindowControl_LayoutUpdated;
 
             _dockManager = new DockManager();
 
             DataContextChanged += HostWindowControl_DataContextChanged;
+        }
+
+        private void OnOwnerWindowClosed(object sender, WindowEventArgs args)
+        {
+            _ownerWindowClosed = true;
+
+            if (sender is Window window)
+            {
+                window.Closed -= OnOwnerWindowClosed;
+            }
         }
 
         private void _ownerWindow_SizeChanged(object sender, WindowSizeChangedEventArgs args)
@@ -86,11 +104,43 @@ namespace Dock.WinUI3.Controls
             return current?.Title ?? string.Empty;
         }
 
+        /// <summary>
+        /// Records the window's geometry every frame.
+        ///
+        /// LayoutUpdated is raised by the framework, so anything thrown here escapes
+        /// as an unhandled exception with no managed frame of ours on the stack. And
+        /// there IS something to throw: reading <c>AppWindow</c> — or any other member
+        /// of a closed WinUI window — fails with E_INVALIDARG ("The parameter is
+        /// incorrect"), which a float window closing under a live subscription hits on
+        /// the very next frame.
+        ///
+        /// Unsubscribing on close is the fix; this guard is the belt to that braces,
+        /// since WinUI does not reliably raise Unloaded for a closing window's tree.
+        /// </summary>
         private void HostWindowControl_LayoutUpdated(object sender, object e)
         {
-            if (Window is { } && _ownerWindow.AppWindow != null && IsTracked)
+            // A close we did not initiate (the user's X button, or the main window
+            // taking its float windows down) never runs CloseOwnerWindow, so this
+            // subscription survives it. Checking the recorded flag costs nothing and
+            // keeps the AppWindow read below off a dead window.
+            if (_ownerWindowClosed)
             {
-                Window.Save();
+                LayoutUpdated -= HostWindowControl_LayoutUpdated;
+                return;
+            }
+
+            try
+            {
+                if (Window is { } && _ownerWindow.AppWindow != null && IsTracked)
+                {
+                    Window.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                Internal.DockDiag.Log(
+                    $"HostWindowControl.LayoutUpdated on a dead window — unsubscribing: {ex.Message}");
+                LayoutUpdated -= HostWindowControl_LayoutUpdated;
             }
         }
 
@@ -151,7 +201,7 @@ namespace Dock.WinUI3.Controls
                 }
 
                 _ownerWindow.Show();
-
+                ExtendContentIntoTitleBar();
             }
             else
             {
@@ -176,6 +226,35 @@ namespace Dock.WinUI3.Controls
                 }
 
                 _ownerWindow.Show();
+                ExtendContentIntoTitleBar();
+            }
+        }
+
+        /// <summary>
+        /// Hands the caption area over to our own title bar — but only once the
+        /// window is actually on screen.
+        ///
+        /// Setting this makes WinUI reconfigure the non-client area, which resolves
+        /// the window's HWND through its WindowId. Before the window is shown that
+        /// association does not exist yet and Microsoft.UI.Input fails with
+        /// "There is no HWND associated with the provided WindowId" — visible in the
+        /// debug output on every float window ever created. Harmless on its own, but
+        /// the same call turns into a process-killing fail-fast (0xC0000602) when it
+        /// runs while another window is being torn down, which is what made
+        /// reloading a layout crash.
+        ///
+        /// Measured order (WINUIDOCK_DIAG): Present -> Show -> here -> OnApplyTemplate,
+        /// so the title bar element is hooked up (SetTitleBar) strictly after this.
+        /// </summary>
+        private void ExtendContentIntoTitleBar()
+        {
+            try
+            {
+                _ownerWindow.ExtendsContentIntoTitleBar = true;
+            }
+            catch (Exception ex)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.ExtendContentIntoTitleBar failed: {ex.Message}");
             }
         }
 
@@ -246,6 +325,15 @@ namespace Dock.WinUI3.Controls
             // allowed to perform this operation on this object"). Let the event
             // chain unwind first.
             Internal.DockDiag.Log($"HostWindowControl.Exit requested for {Internal.DockDiag.Describe(this)}");
+
+            // Cheap early out for the repeat-Exit case, so it does not even cost a
+            // dispatcher hop. CloseOwnerWindow checks again — by the time a deferred
+            // callback runs, the window may have closed in between.
+            if (_ownerWindowClosed)
+            {
+                return;
+            }
+
             var window = Window;
             var ownerWindow = _ownerWindow;
             // Low priority: let the post-drop layout pass of the target window
@@ -281,7 +369,57 @@ namespace Dock.WinUI3.Controls
 
         private void CloseOwnerWindow(WindowEx ownerWindow)
         {
+            // Exit() can be reached more than once for the same window — the reload
+            // path calls it explicitly (035) and the layout swap's
+            // DeInitialize -> ExitWindows calls it again — and BOTH hops defer, so
+            // the second callback lands on a window that is already gone. Every
+            // member of a closed WinUI window then throws
+            // "The WinUI Desktop Window object has already been closed": the
+            // try/catch blocks below do swallow it, but it still breaks the debugger
+            // on every reload, and none of the work below means anything once the
+            // HWND is gone.
+            if (_ownerWindowClosed)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.CloseOwnerWindow skipped, already closed: {Internal.DockDiag.Describe(this)}");
+                return;
+            }
+
             Internal.DockDiag.Log($"HostWindowControl.CloseOwnerWindow executing for {Internal.DockDiag.Describe(this)}");
+
+            // Everything below runs BEFORE the window is closed, and all of it is
+            // about cutting links that would otherwise outlive the HWND. This has to
+            // be prevention rather than a try/catch: the failure mode here is a
+            // fail-fast (0xC0000602 — "exception handlers will not be called, the
+            // process terminates immediately"), which no catch block can intercept.
+
+            // 1. The per-frame geometry recorder reads AppWindow, which throws
+            //    E_INVALIDARG once the window is closed, from the framework's
+            //    LayoutUpdated dispatch.
+            LayoutUpdated -= HostWindowControl_LayoutUpdated;
+
+            // 2. Our own subscriptions to the window's own events.
+            try
+            {
+                ownerWindow.PositionChanged -= _ownerWindow_PositionChanged;
+                ownerWindow.SizeChanged -= _ownerWindow_SizeChanged;
+            }
+            catch
+            {
+            }
+
+            // 3. Detach the custom title bar. WinUIEx keeps tracking that element to
+            //    maintain the non-client drag region through InputNonClientPointerSource;
+            //    once the HWND is gone that lookup fails with
+            //    "There is no HWND associated with the provided WindowId" (E_INVALIDARG)
+            //    deep inside Microsoft.UI.Input, and takes the process down.
+            try
+            {
+                ownerWindow.SetTitleBar(null);
+            }
+            catch
+            {
+            }
+
             // Closing a WinUI 3 window does NOT reliably raise Unloaded for its
             // tree, so the model-owned shared content elements can die attached
             // to this window and poison their next host (E_INVALIDARG at its
@@ -301,14 +439,39 @@ namespace Dock.WinUI3.Controls
             {
             }
 
+            // Set BEFORE closing: Close() raises Closed synchronously, and anything
+            // re-entering through it must already see this window as gone.
+            _ownerWindowClosed = true;
             ownerWindow.Close();
         }
 
+        // Window geometry restored from a layout file is untrusted input: it may be
+        // stale, may have been written before the window was ever sized, and passes
+        // through a DPI conversion on the way to the OS. Values the OS rejects come
+        // back as "The parameter is incorrect" — an E_INVALIDARG that no layout guard
+        // can catch, because it is not thrown from measure/arrange. Validate here.
+
         public void SetPosition(double x, double y)
         {
-            if (!double.IsNaN(x) && !double.IsNaN(y))
+            // Infinity and out-of-int-range matter as much as NaN: the double->int
+            // cast below has already overflowed into garbage by the time the OS sees
+            // them.
+            if (!IsFinite(x) || !IsFinite(y)
+                || x < int.MinValue || x > int.MaxValue
+                || y < int.MinValue || y > int.MaxValue)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.SetPosition ignoring invalid position ({x}, {y})");
+                return;
+            }
+
+            try
             {
                 _ownerWindow.Move((int)x, (int)y);
+            }
+            catch (Exception ex)
+            {
+                // Losing a restored position is cosmetic; taking down the app is not.
+                Internal.DockDiag.Log($"HostWindowControl.SetPosition failed for ({x}, {y}): {ex.Message}");
             }
         }
 
@@ -320,16 +483,35 @@ namespace Dock.WinUI3.Controls
 
         public void SetSize(double width, double height)
         {
-            if (!double.IsNaN(width))
+            TrySetExtent(v => _ownerWindow.Width = v, width, nameof(width));
+            TrySetExtent(v => _ownerWindow.Height = v, height, nameof(height));
+        }
+
+        /// <summary>
+        /// Applies one window extent, skipping values the OS would refuse. A zero or
+        /// negative extent is the dangerous one: it reaches here whenever a layout was
+        /// saved before the window had ever been sized (the tracked extents start at
+        /// zero), and the resize call then fails with "The parameter is incorrect".
+        /// </summary>
+        private static void TrySetExtent(Action<double> apply, double value, string what)
+        {
+            if (!IsFinite(value) || value <= 0.0)
             {
-                _ownerWindow.Width = width;
+                Internal.DockDiag.Log($"HostWindowControl.SetSize ignoring invalid {what} ({value})");
+                return;
             }
 
-            if (!double.IsNaN(height))
+            try
             {
-                _ownerWindow.Height = height;
+                apply(value);
+            }
+            catch (Exception ex)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.SetSize failed for {what}={value}: {ex.Message}");
             }
         }
+
+        private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
         public void GetSize(out double width, out double height)
         {
@@ -349,6 +531,18 @@ namespace Dock.WinUI3.Controls
             ToolChromeControlsWholeWindow = layout.OpenedDockablesCount < 2;
         }
 
+        // Root of a float window's tree — counterpart to the guard on DockControl.
+        // Float windows are created and torn down exactly when these transient
+        // failures happen, and their trees do not hang below the main DockControl,
+        // so they need a top-level guard of their own.
+        protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
+            => Internal.LayoutGuard.Run(
+                this, () => base.MeasureOverride(availableSize), DesiredSize, nameof(HostWindowControl) + ".Measure");
+
+        protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
+            => Internal.LayoutGuard.Run(
+                this, () => base.ArrangeOverride(finalSize), finalSize, nameof(HostWindowControl) + ".Arrange");
+
         private WindowEx _ownerWindow;
         private DockControl _dockControl;
         private HostWindowTitleBar _titleBar;
@@ -357,5 +551,6 @@ namespace Dock.WinUI3.Controls
         private double _ownerWindowY;
         private double _ownerWindowWidth;
         private double _ownerWindowHeight;
+        private bool _ownerWindowClosed;
     }
 }

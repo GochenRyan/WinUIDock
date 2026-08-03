@@ -62,32 +62,49 @@ public abstract partial class FactoryBase
             dock.ActiveDockable = null;
         }
 
-        if (dock.VisibleDockables.Count == 1)
-        {
-            var dockable0 = dock.VisibleDockables[0];
-            if (dockable0 is IProportionalDockSplitter splitter0)
-            {
-                RemoveDockable(splitter0, false);
-            }
-        }
-
-        if (dock.VisibleDockables.Count == 2)
-        {
-            var dockable0 = dock.VisibleDockables[0];
-            var dockable1 = dock.VisibleDockables[1];
-            if (dockable0 is IProportionalDockSplitter splitter0)
-            {
-                RemoveDockable(splitter0, false);
-            }
-            if (dockable1 is IProportionalDockSplitter splitter1)
-            {
-                RemoveDockable(splitter1, false);
-            }
-        }
+        NormalizeSplitters(dock);
 
         if (collapse)
         {
             CollapseDock(dock);
+        }
+    }
+
+    /// <summary>
+    /// Drops splitters that no longer separate anything: a leading one, a trailing
+    /// one, or two in a row.
+    ///
+    /// The old cleanup only fired when the child count fell to 1 or 2, so removing a
+    /// child from a container that still had three or more left an orphan behind —
+    /// a stray drag handle and a gap at the edge of the pane. Rare while only single
+    /// tools moved (they leave their dock in place); routine once whole docks are
+    /// relocated.
+    /// </summary>
+    private void NormalizeSplitters(IDock dock)
+    {
+        if (dock.VisibleDockables is not { } dockables)
+        {
+            return;
+        }
+
+        // Back to front: removing at i never shifts anything still to be examined.
+        for (var i = dockables.Count - 1; i >= 0; i--)
+        {
+            if (dockables[i] is not IProportionalDockSplitter splitter)
+            {
+                continue;
+            }
+
+            var orphaned =
+                i == 0
+                || i == dockables.Count - 1
+                || dockables[i - 1] is IProportionalDockSplitter
+                || dockables[i + 1] is IProportionalDockSplitter;
+
+            if (orphaned)
+            {
+                RemoveDockable(splitter, false);
+            }
         }
     }
 
@@ -618,9 +635,111 @@ public abstract partial class FactoryBase
     {
         if (dockable.CanClose && dockable.OnClose())
         {
+            // Remember the spot so RestoreDockable can put it back. Recorded here
+            // rather than in RemoveDockable because that runs on drag/move paths too,
+            // where the dockable is not "closed" and has no spot to return to.
+            if (dockable.Owner is IDock closeOwner && closeOwner.VisibleDockables is { } siblings)
+            {
+                var closeIndex = siblings.IndexOf(dockable);
+                if (closeIndex >= 0)
+                {
+                    dockable.RestoreOwner = closeOwner;
+                    dockable.RestoreIndex = closeIndex;
+                }
+            }
+
             RemoveDockable(dockable, true);
             OnDockableClosed(dockable);
         }
+    }
+
+    /// <inheritdoc/>
+    public virtual bool RestoreDockable(IDockable dockable)
+    {
+        if (dockable.RestoreOwner is not IDock owner)
+        {
+            return false;
+        }
+
+        // The owner may itself have been collapsed away when this dockable closed —
+        // put it back first, otherwise there is nothing to insert into.
+        if (!IsInLayout(owner))
+        {
+            if (!RestoreDockable(owner))
+            {
+                return false;
+            }
+        }
+
+        if (FindRoot(owner, _ => true) is { } root)
+        {
+            root.HiddenDockables?.Remove(dockable);
+        }
+
+        owner.VisibleDockables ??= new ObservableCollection<IDockable>(CreateList<IDockable>());
+
+        // Siblings may have come and gone since, so treat the index as a hint.
+        var index = dockable.RestoreIndex;
+        if (index < 0 || index > owner.VisibleDockables.Count)
+        {
+            index = owner.VisibleDockables.Count;
+        }
+
+        InsertDockable(owner, dockable, index);
+
+        // CollapseDock took the neighbouring splitters with it; put them back so the
+        // restored dock gets its share of the space.
+        EnsureSplittersAround(owner, index);
+
+        dockable.RestoreOwner = null;
+        dockable.RestoreIndex = -1;
+
+        SetActiveDockable(dockable);
+        return true;
+    }
+
+    /// <summary>
+    /// True when the dockable is currently reachable in its owner's visible tree.
+    /// A parked (hidden) dock keeps its Owner link, so an Owner check alone is not enough.
+    /// </summary>
+    private static bool IsInLayout(IDockable dockable)
+        => dockable.Owner is IDock owner && owner.VisibleDockables?.Contains(dockable) == true;
+
+    /// <summary>
+    /// Puts a splitter on each side of the item just re-inserted at <paramref name="index"/>,
+    /// where one is missing. Only the two neighbouring gaps are touched — rebuilding
+    /// every splitter would work too, but would discard the ids and any customization
+    /// the host gave the existing ones.
+    /// </summary>
+    private void EnsureSplittersAround(IDock dock, int index)
+    {
+        if (dock is not IProportionalDock || dock.VisibleDockables is not { } dockables)
+        {
+            return;
+        }
+
+        if (index < 0 || index >= dockables.Count)
+        {
+            return;
+        }
+
+        // Trailing gap first: inserting there does not shift the item's own index.
+        if (index + 1 < dockables.Count && dockables[index + 1] is not IProportionalDockSplitter)
+        {
+            InsertSplitter(dock, index + 1);
+        }
+
+        if (index > 0 && dockables[index - 1] is not IProportionalDockSplitter)
+        {
+            InsertSplitter(dock, index);
+        }
+    }
+
+    private void InsertSplitter(IDock dock, int index)
+    {
+        var splitter = CreateProportionalDockSplitter();
+        InitDockable(splitter, dock);
+        dock.VisibleDockables?.Insert(index, splitter);
     }
 
     private void CloseDockablesRange(IDock dock, int start, int end, IDockable? excluding = null)

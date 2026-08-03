@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <winuiex:WindowEx
     xmlns:winuiex="using:WinUIEx"
     x:Class="DockServiceSample.MainWindow"
@@ -16,31 +16,26 @@
     <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
         <MenuBar Grid.Row="0">
             <MenuBarItem Title="File">
-                <MenuFlyoutSubItem Text="New">
-                    <MenuFlyoutItem Text="Plain Text Document"/>
-                    <MenuFlyoutItem Text="Rich Text Document"/>
-                    <MenuFlyoutItem Text="Other Formats..."/>
-                </MenuFlyoutSubItem>
-                <MenuFlyoutItem Text="Open..." Click="Open_Click"/>
-                <MenuFlyoutItem Text="Save" Click="Save_Click"/>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Exit"/>
+                <MenuFlyoutItem Text="Open Layout..." Click="Open_Click"/>
+                <MenuFlyoutItem Text="Save Layout..." Click="Save_Click"/>
             </MenuBarItem>
 
-            <MenuBarItem Title="Edit">
-                <MenuFlyoutItem Text="Undo"/>
-                <MenuFlyoutItem Text="Cut"/>
-                <MenuFlyoutItem Text="Copy"/>
-                <MenuFlyoutItem Text="Paste"/>
+            <!-- These go through DockService, i.e. the service-layer API rather than
+                 the factory directly — that is what this sample exists to show.
+                 Check state mirrors the real layout, kept in sync by factory events. -->
+            <MenuBarItem x:Name="ViewMenu" Title="View">
+                <ToggleMenuFlyoutItem Tag="left_tool" Text="Left tool" IsChecked="True" Click="TogglePanel_Click"/>
+                <ToggleMenuFlyoutItem Tag="right_tool" Text="Right tool" IsChecked="True" Click="TogglePanel_Click"/>
+                <ToggleMenuFlyoutItem Tag="bottom_tool" Text="Bottom tool" IsChecked="True" Click="TogglePanel_Click"/>
+                <ToggleMenuFlyoutItem Tag="window_tool" Text="Window tool" IsChecked="True" Click="TogglePanel_Click"/>
             </MenuBarItem>
 
-            <MenuBarItem Title="View">
-                <MenuFlyoutItem Text="Hide Left Tool" Click="HideLeftTool_Click"/>
-                <MenuFlyoutItem Text="Show Left Tool" Click="ShowLeftTool_Click"/>
-            </MenuBarItem>
-
-            <MenuBarItem Title="Help">
-                <MenuFlyoutItem Text="About"/>
+            <MenuBarItem Title="Sample">
+                <MenuFlyoutItem Text="Reset to default layout" Click="ResetDefault_Click"/>
+                <MenuFlyoutItem Text="Save &amp; reload layout (round-trip test)" Click="RoundTrip_Click"/>
+                <MenuFlyoutItem Text="List parked (hidden) dockables" Click="ListHidden_Click"/>
+                <MenuFlyoutItem Text="Check id uniqueness" Click="ValidateIds_Click"/>
+                <MenuFlyoutItem Text="Check window-edge docking" Click="CheckRootEdge_Click"/>
             </MenuBarItem>
         </MenuBar>
 
@@ -52,55 +47,49 @@
                                      Id="Root"
                                      IsCollapsable="False"
                                      DefaultDockable="{x:Bind MainLayout, Mode=OneWay}"
-                                     RootLeftDock="{x:Bind LeftPane, Mode=OneWay}"
-                                     RootRightDock="{x:Bind RightPane, Mode=OneWay}"
-                                     RootTopDock="{x:Bind TopPane, Mode=OneWay}"
-                                     RootBottomDock="{x:Bind BottomPane, Mode=OneWay}"
                                      CanClose="False">
                 <winui3controls:RootDock.Windows>
 
                 </winui3controls:RootDock.Windows>
 
-                <winui3controls:ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Horizontal">
-                    <!--Top Pane-->
+                <!-- Game-editor shape. Outer level is VERTICAL: a toolbar strip across
+                     the top, everything else underneath. -->
+                <winui3controls:ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Vertical">
+
                     <winui3controls:ToolDock x:Name="TopPane" Id="TopPane" Proportion="0" Alignment="Top" CanClose="False">
                     </winui3controls:ToolDock>
 
-                    <winui3controls:ProportionalDockSplitter x:Name="MainSplitter" Id="MainSplitter" />
+                    <winui3controls:ProportionalDockSplitter x:Name="TopSplitter" Id="TopSplitter" />
 
-                    <winui3controls:ProportionalDock x:Name="MainProportion" Id="MainProportion" Orientation="Horizontal">
-                        <!--Left Pane-->
-                        <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left" CanClose="False">
+                    <!-- Inner level is HORIZONTAL with THREE columns. RightPane is a
+                         direct child here, so it runs the full height; BottomPane lives
+                         inside the centre column and no longer cuts across it. -->
+                    <winui3controls:ProportionalDock x:Name="Body" Id="Body" Orientation="Horizontal">
+
+                        <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.22" Alignment="Left" CanClose="False">
                         </winui3controls:ToolDock>
 
                         <winui3controls:ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter" />
 
-                        <winui3controls:ProportionalDock x:Name="TopProportion" Id="TopProportion" Orientation="Vertical">
-                            <!-- Right Pane -->
+                        <winui3controls:ProportionalDock x:Name="Center" Id="Center" Orientation="Vertical">
 
-                            <winui3controls:ProportionalDock x:Name="RightProportion" Id="RightProportion" Orientation="Horizontal">
-
-                                <!--Documents Pane-->
-                                <winui3controls:DocumentDock x:Name="DocumentPane" Id="DocumentPane" CanClose="False">
-                                </winui3controls:DocumentDock>
-
-                                <winui3controls:ProportionalDockSplitter x:Name="RightSplitter" Id="RightSplitter" />
-
-                                <!--Properties Pane-->
-                                <winui3controls:ToolDock x:Name="RightPane" Id="RightPane" Proportion="0.3" Alignment="Right" CanClose="False">
-                                </winui3controls:ToolDock>
-
-                            </winui3controls:ProportionalDock>
+                            <winui3controls:DocumentDock x:Name="DocumentPane" Id="DocumentPane" CanClose="False">
+                            </winui3controls:DocumentDock>
 
                             <winui3controls:ProportionalDockSplitter x:Name="BottomSplitter" Id="BottomSplitter" />
-
-                            <!--Bottom Pane-->
 
                             <winui3controls:ToolDock x:Name="BottomPane" Id="BottomPane" Proportion="0.3" Alignment="Bottom" CanClose="False">
                             </winui3controls:ToolDock>
 
                         </winui3controls:ProportionalDock>
+
+                        <winui3controls:ProportionalDockSplitter x:Name="RightSplitter" Id="RightSplitter" />
+
+                        <winui3controls:ToolDock x:Name="RightPane" Id="RightPane" Proportion="0.22" Alignment="Right" CanClose="False">
+                        </winui3controls:ToolDock>
+
                     </winui3controls:ProportionalDock>
+
                 </winui3controls:ProportionalDock>
             </winui3controls:RootDock>
         </controls:DockControl>

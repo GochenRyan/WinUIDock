@@ -384,10 +384,16 @@ namespace Dock.WinUI3.Controls
             return DragAction.Move;
         }
 
+        // Root of the main dock tree. Layout recurses top-down, so guarding here also
+        // covers the many descendant controls that override measure/arrange without a
+        // guard of their own — that is the gap a rebuilt layout falls into.
         protected override Size MeasureOverride(Size availableSize)
-        {
-            return base.MeasureOverride(availableSize);
-        }
+            => Internal.LayoutGuard.Run(
+                this, () => base.MeasureOverride(availableSize), DesiredSize, nameof(DockControl) + ".Measure");
+
+        protected override Size ArrangeOverride(Size finalSize)
+            => Internal.LayoutGuard.Run(
+                this, () => base.ArrangeOverride(finalSize), finalSize, nameof(DockControl) + ".Arrange");
 
         private readonly DockManager _dockManager;
         private readonly DockControlState _dockControlState;

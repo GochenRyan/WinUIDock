@@ -15,6 +15,7 @@ namespace Dock.Model.WinUI3.Controls
     {
         public ProportionalDock() : base()
         {
+            Kind = nameof(IProportionalDock);
             VisibleDockables = new ObservableCollection<IDockable>();
         }
 

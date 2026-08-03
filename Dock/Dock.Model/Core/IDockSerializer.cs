@@ -29,6 +29,18 @@ public interface IDockSerializer
     T? Load<T>(Stream stream);
 
     /// <summary>
+    /// Loads a layout and runs <paramref name="resolver"/> over every dockable in
+    /// it, so the host can adopt its own live objects (restoring the
+    /// <c>[JsonIgnore]</c> panel content and keeping the references it holds valid)
+    /// or drop nodes the current build no longer knows about.
+    /// </summary>
+    /// <param name="stream">The stream to read from.</param>
+    /// <param name="resolver">The resolution callback; null behaves like <see cref="Load{T}(Stream)"/>.</param>
+    /// <typeparam name="T">The type of the object to load.</typeparam>
+    /// <returns>The loaded and resolved object, or null.</returns>
+    T? Load<T>(Stream stream, DockableResolver? resolver);
+
+    /// <summary>
     /// Saves the specified object to the specified stream.
     /// </summary>
     /// <param name="stream">The stream to write to.</param>

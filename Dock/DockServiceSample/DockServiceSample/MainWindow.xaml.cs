@@ -1,8 +1,10 @@
-using Dock.WinUI3;
+﻿using Dock.WinUI3;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -42,6 +44,12 @@ namespace DockServiceSample
         {
             m_dockService = new();
             m_dockService.LoadDefault();
+            HookFactoryEvents();
+
+            // Runs against a throwaway layout, so it is safe here and every launch
+            // leaves a verdict in crash.log. The opt-in DOCKSAMPLE_REPRO branch is
+            // the exception — that one rearranges the live layout on purpose.
+            m_dockService.CheckRootEdgeQuietly();
         }
 
         private async void Save_Click(object sender, RoutedEventArgs e)
@@ -86,6 +94,7 @@ namespace DockServiceSample
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                App.Log("MainWindow", e);
                 }
             }
         }
@@ -120,18 +129,97 @@ namespace DockServiceSample
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                App.Log("MainWindow", e);
                 }
             }
         }
 
-        private void HideLeftTool_Click(object sender, RoutedEventArgs e)
+        private void TogglePanel_Click(object sender, RoutedEventArgs e)
         {
-            m_dockService.Hide("left_tool");
+            if (sender is not ToggleMenuFlyoutItem item || item.Tag is not string name)
+            {
+                return;
+            }
+
+            if (m_dockService.IsVisible(name))
+            {
+                m_dockService.Hide(name);
+            }
+            else
+            {
+                m_dockService.Show(name);
+            }
+
+            // The toggle flipped itself on click; realign it with the actual layout.
+            SyncViewMenu();
         }
 
-        private void ShowLeftTool_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Mirrors the real layout into the View menu, driven by the factory's own
+        /// events so closing a panel from its tab button unticks it here too.
+        /// </summary>
+        private void SyncViewMenu()
         {
-            m_dockService.Show("left_tool");
+            if (m_dockService is null)
+            {
+                return;
+            }
+
+            foreach (var item in ViewMenu.Items.OfType<ToggleMenuFlyoutItem>())
+            {
+                if (item.Tag is string name)
+                {
+                    item.IsChecked = m_dockService.IsVisible(name);
+                }
+            }
+        }
+
+        private void HookFactoryEvents()
+        {
+            if (WinUIDockManager.GetFactory() is not { } factory)
+            {
+                return;
+            }
+
+            void Refresh(object? sender, object e) => SyncViewMenu();
+
+            factory.DockableAdded += Refresh;
+            factory.DockableRemoved += Refresh;
+            factory.DockableClosed += Refresh;
+            factory.DockablePinned += Refresh;
+            factory.DockableUnpinned += Refresh;
+
+            SyncViewMenu();
+        }
+
+        /// <summary>Undoes any rearranging and returns to the startup layout.</summary>
+        private void ResetDefault_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.ResetToDefault();
+            SyncViewMenu();
+        }
+
+        /// <summary>Saves and immediately reloads. Nothing should move — that IS the
+        /// test: the layout survives a serialization round-trip unchanged.</summary>
+        private void RoundTrip_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.LoadDefault();
+            SyncViewMenu();
+        }
+
+        private void ListHidden_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.LogHiddenDockables();
+        }
+
+        private void ValidateIds_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.LogIdValidation();
+        }
+
+        private void CheckRootEdge_Click(object sender, RoutedEventArgs e)
+        {
+            m_dockService.LogRootEdgeCheck();
         }
 
         private DockService m_dockService;

@@ -1,4 +1,4 @@
-using Dock.Model.Controls;
+﻿using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml;
@@ -27,9 +27,20 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = RootBottomSelectorPartName, Type = typeof(DockTargetGuide))]
     [TemplatePart(Name = RootLeftSelectorPartName, Type = typeof(DockTargetGuide))]
     [TemplatePart(Name = RootRightSelectorPartName, Type = typeof(DockTargetGuide))]
+    [TemplatePart(Name = RootTopIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = RootBottomIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = RootLeftIndicatorPartName, Type = typeof(Grid))]
+    [TemplatePart(Name = RootRightIndicatorPartName, Type = typeof(Grid))]
     [TemplatePart(Name = ClusterPlatePartName, Type = typeof(Border))]
     public sealed class DockTarget : Control
     {
+        /// <summary>
+        /// Share of the window a freshly created edge region takes. Must match
+        /// FactoryBase.RootEdgeProportion, otherwise the preview lies about where
+        /// the drop will land.
+        /// </summary>
+        private const double RootEdgeProportion = 0.2;
+
         public const string ClusterPlatePartName = "PART_ClusterPlate";
         public const string TopIndicatorPartName = "PART_TopIndicator";
         public const string BottomIndicatorPartName = "PART_BottomIndicator";
@@ -45,6 +56,10 @@ namespace Dock.WinUI3.Controls
         public const string RootBottomSelectorPartName = "PART_RootBottomSelector";
         public const string RootLeftSelectorPartName = "PART_RootLeftSelector";
         public const string RootRightSelectorPartName = "PART_RootRightSelector";
+        public const string RootTopIndicatorPartName = "PART_RootTopIndicator";
+        public const string RootBottomIndicatorPartName = "PART_RootBottomIndicator";
+        public const string RootLeftIndicatorPartName = "PART_RootLeftIndicator";
+        public const string RootRightIndicatorPartName = "PART_RootRightIndicator";
 
         public double LocalX
         {
@@ -78,6 +93,45 @@ namespace Dock.WinUI3.Controls
         public static readonly DependencyProperty LocalHeightProperty =
             DependencyProperty.Register(nameof(LocalHeight), typeof(double), typeof(DockTarget), new PropertyMetadata(0d));
 
+        /// <summary>
+        /// Rectangle of the DOCKABLE area (the DockControl) inside the adorner, which
+        /// spans the whole window. The four edge guides and their previews live here
+        /// rather than at the window border, because that is the region an edge drop
+        /// actually carves up — the menu bar and the float window's caption are not
+        /// part of it.
+        /// </summary>
+        public double RootX
+        {
+            get => (double)GetValue(RootXProperty);
+            set => SetValue(RootXProperty, value);
+        }
+        public static readonly DependencyProperty RootXProperty =
+            DependencyProperty.Register(nameof(RootX), typeof(double), typeof(DockTarget), new PropertyMetadata(0d));
+
+        public double RootY
+        {
+            get => (double)GetValue(RootYProperty);
+            set => SetValue(RootYProperty, value);
+        }
+        public static readonly DependencyProperty RootYProperty =
+            DependencyProperty.Register(nameof(RootY), typeof(double), typeof(DockTarget), new PropertyMetadata(0d));
+
+        public double RootWidth
+        {
+            get => (double)GetValue(RootWidthProperty);
+            set => SetValue(RootWidthProperty, value);
+        }
+        public static readonly DependencyProperty RootWidthProperty =
+            DependencyProperty.Register(nameof(RootWidth), typeof(double), typeof(DockTarget), new PropertyMetadata(0d));
+
+        public double RootHeight
+        {
+            get => (double)GetValue(RootHeightProperty);
+            set => SetValue(RootHeightProperty, value);
+        }
+        public static readonly DependencyProperty RootHeightProperty =
+            DependencyProperty.Register(nameof(RootHeight), typeof(double), typeof(DockTarget), new PropertyMetadata(0d));
+
         public DockTarget()
         {
             this.DefaultStyleKey = typeof(DockTarget);
@@ -102,6 +156,13 @@ namespace Dock.WinUI3.Controls
             _rootBottomSelector = GetTemplateChild(RootBottomSelectorPartName) as FrameworkElement;
             _rootLeftSelector = GetTemplateChild(RootLeftSelectorPartName) as FrameworkElement;
             _rootRightSelector = GetTemplateChild(RootRightSelectorPartName) as FrameworkElement;
+
+
+
+            _rootTopIndicator = GetTemplateChild(RootTopIndicatorPartName) as Grid;
+            _rootBottomIndicator = GetTemplateChild(RootBottomIndicatorPartName) as Grid;
+            _rootLeftIndicator = GetTemplateChild(RootLeftIndicatorPartName) as Grid;
+            _rootRightIndicator = GetTemplateChild(RootRightIndicatorPartName) as Grid;
 
             _clusterPlate = GetTemplateChild(ClusterPlatePartName) as Border;
 
@@ -129,7 +190,11 @@ namespace Dock.WinUI3.Controls
             }
 
             // Drop previews fade in/out (alpha lives in the fill brush).
-            foreach (var indicator in new[] { _topIndicator, _bottomIndicator, _leftIndicator, _rightIndicator, _centerIndicator })
+            foreach (var indicator in new[]
+                     {
+                         _topIndicator, _bottomIndicator, _leftIndicator, _rightIndicator, _centerIndicator,
+                         _rootTopIndicator, _rootBottomIndicator, _rootLeftIndicator, _rootRightIndicator,
+                     })
             {
                 if (indicator != null)
                 {
@@ -142,26 +207,35 @@ namespace Dock.WinUI3.Controls
         {
             var result = DockOperation.Window;
             var baseValid = validate(point, DockOperation.Fill, dragAction, relativeTo);
-            var sourceRootOperation = sourceDockable is null ? null : GetSourceRootOperation(sourceDockable);
+            var sourceRootOperation = sourceDockable is null ? null : GetSourceRootOperation(sourceDockable, targetDockable);
 
-            UpdateSelectorVisibility(sourceDockable, targetDockable, baseValid, sourceRootOperation);
+            // Every guide is validated for ITS OWN operation — gating them all on the
+            // single Fill result would show guides for drops that get refused.
+            bool IsEnabled(DockOperation operation)
+                => ShouldShowIndicator(validate(point, operation, dragAction, relativeTo), sourceDockable, operation, sourceRootOperation);
 
-            if (InvalidateIndicator(_rootLeftSelector, _leftIndicator, point, relativeTo, DockOperation.RootLeft, dragAction, sourceDockable, sourceRootOperation, validate))
+            UpdateSelectorVisibility(sourceDockable, baseValid, IsEnabled);
+            UpdateRootIndicatorBounds();
+
+            // Root guides get their OWN previews. Reusing the local ones would draw
+            // the preview inside the pane under the cursor, while the drop actually
+            // inserts a region spanning the whole window edge.
+            if (InvalidateIndicator(_rootLeftSelector, _rootLeftIndicator, point, relativeTo, DockOperation.RootLeft, dragAction, sourceDockable, sourceRootOperation, validate))
             {
                 result = DockOperation.RootLeft;
             }
 
-            if (InvalidateIndicator(_rootRightSelector, _rightIndicator, point, relativeTo, DockOperation.RootRight, dragAction, sourceDockable, sourceRootOperation, validate))
+            if (InvalidateIndicator(_rootRightSelector, _rootRightIndicator, point, relativeTo, DockOperation.RootRight, dragAction, sourceDockable, sourceRootOperation, validate))
             {
                 result = DockOperation.RootRight;
             }
 
-            if (InvalidateIndicator(_rootTopSelector, _topIndicator, point, relativeTo, DockOperation.RootTop, dragAction, sourceDockable, sourceRootOperation, validate))
+            if (InvalidateIndicator(_rootTopSelector, _rootTopIndicator, point, relativeTo, DockOperation.RootTop, dragAction, sourceDockable, sourceRootOperation, validate))
             {
                 result = DockOperation.RootTop;
             }
 
-            if (InvalidateIndicator(_rootBottomSelector, _bottomIndicator, point, relativeTo, DockOperation.RootBottom, dragAction, sourceDockable, sourceRootOperation, validate))
+            if (InvalidateIndicator(_rootBottomSelector, _rootBottomIndicator, point, relativeTo, DockOperation.RootBottom, dragAction, sourceDockable, sourceRootOperation, validate))
             {
                 result = DockOperation.RootBottom;
             }
@@ -194,21 +268,60 @@ namespace Dock.WinUI3.Controls
             return result;
         }
 
-        internal void UpdateRootVisibility(IDockable? sourceDockable)
+        internal void UpdateRootVisibility(IDockable? sourceDockable, IDockable? targetDockable)
         {
-            var sourceRootOperation = sourceDockable is null ? null : GetSourceRootOperation(sourceDockable);
-            var rootDock = GetRootDock(sourceDockable);
+            var sourceRootOperation = sourceDockable is null ? null : GetSourceRootOperation(sourceDockable, targetDockable);
 
-            if (sourceDockable is Document)
+            // This path runs when the pointer is over window chrome rather than a
+            // dock target, so there is no validate callback to consult — the only
+            // pruning available is "the source already occupies that edge".
+            SetRootSelectorVisibility(
+                sourceDockable is Document ? Visibility.Collapsed : Visibility.Visible,
+                operation => sourceRootOperation != operation);
+
+            // No cluster on this path, so nothing for the edge guides to dodge —
+            // drop any displacement left over from the last hover.
+            ResetRootGuideOffsets();
+
+            SetLocalSelectorVisibility(Visibility.Collapsed, _ => true);
+        }
+
+        /// <summary>
+        /// Sizes the four window-level previews to the slice the drop will actually
+        /// carve out. Pure geometry off <see cref="Control.ActualWidth"/> /
+        /// <see cref="Control.ActualHeight"/>, so it needs no layout pass — and it
+        /// has to run per pointer move because the window can be resized mid-drag.
+        /// </summary>
+        private void UpdateRootIndicatorBounds()
+        {
+            SetEdgeThickness(_rootTopIndicator, _rootBottomIndicator, _rootLeftIndicator, _rootRightIndicator,
+                RootWidth, RootHeight);
+        }
+
+        private static void SetEdgeThickness(Grid top, Grid bottom, Grid left, Grid right, double width, double height)
+        {
+            var thicknessY = height * RootEdgeProportion;
+            var thicknessX = width * RootEdgeProportion;
+
+            if (top is not null)
             {
-                SetRootSelectorVisibility(Visibility.Collapsed, sourceRootOperation, rootDock);
-            }
-            else
-            {
-                SetRootSelectorVisibility(Visibility.Visible, sourceRootOperation, rootDock);
+                top.Height = thicknessY;
             }
 
-            SetLocalSelectorVisibility(Visibility.Collapsed);
+            if (bottom is not null)
+            {
+                bottom.Height = thicknessY;
+            }
+
+            if (left is not null)
+            {
+                left.Width = thicknessX;
+            }
+
+            if (right is not null)
+            {
+                right.Width = thicknessX;
+            }
         }
 
         private bool InvalidateIndicator(FrameworkElement selector, FrameworkElement indicator, Point point, FrameworkElement relativeTo, DockOperation operation, DragAction dragAction, IDockable? sourceDockable, DockOperation? sourceRootOperation, Func<Point, DockOperation, DragAction, FrameworkElement, bool> validate)
@@ -254,7 +367,19 @@ namespace Dock.WinUI3.Controls
             return false;
         }
 
-        private static DockOperation? GetSourceRootOperation(IDockable sourceDockable)
+        /// <summary>
+        /// Which window edge the source ALREADY is, used to hide the guide that would
+        /// put it back exactly where it stands. An edge drop tears the source dock
+        /// down and builds a new one, losing its Id, so a no-op drop is worth refusing.
+        ///
+        /// Derived from the layout itself: an edge region (see
+        /// <c>IFactory.SplitToRootEdge</c>) is a DIRECT child of the root layout, at
+        /// the first or last position, and the layout's orientation says which pair of
+        /// edges those positions mean. Nothing else counts — a pane nested one level
+        /// down does not span the window, so moving it out to the edge really does
+        /// change the layout.
+        /// </summary>
+        private static DockOperation? GetSourceRootOperation(IDockable sourceDockable, IDockable? targetDockable)
         {
             var factory = sourceDockable.Factory ?? sourceDockable.Owner?.Factory;
             if (factory is null)
@@ -268,24 +393,75 @@ namespace Dock.WinUI3.Controls
                 return null;
             }
 
-            if (rootDock.RootLeftDock is { } rootLeftDock && factory.FindDockable(rootLeftDock, dockable => ReferenceEquals(dockable, sourceDockable)) is not null)
+            // "Already at this edge" only means anything within ONE root: two windows'
+            // right edges are different places.
+            if (targetDockable is not null)
             {
-                return DockOperation.RootLeft;
+                var targetFactory = targetDockable.Factory ?? targetDockable.Owner?.Factory;
+                var targetRoot = targetFactory?.FindRoot(targetDockable, _ => true);
+                if (targetRoot is not null && !ReferenceEquals(targetRoot, rootDock))
+                {
+                    return null;
+                }
             }
 
-            if (rootDock.RootRightDock is { } rootRightDock && factory.FindDockable(rootRightDock, dockable => ReferenceEquals(dockable, sourceDockable)) is not null)
+            if (GetRootLayout(rootDock) is not IProportionalDock layout
+                || layout.VisibleDockables is not { Count: > 0 } children)
             {
-                return DockOperation.RootRight;
+                return null;
             }
 
-            if (rootDock.RootTopDock is { } rootTopDock && factory.FindDockable(rootTopDock, dockable => ReferenceEquals(dockable, sourceDockable)) is not null)
+            IDockable first = null;
+            IDockable last = null;
+
+            foreach (var child in children)
             {
-                return DockOperation.RootTop;
+                if (child is IProportionalDockSplitter)
+                {
+                    continue;
+                }
+
+                first ??= child;
+                last = child;
             }
 
-            if (rootDock.RootBottomDock is { } rootBottomDock && factory.FindDockable(rootBottomDock, dockable => ReferenceEquals(dockable, sourceDockable)) is not null)
+            // Fully qualified: Microsoft.UI.Xaml.Controls has an Orientation too.
+            var horizontal = layout.Orientation == global::Dock.Model.Core.Orientation.Horizontal;
+
+            if (ReferenceEquals(first, sourceDockable))
             {
-                return DockOperation.RootBottom;
+                return horizontal ? DockOperation.RootLeft : DockOperation.RootTop;
+            }
+
+            if (ReferenceEquals(last, sourceDockable))
+            {
+                return horizontal ? DockOperation.RootRight : DockOperation.RootBottom;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The single layout node a root dock hosts — mirrors FactoryBase.GetRootLayout.
+        /// </summary>
+        private static IDock GetRootLayout(IRootDock rootDock)
+        {
+            if (rootDock.VisibleDockables is not { } dockables)
+            {
+                return null;
+            }
+
+            if (rootDock.ActiveDockable is IDock active && dockables.Contains(active))
+            {
+                return active;
+            }
+
+            foreach (var dockable in dockables)
+            {
+                if (dockable is IDock dock)
+                {
+                    return dock;
+                }
             }
 
             return null;
@@ -307,7 +483,7 @@ namespace Dock.WinUI3.Controls
             {
                 if (IsRootOperation(operation))
                 {
-                    return sourceRootOperation != operation;
+                    return sourceRootOperation != operation && isValid;
                 }
 
                 return isValid;
@@ -316,69 +492,45 @@ namespace Dock.WinUI3.Controls
             return isValid;
         }
 
-        private void UpdateSelectorVisibility(IDockable? sourceDockable, IDockable? targetDockable, bool isValid, DockOperation? sourceRootOperation)
+        private void UpdateSelectorVisibility(IDockable? sourceDockable, bool isValid, Func<DockOperation, bool> isEnabled)
         {
-            var rootDock = GetRootDock(targetDockable);
-            var rootVisibility = isValid ? Visibility.Visible : Visibility.Collapsed;
-            if (sourceDockable is Document)
-            {
-                SetRootSelectorVisibility(Visibility.Collapsed, sourceRootOperation, rootDock);
-                SetLocalSelectorVisibility(isValid ? Visibility.Visible : Visibility.Collapsed);
-                return;
-            }
+            // A Document never gets the edge guides — documents belong in the
+            // document area, not pinned along a window border.
+            var rootVisibility = isValid && sourceDockable is not Document
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
-            if (sourceDockable is IDock)
-            {
-                SetRootSelectorVisibility(rootVisibility, sourceRootOperation, rootDock);
-                SetLocalSelectorVisibility(isValid ? Visibility.Visible : Visibility.Collapsed);
-                return;
-            }
-
-            SetRootSelectorVisibility(rootVisibility, null, rootDock);
-            SetLocalSelectorVisibility(isValid ? Visibility.Visible : Visibility.Collapsed);
+            SetRootSelectorVisibility(rootVisibility, isEnabled);
+            SetLocalSelectorVisibility(isValid ? Visibility.Visible : Visibility.Collapsed, isEnabled);
         }
 
-        private static IRootDock? GetRootDock(IDockable? sourceDockable)
+
+        /// <summary>
+        /// An edge guide no longer needs a pre-declared <c>RootXxxDock</c> to be
+        /// usable: dropping there now inserts a brand new region at the root level.
+        /// What decides whether it appears is simply whether that operation
+        /// validates.
+        ///
+        /// The old availability gate (<c>RootXxxDock is null || Proportion == 0</c>)
+        /// is why the top guide never appeared in DockServiceSample — TopPane has
+        /// Proportion="0" — and why LevelEditor showed no edge guides at all: its
+        /// layout declares none of the four properties.
+        /// </summary>
+        private void SetRootSelectorVisibility(Visibility visibility, Func<DockOperation, bool> isEnabled)
         {
-            if (sourceDockable is null)
-            {
-                return null;
-            }
-
-            var factory = sourceDockable.Factory ?? sourceDockable.Owner?.Factory;
-            if (factory is null)
-            {
-                return null;
-            }
-
-            return factory.FindRoot(sourceDockable, _ => true);
+            SetSelectorVisibility(_rootLeftSelector, visibility, !isEnabled(DockOperation.RootLeft));
+            SetSelectorVisibility(_rootRightSelector, visibility, !isEnabled(DockOperation.RootRight));
+            SetSelectorVisibility(_rootTopSelector, visibility, !isEnabled(DockOperation.RootTop));
+            SetSelectorVisibility(_rootBottomSelector, visibility, !isEnabled(DockOperation.RootBottom));
         }
 
-        private static bool IsRootDockAvailable(IDock? dock)
+        private void SetLocalSelectorVisibility(Visibility visibility, Func<DockOperation, bool> isEnabled)
         {
-            return dock is not null && Math.Abs(dock.Proportion) > 0.001;
-        }
-
-        private void SetRootSelectorVisibility(Visibility visibility, DockOperation? sourceRootOperation, IRootDock? rootDock)
-        {
-            var rootLeftAvailable = IsRootDockAvailable(rootDock?.RootLeftDock);
-            var rootRightAvailable = IsRootDockAvailable(rootDock?.RootRightDock);
-            var rootTopAvailable = IsRootDockAvailable(rootDock?.RootTopDock);
-            var rootBottomAvailable = IsRootDockAvailable(rootDock?.RootBottomDock);
-
-            SetSelectorVisibility(_rootLeftSelector, visibility, sourceRootOperation == DockOperation.RootLeft || !rootLeftAvailable);
-            SetSelectorVisibility(_rootRightSelector, visibility, sourceRootOperation == DockOperation.RootRight || !rootRightAvailable);
-            SetSelectorVisibility(_rootTopSelector, visibility, sourceRootOperation == DockOperation.RootTop || !rootTopAvailable);
-            SetSelectorVisibility(_rootBottomSelector, visibility, sourceRootOperation == DockOperation.RootBottom || !rootBottomAvailable);
-        }
-
-        private void SetLocalSelectorVisibility(Visibility visibility)
-        {
-            SetSelectorVisibility(_leftSelector, visibility, false);
-            SetSelectorVisibility(_rightSelector, visibility, false);
-            SetSelectorVisibility(_topSelector, visibility, false);
-            SetSelectorVisibility(_bottomSelector, visibility, false);
-            SetSelectorVisibility(_centerSelector, visibility, false);
+            SetSelectorVisibility(_leftSelector, visibility, !isEnabled(DockOperation.Left));
+            SetSelectorVisibility(_rightSelector, visibility, !isEnabled(DockOperation.Right));
+            SetSelectorVisibility(_topSelector, visibility, !isEnabled(DockOperation.Top));
+            SetSelectorVisibility(_bottomSelector, visibility, !isEnabled(DockOperation.Bottom));
+            SetSelectorVisibility(_centerSelector, visibility, !isEnabled(DockOperation.Fill));
 
             if (_clusterPlate != null)
             {
@@ -392,11 +544,16 @@ namespace Dock.WinUI3.Controls
         }
 
         /// <summary>
-        /// Nudges the centered guide cluster clear of the window-edge root
-        /// guides. A pane sitting against a window edge (e.g. the Output pane at
-        /// the bottom) puts its cluster right on top of that edge's root guide.
-        /// Pure geometry — derived from the metric keys and the pane rectangle,
-        /// so it needs no layout pass.
+        /// Centres the guide cluster on its pane, then slides any window-edge guide
+        /// it covers out of the way. Pure geometry — derived from the metric keys and
+        /// the pane rectangle, so it needs no layout pass.
+        ///
+        /// The cluster must NOT move to dodge an edge guide. On a short pane that
+        /// carries it onto the NEIGHBOURING pane, and reaching for a guide there
+        /// leaves the pane the guides belong to — which changes DropControl and
+        /// rebuilds the whole adorner out from under the pointer, so the guides vanish
+        /// mid-reach. The edge guides move instead; they have a whole window border to
+        /// slide along.
         /// </summary>
         private void UpdateClusterOffset()
         {
@@ -411,81 +568,163 @@ namespace Dock.WinUI3.Controls
             const double gap = 10.0;
 
             // 3x3 grid of guides with the 2px gutters declared in the template.
-            var extent = guideSize * 3 + 4;
+            var fullExtent = guideSize * 3 + 4;
+            var scale = ResolveClusterScale(fullExtent, out var extent);
             var centerX = LocalX + LocalWidth / 2;
             var centerY = LocalY + LocalHeight / 2;
-            var cluster = new Rect(centerX - extent / 2, centerY - extent / 2, extent, extent);
 
-            var hostWidth = ActualWidth;
-            var hostHeight = ActualHeight;
-            double dx = 0;
-            double dy = 0;
+            // The plate is centred on the whole adorner by the template, so the
+            // translate is measured from there; the clamp uses the DOCKABLE rect,
+            // since a guide over the menu bar or the caption is not reachable.
+            var dx = centerX - ActualWidth / 2;
+            var dy = centerY - ActualHeight / 2;
 
-            if (IsSelectorVisible(_rootTopSelector))
+            // Last resort only: an unreachable guide is worse than an off-centre one.
+            var left = (ActualWidth - extent) / 2 + dx;
+            var top = (ActualHeight - extent) / 2 + dy;
+
+            if (left < RootX)
             {
-                var r = new Rect((hostWidth - rootSize) / 2, inset, rootSize, rootSize);
-                if (Overlaps(cluster, r, gap))
-                {
-                    dy = Push(dy, r.Bottom + gap - cluster.Top);
-                }
+                dx += RootX - left;
+            }
+            else if (left + extent > RootX + RootWidth)
+            {
+                dx -= left + extent - (RootX + RootWidth);
             }
 
-            if (IsSelectorVisible(_rootBottomSelector))
+            if (top < RootY)
             {
-                var r = new Rect((hostWidth - rootSize) / 2, hostHeight - inset - rootSize, rootSize, rootSize);
-                if (Overlaps(cluster, r, gap))
-                {
-                    dy = Push(dy, r.Top - gap - cluster.Bottom);
-                }
+                dy += RootY - top;
+            }
+            else if (top + extent > RootY + RootHeight)
+            {
+                dy -= top + extent - (RootY + RootHeight);
             }
 
-            if (IsSelectorVisible(_rootLeftSelector))
-            {
-                var r = new Rect(inset, (hostHeight - rootSize) / 2, rootSize, rootSize);
-                if (Overlaps(cluster, r, gap))
-                {
-                    dx = Push(dx, r.Right + gap - cluster.Left);
-                }
-            }
+            var cluster = new Rect(
+                (ActualWidth - extent) / 2 + dx,
+                (ActualHeight - extent) / 2 + dy,
+                extent,
+                extent);
 
-            if (IsSelectorVisible(_rootRightSelector))
-            {
-                var r = new Rect(hostWidth - inset - rootSize, (hostHeight - rootSize) / 2, rootSize, rootSize);
-                if (Overlaps(cluster, r, gap))
-                {
-                    dx = Push(dx, r.Left - gap - cluster.Right);
-                }
-            }
+            OffsetRootGuidesAroundCluster(cluster, rootSize, inset, gap);
 
-            // Never push the cluster outside the pane it belongs to.
-            var limitX = Math.Max(0, (LocalWidth - extent) / 2);
-            var limitY = Math.Max(0, (LocalHeight - extent) / 2);
-            dx = Math.Clamp(dx, -limitX, limitX);
-            dy = Math.Clamp(dy, -limitY, limitY);
-
-            if (dx == 0 && dy == 0)
+            if (scale >= 1.0 && dx == 0 && dy == 0)
             {
                 _clusterPlate.RenderTransform = null;
                 return;
             }
 
-            _clusterPlate.RenderTransform = new TranslateTransform { X = dx, Y = dy };
+            // Scale first, translate second: TransformGroup multiplies in order, so
+            // the offsets stay in window pixels instead of being scaled too.
+            var transform = new TransformGroup();
+
+            if (scale < 1.0)
+            {
+                transform.Children.Add(new ScaleTransform { ScaleX = scale, ScaleY = scale });
+            }
+
+            if (dx != 0 || dy != 0)
+            {
+                transform.Children.Add(new TranslateTransform { X = dx, Y = dy });
+            }
+
+            _clusterPlate.RenderTransform = transform;
         }
 
-        private static double Push(double current, double candidate)
+        /// <summary>
+        /// Slides any window-edge guide the cluster covers along its own edge. The
+        /// four rotate as a set — bottom to the right, right upwards, top to the
+        /// left, left downwards — so the displacement reads as one deliberate motion
+        /// rather than four independent jumps.
+        ///
+        /// Applied as a RenderTransform, which hit testing accounts for
+        /// (<see cref="VisualTreeHelper.FindElementsInHostCoordinates"/>), so a moved
+        /// guide is still aimable at its new spot.
+        /// </summary>
+        private void OffsetRootGuidesAroundCluster(Rect cluster, double rootSize, double inset, double gap)
         {
-            return Math.Abs(candidate) > Math.Abs(current) ? candidate : current;
+            // Guide rectangles in ADORNER coordinates: the template lays them out
+            // inside the dockable rect, so every one carries the RootX/RootY offset.
+            // The cluster rect is already in adorner coordinates.
+            var minX = RootX + inset;
+            var maxX = RootX + RootWidth - inset;
+            var minY = RootY + inset;
+            var maxY = RootY + RootHeight - inset;
+            var midX = RootX + (RootWidth - rootSize) / 2;
+            var midY = RootY + (RootHeight - rootSize) / 2;
+
+            // Top guide slides LEFT.
+            var top = new Rect(midX, minY, rootSize, rootSize);
+            var topDx = Overlaps(top, cluster, gap) ? cluster.Left - gap - top.Right : 0;
+            SetSelectorOffset(_rootTopSelector, Math.Min(0, Math.Max(topDx, minX - top.Left)), 0);
+
+            // Bottom guide slides RIGHT.
+            var bottom = new Rect(midX, maxY - rootSize, rootSize, rootSize);
+            var bottomDx = Overlaps(bottom, cluster, gap) ? cluster.Right + gap - bottom.Left : 0;
+            SetSelectorOffset(_rootBottomSelector, Math.Max(0, Math.Min(bottomDx, maxX - bottom.Right)), 0);
+
+            // Left guide slides DOWN.
+            var leftGuide = new Rect(minX, midY, rootSize, rootSize);
+            var leftDy = Overlaps(leftGuide, cluster, gap) ? cluster.Bottom + gap - leftGuide.Top : 0;
+            SetSelectorOffset(_rootLeftSelector, 0, Math.Max(0, Math.Min(leftDy, maxY - leftGuide.Bottom)));
+
+            // Right guide slides UP.
+            var right = new Rect(maxX - rootSize, midY, rootSize, rootSize);
+            var rightDy = Overlaps(right, cluster, gap) ? cluster.Top - gap - right.Bottom : 0;
+            SetSelectorOffset(_rootRightSelector, 0, Math.Min(0, Math.Max(rightDy, minY - right.Top)));
+        }
+
+        private void ResetRootGuideOffsets()
+        {
+            SetSelectorOffset(_rootTopSelector, 0, 0);
+            SetSelectorOffset(_rootBottomSelector, 0, 0);
+            SetSelectorOffset(_rootLeftSelector, 0, 0);
+            SetSelectorOffset(_rootRightSelector, 0, 0);
+        }
+
+        private static void SetSelectorOffset(FrameworkElement selector, double dx, double dy)
+        {
+            if (selector is null)
+            {
+                return;
+            }
+
+            selector.RenderTransform = dx == 0 && dy == 0
+                ? null
+                : new TranslateTransform { X = dx, Y = dy };
+        }
+
+        /// <summary>
+        /// Shrinks the cluster to fit its pane, down to a floor where a guide is
+        /// still big enough to aim at. Below that floor it simply overflows — the
+        /// caller clamps it into the window so every guide stays reachable.
+        ///
+        /// Never hides guides to make room: hiding a target the user can legitimately
+        /// drop on is worse than an overlapping one, and the drop preview already says
+        /// which pane wins.
+        /// </summary>
+        private double ResolveClusterScale(double fullExtent, out double extent)
+        {
+            const double margin = 8.0;      // breathing room against the pane edges
+            const double minScale = 0.55;   // below this a 40px guide is under 22px
+
+            var available = Math.Min(LocalWidth, LocalHeight) - margin * 2;
+            if (available <= 0 || fullExtent <= 0)
+            {
+                extent = fullExtent;
+                return 1.0;
+            }
+
+            var scale = Math.Clamp(available / fullExtent, minScale, 1.0);
+            extent = fullExtent * scale;
+            return scale;
         }
 
         private static bool Overlaps(Rect a, Rect b, double gap)
         {
             b = new Rect(b.X - gap, b.Y - gap, b.Width + gap * 2, b.Height + gap * 2);
             return a.Left < b.Right && b.Left < a.Right && a.Top < b.Bottom && b.Top < a.Bottom;
-        }
-
-        private static bool IsSelectorVisible(FrameworkElement selector)
-        {
-            return selector is { Visibility: Visibility.Visible };
         }
 
         private static void SetSelectorVisibility(FrameworkElement selector, Visibility visibility, bool hide)
@@ -514,6 +753,13 @@ namespace Dock.WinUI3.Controls
         private FrameworkElement _rootBottomSelector;
         private FrameworkElement _rootLeftSelector;
         private FrameworkElement _rootRightSelector;
+
+
+
+        private Grid _rootTopIndicator;
+        private Grid _rootBottomIndicator;
+        private Grid _rootLeftIndicator;
+        private Grid _rootRightIndicator;
 
         private Border _clusterPlate;
     }

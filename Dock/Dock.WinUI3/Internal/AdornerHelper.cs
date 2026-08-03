@@ -1,7 +1,9 @@
-﻿using Dock.WinUI3.Controls;
+﻿using Dock.Model.Core;
+using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 
 namespace Dock.WinUI3.Internal
@@ -13,7 +15,15 @@ namespace Dock.WinUI3.Internal
         private UIElement _currentElement;
         private Grid _host;
 
-        public void AddAdorner(UIElement element)
+        /// <param name="element">The control being adorned (the drop target).</param>
+        /// <param name="dockControl">
+        /// The DockControl the drop belongs to. Supplies the DOCKABLE rectangle: the
+        /// edge guides are laid out inside it, not against the window border, because
+        /// that is the region an edge drop actually carves up. Anchored to the window
+        /// instead, the top guide fell inside the float window's caption band and was
+        /// visible but not hittable.
+        /// </param>
+        public void AddAdorner(UIElement element, FrameworkElement dockControl = null)
         {
             if (element == null) return;
 
@@ -25,7 +35,7 @@ namespace Dock.WinUI3.Internal
 
             if (_popup is { } && Adorner is { } && ReferenceEquals(_currentElement, element))
             {
-                UpdateAdornerLayout(element, root);
+                UpdateAdornerLayout(element, root, dockControl);
                 return;
             }
 
@@ -48,7 +58,7 @@ namespace Dock.WinUI3.Internal
             host.Children.Add(Adorner);
             _host = host;
 
-            UpdateAdornerLayout(element, root);
+            UpdateAdornerLayout(element, root, dockControl);
 
             _popup = new Popup
             {
@@ -76,7 +86,7 @@ namespace Dock.WinUI3.Internal
             }
         }
 
-        private void UpdateAdornerLayout(UIElement element, FrameworkElement root)
+        private void UpdateAdornerLayout(UIElement element, FrameworkElement root, FrameworkElement dockControl)
         {
             var t = element.TransformToVisual(root);
             var p = t.TransformPoint(new Point(0, 0));
@@ -93,6 +103,24 @@ namespace Dock.WinUI3.Internal
                 Adorner.LocalY = p.Y;
                 Adorner.LocalWidth = element.ActualSize.X;
                 Adorner.LocalHeight = element.ActualSize.Y;
+
+                // Fall back to the whole window when the caller has no DockControl.
+                if (dockControl is { ActualWidth: > 0, ActualHeight: > 0 })
+                {
+                    var rootPoint = dockControl.TransformToVisual(root).TransformPoint(new Point(0, 0));
+                    Adorner.RootX = rootPoint.X;
+                    Adorner.RootY = rootPoint.Y;
+                    Adorner.RootWidth = dockControl.ActualWidth;
+                    Adorner.RootHeight = dockControl.ActualHeight;
+                }
+                else
+                {
+                    Adorner.RootX = 0;
+                    Adorner.RootY = 0;
+                    Adorner.RootWidth = root.ActualWidth;
+                    Adorner.RootHeight = root.ActualHeight;
+                }
+
             }
         }
     }

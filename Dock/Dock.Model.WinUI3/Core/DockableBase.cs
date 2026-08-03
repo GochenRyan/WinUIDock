@@ -33,6 +33,10 @@ namespace Dock.Model.WinUI3.Core
         public string Id { get => (string)GetValue(IDProperty); set => SetValue(IDProperty, value); }
 
         [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        [JsonPropertyName("Kind")]
+        public string Kind { get => (string)GetValue(KindProperty); set => SetValue(KindProperty, value); }
+
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
         [JsonPropertyName("Title")]
         public string Title { get => (string)GetValue(TitleProperty); set => SetValue(TitleProperty, value); }
 
@@ -47,6 +51,14 @@ namespace Dock.Model.WinUI3.Core
         [IgnoreDataMember]
         [JsonIgnore]
         public IDockable OriginalOwner { get => (IDockable)GetValue(OriginalOwnerProperty); set => SetValue(OriginalOwnerProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
+        public IDockable RestoreOwner { get => (IDockable)GetValue(RestoreOwnerProperty); set => SetValue(RestoreOwnerProperty, value); }
+
+        [IgnoreDataMember]
+        [JsonIgnore]
+        public int RestoreIndex { get => (int)GetValue(RestoreIndexProperty); set => SetValue(RestoreIndexProperty, value); }
 
         [IgnoreDataMember]
         [JsonIgnore]
@@ -66,6 +78,12 @@ namespace Dock.Model.WinUI3.Core
 
         public static readonly DependencyProperty IDProperty = DependencyProperty.Register(
             nameof(Id),
+            typeof(string),
+            typeof(DockableBase),
+            new PropertyMetadata(string.Empty));
+
+        public static readonly DependencyProperty KindProperty = DependencyProperty.Register(
+            nameof(Kind),
             typeof(string),
             typeof(DockableBase),
             new PropertyMetadata(string.Empty));
@@ -93,6 +111,18 @@ namespace Dock.Model.WinUI3.Core
             typeof(IDockable),
             typeof(DockableBase),
             new PropertyMetadata(null));
+
+        public static readonly DependencyProperty RestoreOwnerProperty = DependencyProperty.Register(
+            nameof(RestoreOwner),
+            typeof(IDockable),
+            typeof(DockableBase),
+            new PropertyMetadata(null));
+
+        public static readonly DependencyProperty RestoreIndexProperty = DependencyProperty.Register(
+            nameof(RestoreIndex),
+            typeof(int),
+            typeof(DockableBase),
+            new PropertyMetadata(-1));
 
         public static readonly DependencyProperty FactoryProperty = DependencyProperty.Register(
             nameof(Factory),

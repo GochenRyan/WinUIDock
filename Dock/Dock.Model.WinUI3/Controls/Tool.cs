@@ -24,6 +24,7 @@ namespace Dock.Model.WinUI3.Controls
 
         public Tool()
         {
+            Kind = nameof(ITool);
         }
 
         [IgnoreDataMember]

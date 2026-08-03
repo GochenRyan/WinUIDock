@@ -15,6 +15,7 @@ namespace Dock.Model.WinUI3.Controls
     {
         public ProportionalDockSplitter() : base()
         {
+            Kind = nameof(IProportionalDockSplitter);
             VisibleDockables = new ObservableCollection<IDockable>();
         }
 

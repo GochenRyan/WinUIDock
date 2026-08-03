@@ -12,6 +12,11 @@ namespace Dock.Model.WinUI3.Controls
     [ContentProperty(Name = "Content")]
     public class Document : DockableBase, IDocument, IDocumentContent
     {
+        public Document()
+        {
+            Kind = nameof(IDocument);
+        }
+
         [IgnoreDataMember]
         [JsonIgnore]
         public object Content { get => GetValue(ContentProperty); set => SetValue(ContentProperty, value); }

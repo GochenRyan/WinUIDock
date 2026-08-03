@@ -47,6 +47,12 @@ namespace Dock.WinUI3.Internal
         private readonly AdornerHelper _adornerHelper = new();
         private readonly DockDragState _state = new();
 
+        /// <summary>Window last raised by the drag; only tracked to avoid re-raising it.</summary>
+        private IntPtr _raisedWindow;
+
+        /// <summary>Last line written by <see cref="LogDragState"/>, for de-duplication.</summary>
+        private string _lastDiagState;
+
         public IDockManager DockManager { get; set; }
 
         public DockControlState(IDockManager dockManager)
@@ -59,7 +65,9 @@ namespace Dock.WinUI3.Internal
             var valid = Validate(point, DockOperation.Fill, dragAction, relativeTo);
             if (_state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
-                EnsureAdorner(control);
+                // relativeTo IS the target DockControl — it carries the dockable
+                // rectangle the edge guides are laid out in.
+                EnsureAdorner(control, relativeTo);
             }
         }
 
@@ -75,6 +83,60 @@ namespace Dock.WinUI3.Internal
             }
 
             Validate(point, operation, dragAction, relativeTo);
+
+            LogDragState($"over op={operation} drop={DockDiag.Describe(_state.DropControl)}");
+        }
+
+        /// <summary>
+        /// The release point expressed in the TARGET window's coordinates — the same
+        /// space <see cref="DockDragState.TargetPoint"/> uses, so it is a drop-in
+        /// replacement for it. Falls back to the recorded target point if the
+        /// cross-window transform is unavailable (a window closing mid-drag).
+        /// </summary>
+        private Point ResolveDropPoint(Point point, FrameworkElement activeDockControl)
+        {
+            if (_state.TargetDockControl is not { } targetDockControl)
+            {
+                return _state.TargetPoint;
+            }
+
+            if (ReferenceEquals(targetDockControl.XamlRoot, activeDockControl.XamlRoot))
+            {
+                return point;
+            }
+
+            try
+            {
+                var fromWindow = HostWindow.GetWindowForElement(activeDockControl);
+                var toWindow = HostWindow.GetWindowForElement(targetDockControl);
+
+                if (fromWindow?.Content is { } fromContent && toWindow?.Content is { } toContent)
+                {
+                    return Extensions.TransformPoint(fromContent, point, toContent);
+                }
+            }
+            catch
+            {
+                // Window gone — the recorded point is the best that remains.
+            }
+
+            return _state.TargetPoint;
+        }
+
+        /// <summary>
+        /// Per-move diagnostics, de-duplicated: a drag produces hundreds of moves but
+        /// only a handful of distinct resolutions, so this stays within DockDiag's
+        /// "no per-frame chatter" rule while still showing every transition.
+        /// </summary>
+        private void LogDragState(string state)
+        {
+            if (!DockDiag.IsEnabled || state == _lastDiagState)
+            {
+                return;
+            }
+
+            _lastDiagState = state;
+            DockDiag.Log($"drag: {state}");
         }
 
         private void Drop(Point point, DragAction dragAction, FrameworkElement relativeTo)
@@ -87,6 +149,13 @@ namespace Dock.WinUI3.Internal
                 var targetDockable = _state.DropControl?.DataContext as IDockable;
                 operation = target.GetDockOperation(point, relativeTo, dragAction, sourceDockable, targetDockable, Validate);
             }
+
+            // The operation is re-resolved here from _state.TargetPoint (the LAST
+            // MOVE's point, not the release point) — worth seeing when the executed
+            // operation disagrees with the guide that was highlighted.
+            DockDiag.Log($"drop: op={operation} at {point.X:F0},{point.Y:F0} "
+                         + $"(last move was {_state.TargetPoint.X:F0},{_state.TargetPoint.Y:F0}) "
+                         + $"drop={DockDiag.Describe(_state.DropControl)}");
 
             if (_state.DropControl is { } control && DockProperties.GetIsDockTarget(control))
             {
@@ -112,9 +181,9 @@ namespace Dock.WinUI3.Internal
                    && point.Y <= element.ActualHeight;
         }
 
-        private void EnsureAdorner(UIElement element)
+        private void EnsureAdorner(UIElement element, FrameworkElement dockControl = null)
         {
-            _adornerHelper.AddAdorner(element);
+            _adornerHelper.AddAdorner(element, dockControl);
         }
 
         private void ShowRootAdorner(Point point, FrameworkElement relativeTo)
@@ -130,7 +199,12 @@ namespace Dock.WinUI3.Internal
                 return;
             }
 
-            var rootPoint = Extensions.TransformPoint(relativeTo, point, root);
+            // `point` is ALREADY relative to the window content — the DockControl
+            // pointer handlers report GetCurrentPoint(ownerWindow.Content). Running it
+            // through relativeTo -> root added the DockControl's own offset a second
+            // time, so near the bottom of a window the bounds check saw an outside
+            // point and tore the adorner down.
+            var rootPoint = point;
             if (!IsPointInBounds(rootPoint, root))
             {
                 if (_adornerHelper.Adorner is { })
@@ -140,11 +214,15 @@ namespace Dock.WinUI3.Internal
                 return;
             }
 
-            EnsureAdorner(root);
+            EnsureAdorner(root, relativeTo);
             if (_adornerHelper.Adorner is DockTarget target)
             {
                 var sourceDockable = _state.DragControl?.DataContext as IDockable;
-                target.UpdateRootVisibility(sourceDockable);
+
+                // Layout of the window the adorner is on — it decides whether the
+                // source's "already at this edge" suppression applies here at all.
+                var targetDockable = (relativeTo as DockControl)?.Layout;
+                target.UpdateRootVisibility(sourceDockable, targetDockable);
             }
         }
 
@@ -185,16 +263,9 @@ namespace Dock.WinUI3.Internal
 
             if (_state.DragControl.DataContext is IDockable sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
             {
-                if (sourceDockable is IDock dock)
-                {
-                    sourceDockable = dock.ActiveDockable;
-                }
-
-                if (sourceDockable == null)
-                {
-                    return;
-                }
-
+                // D18: deliberately NOT reduced to dock.ActiveDockable. Dragging a
+                // tool TAB gives a tool; dragging the chrome caption gives the whole
+                // IToolDock, and the whole dock is what should then move.
                 var ownerWindow = HostWindow.GetWindowForElement(relativeTo);
                 GeneralTransform t = ownerWindow.Content.TransformToVisual(relativeTo);
                 Point relativePoint = t.TransformPoint(point);
@@ -208,6 +279,40 @@ namespace Dock.WinUI3.Internal
                 var screenPoint = Extensions.GetScreenPoint(ownerWindow.Content, point);
                 DockManager.ScreenPosition = DockHelpers.ToDockPoint(screenPoint);
                 DockManager.ValidateDockable(sourceDockable, targetDockable, dragAction, operation, true);
+            }
+        }
+
+        /// <summary>
+        /// Screen point for the pointer, or an off-screen sentinel when it cannot be
+        /// derived.
+        ///
+        /// The transform must start at the WINDOW CONTENT: the DockControl pointer
+        /// handlers already report <c>GetCurrentPoint(ownerWindow.Content)</c>, so
+        /// handing <see cref="Extensions.GetScreenPoint"/> the DockControl instead
+        /// made it re-apply that control's offset inside the window — 32px for a
+        /// float window's title bar, about 40 for the sample's menu bar — and probed
+        /// the OS that far BELOW the real cursor. Near the bottom edge of a window the
+        /// probe then landed outside it entirely, so the window underneath was
+        /// reported as topmost and promptly raised over the one being dragged onto.
+        ///
+        /// Wrapped because it reads XamlRoot and the window handle, both of which
+        /// throw on a window that has just closed — and this runs on every pointer
+        /// move, exactly when float windows are being torn down.
+        /// </summary>
+        private static Point TryGetScreenPoint(UIElement element, Point point)
+        {
+            try
+            {
+                if (HostWindow.GetWindowForElement(element)?.Content is not UIElement content)
+                {
+                    return new Point(double.NaN, double.NaN);
+                }
+
+                return Extensions.GetScreenPoint(content, point);
+            }
+            catch
+            {
+                return new Point(double.NaN, double.NaN);
             }
         }
 
@@ -245,7 +350,14 @@ namespace Dock.WinUI3.Internal
                             {
                                 break;
                             }
+                            // Drop anything a previous gesture left behind. A drag
+                            // whose release never came back here (the pointer ended up
+                            // over another window) leaves the adorner open and the
+                            // drag state half-set.
+                            Leave();
+
                             _state.Start(dragControl, point);
+                            _raisedWindow = IntPtr.Zero;
                             activeDockControl.IsDraggingDock = true;
                         }
                         break;
@@ -260,23 +372,27 @@ namespace Dock.WinUI3.Internal
 
                                 if (_state.TargetDockControl is Control targetControl)
                                 {
-                                    // The DROP target is gated by IsDropEnabled;
-                                    // IsDragEnabled belongs to the drag SOURCE
-                                    // (see the Pressed branch). Reading the wrong
-                                    // one here let a drop execute on a target that
-                                    // the Moved branch had already refused to show
-                                    // guides for.
+                                    // IsDropEnabled, not IsDragEnabled — the latter
+                                    // belongs to the drag SOURCE (see Pressed).
                                     isDropEnabled = DockProperties.GetIsDropEnabled(targetControl);
                                 }
 
                                 if (isDropEnabled)
                                 {
-                                    Drop(_state.TargetPoint, dragAction, _state.TargetDockControl);
+                                    // Resolve at the RELEASE point, not at the last
+                                    // move's. Pointer moves are sampled and coalesced,
+                                    // so a fast gesture leaves TargetPoint a sample
+                                    // behind the cursor — and the guide is resolved
+                                    // from wherever that stale sample landed, which is
+                                    // often no guide at all (=> Window => floats).
+                                    Drop(ResolveDropPoint(point, inputActiveDockControl), dragAction, _state.TargetDockControl);
                                 }
                             }
                             else
                             {
                                 // Drag out of the window
+                                DockDiag.Log($"drop: NO TARGET (drop={DockDiag.Describe(_state.DropControl)}, "
+                                             + $"targetDockControl={DockDiag.Describe(_state.TargetDockControl)}) -> float");
                                 _state.DropControl = activeDockControl;
                                 _state.TargetDockControl = activeDockControl;
                                 _state.TargetPoint = point;
@@ -288,6 +404,7 @@ namespace Dock.WinUI3.Internal
                         }
                         Leave();
                         _state.End();
+                        _raisedWindow = IntPtr.Zero;
                         activeDockControl.IsDraggingDock = false;
                         break;
                     }
@@ -319,7 +436,28 @@ namespace Dock.WinUI3.Internal
                             Control dropControl = null;
                             bool isOverDockControl = false;
 
-                            foreach (var inputDockControl in dockControls.GetZOrderedDockControls())
+                            // Screen coordinates, so the OS can be asked which window
+                            // is really on top under the cursor. Overlapping float
+                            // windows are otherwise resolved by creation order.
+                            var pointerScreenPoint = TryGetScreenPoint(inputActiveDockControl, point);
+                            var topWindow = dockControls.GetOwnWindowAt(pointerScreenPoint);
+
+                            // Bring it forward. A window sitting behind another cannot
+                            // be dropped into at all — its guides live in its own
+                            // window, so while it is occluded they are invisible and
+                            // the area they cover belongs to whatever is on top.
+                            // Guarded on "changed" so a stationary pointer does not
+                            // re-issue SetWindowPos on every move event.
+                            if (topWindow != IntPtr.Zero && topWindow != _raisedWindow)
+                            {
+                                LogDragState($"raise hwnd={topWindow.ToInt64():x} "
+                                             + $"(pointer {point.X:F0},{point.Y:F0} -> screen "
+                                             + $"{pointerScreenPoint.X:F0},{pointerScreenPoint.Y:F0})");
+                                Extensions.RaiseWindow(topWindow);
+                                _raisedWindow = topWindow;
+                            }
+
+                            foreach (var inputDockControl in dockControls.GetZOrderedDockControls(topWindow))
                             {
                                 if (inputActiveDockControl.XamlRoot is null)
                                 {
@@ -426,6 +564,12 @@ namespace Dock.WinUI3.Internal
                             }
                             else
                             {
+                                // Suspect path: a single move with no drop control tears
+                                // the adorner down and clears TargetDockControl, and a
+                                // release right after lands in the "drag out" branch.
+                                LogDragState($"NO drop control at {point.X:F0},{point.Y:F0} "
+                                             + $"overDockControl={isOverDockControl} (adorner torn down)");
+
                                 if (_state.DropControl is { })
                                 {
                                     Leave();
@@ -461,6 +605,7 @@ namespace Dock.WinUI3.Internal
                     {
                         Leave();
                         _state.End();
+                        _raisedWindow = IntPtr.Zero;
                         activeDockControl.IsDraggingDock = false;
                         break;
                     }

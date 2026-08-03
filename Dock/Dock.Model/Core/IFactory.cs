@@ -116,24 +116,26 @@ public partial interface IFactory
     /// <summary>
     /// Gets registered context in <see cref="ContextLocator"/>.
     /// </summary>
-    /// <param name="id">The object id.</param>
+    /// <param name="kind">The dockable kind, see <see cref="IDockable.Kind"/>.</param>
     /// <returns>The located context.</returns>
-    object? GetContext(string id);
+    object? GetContext(string kind);
 
     /// <summary>
     /// Gets registered host window.
     /// </summary>
-    /// <param name="id">The host id.</param>
+    /// <param name="kind">The window kind, see <see cref="IDockWindow.Kind"/>.</param>
     /// <returns>The located host.</returns>
-    IHostWindow? GetHostWindow(string id);
+    IHostWindow? GetHostWindow(string kind);
 
     /// <summary>
-    /// Gets registered dockable in <see cref="DockableLocator"/>.
+    /// Gets registered dockable in <see cref="DockableLocator"/>. This is the
+    /// spawner entry point: register a factory per kind to make a dockable
+    /// re-creatable after it has been closed.
     /// </summary>
-    /// <param name="id">The dockable id.</param>
+    /// <param name="kind">The dockable kind, see <see cref="IDockable.Kind"/>.</param>
     /// <typeparam name="T">The dockable return type.</typeparam>
     /// <returns>The located dockable.</returns>
-    T? GetDockable<T>(string id) where T : class, IDockable;
+    T? GetDockable<T>(string kind) where T : class, IDockable;
 
     /// <summary>
     /// Initialize layout.
@@ -191,6 +193,41 @@ public partial interface IFactory
     /// <param name="predicate">The predicate to filter dockables.</param>
     /// <returns>The dockable instance or null if dockable was not found.</returns>
     IDockable? FindDockable(IDock dock, Func<IDockable, bool> predicate);
+
+    /// <summary>
+    /// Finds the single dockable carrying the given <see cref="IDockable.Id"/>.
+    /// Id is an instance identity, so this returns one value or null — never a set.
+    /// An empty id never matches: it means "does not participate in id-based lookup".
+    /// Duplicates break the contract and are reported through the factory's
+    /// violation handler (throws in Debug, traces in Release).
+    /// </summary>
+    /// <param name="id">The instance id to look for.</param>
+    /// <param name="scope">Limits the search to this subtree; null searches the
+    /// whole factory (every registered <see cref="DockControls"/> layout).</param>
+    /// <returns>The matching dockable, or null.</returns>
+    IDockable? FindDockableById(string id, IDock? scope = null);
+
+    /// <summary>
+    /// Checks that this dockable's <see cref="IDockable.Id"/> does not collide with
+    /// one already in the factory. No-op for empty ids. Reports through the same
+    /// violation handler as <see cref="FindDockableById"/>.
+    /// </summary>
+    /// <remarks>
+    /// Each call walks the tree, so this is meant for one-off checks (adopting a
+    /// dockable, wiring up a new panel) — not for every insert during a bulk load.
+    /// Use <see cref="ValidateIds"/> once after loading instead.
+    /// </remarks>
+    void ValidateId(IDockable dockable);
+
+    /// <summary>
+    /// Validates Id uniqueness across the tree in one pass. Intended to run after
+    /// deserialization and before saving.
+    /// </summary>
+    /// <param name="scope">Limits validation to this subtree; null validates the
+    /// whole factory.</param>
+    /// <returns>One entry per offending id with all dockables sharing it; empty
+    /// when the tree is compliant.</returns>
+    IReadOnlyList<(string Id, IReadOnlyList<IDockable> Dockables)> ValidateIds(IDock? scope = null);
 
     /// <summary>
     /// Searches for dockables in all registered <see cref="IDockControl"/>.
@@ -358,6 +395,19 @@ public partial interface IFactory
     void CollapseDock(IDock dock);
 
     /// <summary>
+    /// Puts a closed or collapsed dockable back where it came from, using the anchor
+    /// recorded by <see cref="CloseDockable"/> / <see cref="CollapseDock"/>.
+    ///
+    /// Restores recursively: if closing the dockable emptied its dock and that dock
+    /// was collapsed away, the dock is brought back first. This is what makes
+    /// "close the last tool in a pane, then reopen it from the menu" put both the
+    /// pane and the tool back in their original spot.
+    /// </summary>
+    /// <param name="dockable">The dockable to restore.</param>
+    /// <returns>True if an anchor was available and the dockable was restored.</returns>
+    bool RestoreDockable(IDockable dockable);
+
+    /// <summary>
     /// Creates a new split layout from source dockable.
     /// </summary>
     /// <param name="dock">The dock to perform operation on.</param>
@@ -373,6 +423,18 @@ public partial interface IFactory
     /// <param name="dockable">The optional dockable to add to a split side.</param>
     /// <param name="operation"> The dock operation to perform.</param>
     void SplitToDock(IDock dock, IDockable dockable, DockOperation operation);
+
+    /// <summary>
+    /// Inserts a dock along one edge of the root layout, spanning the whole
+    /// window width or height. Unlike <see cref="SplitToDock"/> — which
+    /// subdivides the rectangle of the dock under the cursor — this inserts at
+    /// the root level, so every existing pane gives way proportionally.
+    /// </summary>
+    /// <param name="rootDock">The root dock whose layout gains the edge region.</param>
+    /// <param name="dock">The dock to place along the edge.</param>
+    /// <param name="operation">One of the <c>Root*</c> dock operations.</param>
+    /// <returns>True when the root layout could be resolved and the dock was inserted.</returns>
+    bool SplitToRootEdge(IRootDock rootDock, IDock dock, DockOperation operation);
 
     /// <summary>
     /// Creates dock window from source dockable.

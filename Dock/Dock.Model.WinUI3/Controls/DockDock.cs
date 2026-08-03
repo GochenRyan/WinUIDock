@@ -15,6 +15,7 @@ namespace Dock.Model.WinUI3.Controls
     {
         public DockDock() : base()
         {
+            Kind = nameof(IDockDock);
             VisibleDockables = new ObservableCollection<IDockable>();
         }
 

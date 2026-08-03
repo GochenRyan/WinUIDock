@@ -7,9 +7,23 @@ namespace Dock.Model.Core;
 public interface IDockable
 {
     /// <summary>
-    /// Gets or sets dockable id.
+    /// Gets or sets the unique instance identity of this dockable.
+    /// Supplied by the host application; the framework never writes it.
+    /// Used for content re-association, navigation by id and layout round-trips.
+    /// Contract: when non-empty it must be unique within a single factory; an
+    /// empty value simply means "does not participate in id-based matching".
+    /// For the key the factory locators are keyed by, see <see cref="Kind"/>.
     /// </summary>
     string Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the locator key / category of this dockable.
+    /// The framework writes a default (the contract type name); hosts may override it.
+    /// Used to look up ContextLocator / HostWindowLocator / DockableLocator and to
+    /// match dockables by category.
+    /// Contract: always has a value and may repeat across instances of the same kind.
+    /// </summary>
+    string Kind { get; set; }
 
     /// <summary>
     /// Gets or sets dockable title.
@@ -30,6 +44,20 @@ public interface IDockable
     /// Gets or sets dockable original owner.
     /// </summary>
     IDockable? OriginalOwner { get; set; }
+
+    /// <summary>
+    /// Gets or sets the dock this dockable sat in before it was closed or collapsed,
+    /// so it can be put back there. Deliberately separate from <see cref="OriginalOwner"/>,
+    /// which pinning uses for a different purpose.
+    /// Written by CloseDockable / CollapseDock, consumed and cleared by RestoreDockable.
+    /// </summary>
+    IDockable? RestoreOwner { get; set; }
+
+    /// <summary>
+    /// Gets or sets the index this dockable had in <see cref="RestoreOwner"/>.
+    /// Clamped on restore, since siblings may have come and gone meanwhile.
+    /// </summary>
+    int RestoreIndex { get; set; }
 
     /// <summary>
     /// Gets or sets dockable factory.

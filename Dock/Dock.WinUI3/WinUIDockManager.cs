@@ -1,8 +1,8 @@
 ﻿using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Dock.WinUI3
 {
@@ -60,16 +60,72 @@ namespace Dock.WinUI3
             _factory.SplitToDock(dock, dockable, operation);
         }
 
-        public static IEnumerable<IDockable> FindDockableByID(string id)
+        /// <summary>
+        /// Finds the dockable carrying the given <see cref="IDockable.Id"/>.
+        /// Id is an instance identity and must be unique, so this returns a single
+        /// value: the match, or null when there is none. An empty id never matches —
+        /// it means "does not participate in id-based lookup".
+        /// </summary>
+        public static IDockable FindDockableByID(string id)
         {
-            var res = _factory.Find(x => x.Id == id);
-            return res;
+            return FindSingleById<IDockable>(id, _ => true);
         }
 
-        public static IEnumerable<IDock> FindDockByID(string id)
+        /// <summary>
+        /// Finds the dock carrying the given <see cref="IDockable.Id"/>.
+        /// See <see cref="FindDockableByID"/> for the single-value contract.
+        /// </summary>
+        public static IDock FindDockByID(string id)
         {
-            IEnumerable<IDock> res = _factory.Find(x => x is IDock && x.Id == id).Select(x => (IDock)x);
-            return res;
+            return FindSingleById<IDock>(id, x => x is IDock);
+        }
+
+        /// <summary>
+        /// Shared single-value lookup. Duplicate ids violate the uniqueness
+        /// contract, so they throw in Debug and are recorded as diagnostics in
+        /// Release (where the first match is returned to keep the app running).
+        /// </summary>
+        private static T FindSingleById<T>(string id, Func<IDockable, bool> filter)
+            where T : class, IDockable
+        {
+            if (_factory is null || string.IsNullOrEmpty(id))
+            {
+                return null;
+            }
+
+            T match = null;
+            var duplicates = 0;
+
+            foreach (var dockable in _factory.Find(x => x.Id == id && filter(x)))
+            {
+                if (dockable is not T typed)
+                {
+                    continue;
+                }
+
+                if (match is null)
+                {
+                    match = typed;
+                }
+                else if (!ReferenceEquals(match, typed))
+                {
+                    duplicates++;
+                }
+            }
+
+            if (duplicates > 0)
+            {
+                var message =
+                    $"Duplicate dockable id '{id}': {duplicates + 1} instances share it. " +
+                    "Id must be unique within a factory; use Kind for category matching.";
+#if DEBUG
+                throw new InvalidOperationException(message);
+#else
+                Internal.DockDiag.Log($"WinUIDockManager {message}");
+#endif
+            }
+
+            return match;
         }
 
         public static int GetIndex(IDockable dockable)
@@ -139,11 +195,9 @@ namespace Dock.WinUI3
 
         public static void ActiveDockable(string id)
         {
-            var res = FindDockableByID(id);
-
-            if (res.Count() > 0)
+            if (FindDockableByID(id) is { } dockable)
             {
-                ActiveDockable(res.First());
+                ActiveDockable(dockable);
             }
         }
 

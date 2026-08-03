@@ -202,7 +202,6 @@ namespace Dock.WinUI3.Controls
         private const int HostAttemptLimit = 10;
 
         private ToolTabStrip _toolTabStrip;
-        //private ToolContentControl _toolContentControl;
         private ContentControl _toolContentControl;
         private ToolContentControl _innerContent;
         private int _hostAttempts;

@@ -1,4 +1,4 @@
-namespace Dock.Model.Core;
+﻿namespace Dock.Model.Core;
 
 internal static class DockOperationExtensions
 {

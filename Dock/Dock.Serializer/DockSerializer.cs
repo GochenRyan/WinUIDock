@@ -1,4 +1,5 @@
-﻿using Dock.Model.Core;
+﻿using Dock.Model;
+using Dock.Model.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Text;
@@ -51,6 +52,19 @@ public sealed class DockSerializer : IDockSerializer
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
         var text = streamReader.ReadToEnd();
         return Deserialize<T>(text);
+    }
+
+    /// <inheritdoc/>
+    public T? Load<T>(Stream stream, DockableResolver? resolver)
+    {
+        var result = Load<T>(stream);
+
+        if (resolver is null || result is not IDockable dockable)
+        {
+            return result;
+        }
+
+        return DockableResolution.Apply(dockable, resolver) is T resolved ? resolved : default;
     }
 
     /// <inheritdoc/>

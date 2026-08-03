@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
@@ -183,7 +183,21 @@ namespace Dock.WinUI3
                 RegisterRoot(root);
             }
 
-            TryApplyTitleBar(window);
+            // Caption colours reach into the non-client area, and that needs the
+            // window's HWND to be associated with its WindowId. Before the window has
+            // been shown no such association exists, and Microsoft.UI.Input reports
+            // "There is no HWND associated with the provided WindowId". It is
+            // swallowed here — but it is the same call that escalates into a
+            // process-killing fail-fast (0xC0000602) when it runs while other windows
+            // are being torn down. Float windows register from their constructor,
+            // i.e. well before Present/Show, so they always took this path.
+            //
+            // Deferring costs nothing: the shell drops pre-activation caption colours
+            // anyway, which is exactly why the Activated re-apply below exists.
+            if (IsRealized(window))
+            {
+                TryApplyTitleBar(window);
+            }
 
             if (DefaultBackdrop != DockBackdrop.None)
             {
@@ -279,6 +293,25 @@ namespace Dock.WinUI3
                 TryApplyTitleBar(window);
             }
         }
+
+        /// <summary>
+        /// True once the window has an AppWindow that is actually on screen — the
+        /// point at which its HWND is associated with its WindowId and non-client
+        /// operations become legal. Both "not shown yet" and "already closed" report
+        /// false, and both are cases where touching the caption is unsafe.
+        /// </summary>
+        private static bool IsRealized(Window window)
+        {
+            try
+            {
+                return window.AppWindow is { IsVisible: true };
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// Recolors a window's OS title bar (caption + min/max/close buttons) from
