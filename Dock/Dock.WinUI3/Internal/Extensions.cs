@@ -51,23 +51,75 @@ namespace Dock.WinUI3.Internal
 
         /// <summary>
         /// The top-level window of OURS that sits topmost at <paramref name="screenPoint"/>,
-        /// or <see cref="IntPtr.Zero"/> when the point is over another process (or
-        /// nothing at all).
+        /// or <see cref="IntPtr.Zero"/> when the point is covered by another process
+        /// (or nothing at all).
+        ///
+        /// Walks the real z-order instead of asking WindowFromPoint: with
+        /// ExtendsContentIntoTitleBar, WindowFromPoint falls THROUGH the caption
+        /// band to whatever lies beneath, so the raise logic promoted the wrong
+        /// window when dragging across a float window's title bar.
         /// </summary>
         public static IntPtr GetOwnWindowAt(this IList<IDockControl> dockControls, Point screenPoint)
         {
-            var topWindow = GetRootWindowFromPoint(screenPoint);
-            if (topWindow == IntPtr.Zero)
+            if (double.IsNaN(screenPoint.X) || double.IsNaN(screenPoint.Y))
             {
                 return IntPtr.Zero;
             }
 
+            var own = new HashSet<IntPtr>();
             foreach (var control in dockControls.OfType<DockControl>())
             {
-                if (GetWindowHandle(control) == topWindow)
+                var handle = GetWindowHandle(control);
+                if (handle != IntPtr.Zero)
                 {
-                    return topWindow;
+                    own.Add(handle);
                 }
+            }
+
+            if (own.Count == 0)
+            {
+                return IntPtr.Zero;
+            }
+
+            var x = (int)Math.Round(screenPoint.X);
+            var y = (int)Math.Round(screenPoint.Y);
+
+            try
+            {
+                for (var hwnd = GetTopWindow(IntPtr.Zero); hwnd != IntPtr.Zero; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
+                {
+                    if (!IsWindowVisible(hwnd) || IsIconic(hwnd))
+                    {
+                        continue;
+                    }
+
+                    // Click-through overlays never own the point.
+                    if ((GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TRANSPARENT) != 0)
+                    {
+                        continue;
+                    }
+
+                    // Cloaked = alive but not on screen (suspended UWP apps, windows
+                    // parked on another virtual desktop).
+                    if (DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, out var cloaked, sizeof(int)) == 0 && cloaked != 0)
+                    {
+                        continue;
+                    }
+
+                    if (!GetWindowRect(hwnd, out var rect)
+                        || x < rect.Left || x >= rect.Right || y < rect.Top || y >= rect.Bottom)
+                    {
+                        continue;
+                    }
+
+                    // First window under the point wins: ours is the raise
+                    // candidate; a foreign one means the point is covered.
+                    return own.Contains(hwnd) ? hwnd : IntPtr.Zero;
+                }
+            }
+            catch
+            {
+                return IntPtr.Zero;
             }
 
             return IntPtr.Zero;
@@ -102,31 +154,6 @@ namespace Dock.WinUI3.Internal
             }
         }
 
-        private static IntPtr GetRootWindowFromPoint(Point screenPoint)
-        {
-            if (double.IsNaN(screenPoint.X) || double.IsNaN(screenPoint.Y))
-            {
-                return IntPtr.Zero;
-            }
-
-            try
-            {
-                var hwnd = WindowFromPoint(new NativePoint
-                {
-                    X = (int)Math.Round(screenPoint.X),
-                    Y = (int)Math.Round(screenPoint.Y)
-                });
-
-                // WindowFromPoint lands on the deepest child (the XAML island host),
-                // so walk up to the top-level window the DockControl belongs to.
-                return hwnd == IntPtr.Zero ? IntPtr.Zero : GetAncestor(hwnd, GA_ROOT);
-            }
-            catch
-            {
-                return IntPtr.Zero;
-            }
-        }
-
         private static IntPtr GetWindowHandle(UIElement element)
         {
             try
@@ -142,10 +169,13 @@ namespace Dock.WinUI3.Internal
             }
         }
 
-        private const uint GA_ROOT = 2;
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOMOVE = 0x0002;
         private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint GW_HWNDNEXT = 2;
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TRANSPARENT = 0x00000020;
+        private const int DWMWA_CLOAKED = 14;
         private static readonly IntPtr HWND_TOP = IntPtr.Zero;
 
         [StructLayout(LayoutKind.Sequential)]
@@ -155,11 +185,38 @@ namespace Dock.WinUI3.Internal
             public int Y;
         }
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr WindowFromPoint(NativePoint point);
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeRect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
 
         [DllImport("user32.dll")]
-        private static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+        private static extern IntPtr GetTopWindow(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetWindow(IntPtr hwnd, uint cmd);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWindowVisible(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsIconic(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hwnd, int index);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

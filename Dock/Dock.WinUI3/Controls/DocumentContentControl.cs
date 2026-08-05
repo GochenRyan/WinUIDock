@@ -69,9 +69,24 @@ namespace Dock.WinUI3.Controls
             }
         }
 
+        /// <summary>
+        /// Permanently stands this host down — see
+        /// <see cref="ToolContentControl.StandDownForTeardown"/> for the race
+        /// this closes (its window is dying while the content moves elsewhere).
+        /// </summary>
+        internal void StandDownForTeardown()
+        {
+            _stoodDown = true;
+
+            if (_contentPresenter is not null)
+            {
+                _contentPresenter.Content = null;
+            }
+        }
+
         private void UpdateContent()
         {
-            if (_contentPresenter is null || DataContext is not IDocument document)
+            if (_stoodDown || _contentPresenter is null || DataContext is not IDocument document)
             {
                 return;
             }
@@ -160,6 +175,7 @@ namespace Dock.WinUI3.Controls
         }
 
         private long _contentToken = 0;
+        private bool _stoodDown;
         private IDocument _lastDocument = null;
         private ContentPresenter _contentPresenter;
         private DockableControl _dockableControl;

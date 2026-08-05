@@ -79,18 +79,6 @@
                           TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
                           FallbackColor="#202020"
                           AlwaysUseFallback="True" />
-            <AcrylicBrush x:Key="DockAcrylicGuidePlateBrush"
-                          TintColor="{StaticResource DockAcrylicTintColor}"
-                          TintOpacity="{StaticResource DockAcrylicTintOpacity}"
-                          TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
-                          FallbackColor="#242424"
-                          AlwaysUseFallback="True" />
-            <AcrylicBrush x:Key="DockAcrylicChromeBrush"
-                          TintColor="{StaticResource DockAcrylicTintColor}"
-                          TintOpacity="{StaticResource DockAcrylicTintOpacity}"
-                          TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
-                          FallbackColor="#141414"
-                          AlwaysUseFallback="True" />
             <!-- Legacy keys (pre-overhaul templates and existing consumers) -->
             <SolidColorBrush x:Key="DockChromeTabItemRestBrush" Color="#1E1E1E" />
             <SolidColorBrush x:Key="DockChromeTabItemRestForeBrush" Color="#A0A0A0" />
@@ -154,18 +142,6 @@
                           TintOpacity="{StaticResource DockAcrylicTintOpacity}"
                           TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
                           FallbackColor="#FFFFFF"
-                          AlwaysUseFallback="True" />
-            <AcrylicBrush x:Key="DockAcrylicGuidePlateBrush"
-                          TintColor="{StaticResource DockAcrylicTintColor}"
-                          TintOpacity="{StaticResource DockAcrylicTintOpacity}"
-                          TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
-                          FallbackColor="#FFFFFF"
-                          AlwaysUseFallback="True" />
-            <AcrylicBrush x:Key="DockAcrylicChromeBrush"
-                          TintColor="{StaticResource DockAcrylicTintColor}"
-                          TintOpacity="{StaticResource DockAcrylicTintOpacity}"
-                          TintLuminosityOpacity="{StaticResource DockAcrylicLuminosityOpacity}"
-                          FallbackColor="#EBEBEB"
                           AlwaysUseFallback="True" />
             <!-- Legacy keys (pre-overhaul templates and existing consumers) -->
             <SolidColorBrush x:Key="DockChromeTabItemRestBrush" Color="#E1E1E1" />

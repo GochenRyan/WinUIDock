@@ -334,6 +334,10 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public void HidePreviewingDockables(IRootDock rootDock)
     {
+        DockDiagnostics.Log(() =>
+            $"HidePreviewingDockables: pinnedDock={DockDiagnostics.Describe(rootDock.PinnedDock)} "
+            + $"count={rootDock.PinnedDock?.VisibleDockables?.Count ?? -1}");
+
         if (rootDock.PinnedDock == null)
             return;
 
@@ -351,6 +355,9 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public void PreviewPinnedDockable(IDockable dockable)
     {
+        DockDiagnostics.Log(() =>
+            $"PreviewPinnedDockable: {DockDiagnostics.Describe(dockable)} owner={DockDiagnostics.Describe(dockable.Owner)}");
+
         var rootDock = FindRoot(dockable, _ => true);
         if (rootDock is null)
         {
@@ -379,6 +386,10 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public virtual void PinDockable(IDockable dockable)
     {
+        DockDiagnostics.Log(() =>
+            $"PinDockable: {DockDiagnostics.Describe(dockable)} owner={DockDiagnostics.Describe(dockable.Owner)} "
+            + $"originalOwner={DockDiagnostics.Describe(dockable.OriginalOwner)}");
+
         switch (dockable.Owner)
         {
             case IToolDock toolDock:
@@ -386,6 +397,7 @@ public abstract partial class FactoryBase
                     var rootDock = FindRoot(dockable, _ => true);
                     if (rootDock is null)
                     {
+                        DockDiagnostics.Log(() => "PinDockable: no root — BAILING");
                         return;
                     }
 
@@ -401,6 +413,10 @@ public abstract partial class FactoryBase
                     var originalToolDock = dockable.OriginalOwner as IToolDock;
 
                     var alignment = originalToolDock?.Alignment ?? toolDock.Alignment;
+
+                    DockDiagnostics.Log(() =>
+                        $"PinDockable: isVisible={isVisible} isPinned={isPinned} alignment={alignment} "
+                        + $"-> branch={(isVisible && !isPinned ? "PIN" : isPinned ? "UNPIN" : "INVALID")}");
 
                     if (isVisible && !isPinned)
                     {
@@ -582,6 +598,16 @@ public abstract partial class FactoryBase
             return;
         }
 
+        // Already floating alone: re-floating would rebuild the window from the
+        // CONTENT bounds and lose one chrome per repeat. No-op, same rule as
+        // DockManager's window path.
+        var sourceRoot = FindRoot(dockable, _ => true);
+        if (sourceRoot?.Window is not null
+            && !Find(sourceRoot, d => d is not IDock and not IProportionalDockSplitter).Skip(1).Any())
+        {
+            return;
+        }
+
         UnpinDockable(dockable);
 
         dock.GetVisibleBounds(out var ownerX, out var ownerY, out var ownerWidth, out var ownerHeight);
@@ -625,6 +651,16 @@ public abstract partial class FactoryBase
         if (double.IsNaN(dockableHeight))
         {
             dockableHeight = double.IsNaN(ownerHeight) ? 400 : ownerHeight;
+        }
+
+        // Torn out of a SHARED float window: inherit that window's size instead
+        // of the chrome-less content bounds.
+        if (sourceRoot?.Window is { } sourceWindow
+            && !double.IsNaN(sourceWindow.WindowWidth) && sourceWindow.WindowWidth > 0
+            && !double.IsNaN(sourceWindow.WindowHeight) && sourceWindow.WindowHeight > 0)
+        {
+            dockableWidth = sourceWindow.WindowWidth;
+            dockableHeight = sourceWindow.WindowHeight;
         }
 
         SplitToWindow(dock, dockable, x, y, dockableWidth, dockableHeight);

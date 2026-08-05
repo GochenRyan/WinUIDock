@@ -4,6 +4,7 @@ using Dock.Model.Core;
 using Dock.Serializer;
 using Dock.WinUI3;
 using Dock.WinUI3.Controls;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -39,6 +40,17 @@ namespace DockWinUISample
 
             _serializer = new DockSerializer(typeof(List<>));
 
+            // The XAML sets these too, but x:Bind's first pass runs after the
+            // constructor body — and the snapshot below happens here. Left to the
+            // bindings, "the default layout" would be captured with no
+            // DefaultDockable and no active tab anywhere: resetting to it would
+            // render an empty window (the former) or empty panes (the latter).
+            Root.DefaultDockable = Body;
+            LeftPane.ActiveDockable = Outliner;
+            DocumentsPane.ActiveDockable = Document1;
+            BottomPane.ActiveDockable = Output;
+            RightPane.ActiveDockable = Properties;
+
             // Index the XAML-declared dockables by Id so a loaded layout can adopt
             // them instead of replacing them. That restores their [JsonIgnore]
             // Content and, unlike a content-only cache, keeps object identity too.
@@ -53,7 +65,101 @@ namespace DockWinUISample
             }
 
             // The factory only exists once the dock control has loaded.
-            Dock.Loaded += (_, _) => HookFactoryEvents();
+            Dock.Loaded += (_, _) =>
+            {
+                HookFactoryEvents();
+
+                // Opt-in rather than automatic: the check opens and closes a real
+                // window, which is not something every launch should do.
+                if (Environment.GetEnvironmentVariable("DOCKSAMPLE_CONTEXTCHECK") == "1")
+                {
+                    CheckEditorContexts_Click(this, null);
+                }
+
+                // Repro hook: float a panel, then reset the layout while its float
+                // window is still open — the user-reported crash. "1" resets one
+                // tick later (window not yet presented); "2" waits until the float
+                // window has fully presented and settled, which is what a real hand
+                // reaching the menu does — the two states fail differently.
+                var resetRepro = Environment.GetEnvironmentVariable("DOCKSAMPLE_RESETREPRO");
+                if (resetRepro is "1" or "2")
+                {
+                    FloatPanel_Click(this, null);
+
+                    void RunReset()
+                    {
+                        App.Log("ResetRepro: resetting layout with a float window open");
+                        ResetLayout_Click(this, null);
+                        App.Log("ResetRepro: reset returned without throwing");
+                    }
+
+                    if (resetRepro == "1")
+                    {
+                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, RunReset);
+                    }
+                    else
+                    {
+                        // Field-held: a local DispatcherQueueTimer is garbage once
+                        // the handler returns, and a collected timer never ticks.
+                        _reproTimer = DispatcherQueue.CreateTimer();
+                        _reproTimer.Interval = TimeSpan.FromSeconds(2);
+                        _reproTimer.IsRepeating = false;
+                        _reproTimer.Tick += (_, _) => RunReset();
+                        _reproTimer.Start();
+                    }
+                }
+                else if (resetRepro == "3")
+                {
+                    // Pin a panel, then float it out of the pin flyout — the same
+                    // model transition a drag out of the flyout performs.
+                    PinPanel_Click(this, null);
+                    _reproTimer = DispatcherQueue.CreateTimer();
+                    _reproTimer.Interval = TimeSpan.FromSeconds(2);
+                    _reproTimer.IsRepeating = false;
+                    _reproTimer.Tick += (_, _) =>
+                    {
+                        App.Log("PinFloatRepro: floating the pinned panel");
+                        FloatPanel_Click(this, null);
+                        App.Log("PinFloatRepro: float returned without throwing");
+                    };
+                    _reproTimer.Start();
+                }
+                else if (resetRepro == "4")
+                {
+                    // The user's exact flow, minus the pointer gesture: pin →
+                    // OPEN the flyout (PreviewPinnedDockable is what the tab
+                    // click calls) → run the drag's Window drop through the real
+                    // DockManager while the flyout is showing the panel.
+                    PinPanel_Click(this, null);
+                    _reproTimer = DispatcherQueue.CreateTimer();
+                    _reproTimer.Interval = TimeSpan.FromSeconds(2);
+                    _reproTimer.IsRepeating = false;
+                    _reproTimer.Tick += (_, _) =>
+                    {
+                        if (Declared("Outliner") is not { } panel || Factory is not { } factory)
+                        {
+                            return;
+                        }
+
+                        App.Log("PinPreviewRepro: opening the pin flyout");
+                        factory.PreviewPinnedDockable(panel);
+
+                        _reproTimer = DispatcherQueue.CreateTimer();
+                        _reproTimer.Interval = TimeSpan.FromSeconds(2);
+                        _reproTimer.IsRepeating = false;
+                        _reproTimer.Tick += (_, _) =>
+                        {
+                            App.Log("PinPreviewRepro: dropping to Window from the open flyout");
+                            var manager = Dock.DockManager;
+                            manager.ScreenPosition = new global::Dock.Model.Core.DockPoint(500, 300);
+                            var ok = manager.ValidateDockable(panel, Root, DragAction.Move, DockOperation.Window, true);
+                            App.Log($"PinPreviewRepro: window drop returned {ok} without throwing");
+                        };
+                        _reproTimer.Start();
+                    };
+                    _reproTimer.Start();
+                }
+            };
         }
 
         private void IndexDeclared(IDockable dockable)
@@ -282,6 +388,11 @@ namespace DockWinUISample
             factory.DockableClosed += Refresh;
             factory.DockablePinned += Refresh;
             factory.DockableUnpinned += Refresh;
+            // Float windows change what "is open" without touching any dockable
+            // event this menu listens to — closing one via its caption X, most
+            // visibly. Window events keep the ticks honest.
+            factory.WindowOpened += Refresh;
+            factory.WindowClosed += Refresh;
 
             SyncViewMenu();
         }
@@ -441,11 +552,162 @@ namespace DockWinUISample
             }
         }
 
+        // ---- Editors menu: one asset-editor window per context ----
+
+        private EditorWindow OpenEditor(EditorKind kind)
+        {
+            // Owned by this window, so it closes when the application does — and
+            // so does anything torn off it.
+            var editor = new EditorWindow(kind, this);
+            editor.Activate();
+            Log($"opened the {kind} editor in a context of its own");
+            return editor;
+        }
+
+        private void OpenAnimationEditor_Click(object sender, RoutedEventArgs e)
+            => OpenEditor(EditorKind.Animation);
+
+        private void OpenShaderGraph_Click(object sender, RoutedEventArgs e)
+            => OpenEditor(EditorKind.ShaderGraph);
+
+        private void ResetEditorTemplates_Click(object sender, RoutedEventArgs e)
+        {
+            EditorWindow.ResetTemplates();
+            Log("deleted the per-kind editor layout templates");
+        }
+
+        private void CheckEditorContexts_Click(object sender, RoutedEventArgs e)
+        {
+            var editor = OpenEditor(EditorKind.Animation);
+
+            if (editor.DockControl.IsLoaded)
+            {
+                RunEditorContextChecks(editor);
+                return;
+            }
+
+            void OnLoaded(object s, RoutedEventArgs args)
+            {
+                editor.DockControl.Loaded -= OnLoaded;
+                RunEditorContextChecks(editor);
+            }
+
+            editor.DockControl.Loaded += OnLoaded;
+        }
+
+        /// <summary>
+        /// Asserts the two properties that make an editor window a context rather
+        /// than just another window: its factory is private to it (which is what
+        /// isolates drag and drop), and the dock registry both knows it and lets
+        /// go of it again.
+        /// </summary>
+        private void RunEditorContextChecks(EditorWindow editor)
+        {
+            var pass = 0;
+            var fail = 0;
+
+            void Check(string name, bool ok)
+            {
+                if (ok)
+                {
+                    pass++;
+                }
+                else
+                {
+                    fail++;
+                }
+
+                var line = $"{(ok ? "PASS" : "FAIL")} {name}";
+                Log(line);
+                App.Log($"EditorContextCheck: {line}");
+            }
+
+            var mainFactory = Factory;
+            var editorFactory = editor.DockControl.Factory;
+
+            Check("editor owns a separate factory",
+                editorFactory is { } && !ReferenceEquals(editorFactory, mainFactory));
+            Check("main factory does not list the editor's dock control",
+                mainFactory?.DockControls.Contains(editor.DockControl) == false);
+            Check("editor factory does not list the main dock control",
+                editorFactory?.DockControls.Contains(Dock) == false);
+            Check("editor window is in the dock registry",
+                ReferenceEquals(HostWindow.GetWindowForElement(editor.DockControl), editor));
+
+            // RootDockControl renders DefaultDockable, so a root without one is a
+            // window that shows nothing at all — with a perfectly intact tree
+            // underneath, which is what makes it so confusing to diagnose. The
+            // pane-level version of the same disease: a tabbed dock with tabs but
+            // no ActiveDockable draws an empty chrome.
+            static bool PanesHaveActiveTabs(IDockable? node)
+            {
+                if (node is IToolDock or IDocumentDock)
+                {
+                    var dock = (IDock)node;
+                    if (dock.VisibleDockables?.Count > 0 && dock.ActiveDockable is null)
+                    {
+                        return false;
+                    }
+                }
+
+                if (node is IDock parent && parent.VisibleDockables is { } children)
+                {
+                    foreach (var child in children)
+                    {
+                        if (!PanesHaveActiveTabs(child))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            static bool Renderable(DockControl control)
+                => control.Layout is IRootDock { DefaultDockable: IDock node }
+                   && control.Layout is IDock root
+                   && root.VisibleDockables?.Contains(node) == true
+                   && PanesHaveActiveTabs(root);
+
+            Check("editor root has something to render", Renderable(editor.DockControl));
+
+            // Both contexts declare a tool with id "Properties" — each must find
+            // its own, which is the whole point of scoping ids to a factory.
+            var mine = mainFactory?.FindDockableById("Properties");
+            var theirs = editorFactory?.FindDockableById("Properties");
+            Check("the same id resolves to a different panel per context",
+                mine is { } && theirs is { } && !ReferenceEquals(mine, theirs));
+
+            // Last, because it swaps the whole tree out.
+            editor.ResetToBuiltIn();
+            Check("editor root still renders after resetting to the built-in layout",
+                Renderable(editor.DockControl));
+
+            // Queued so the assertions above are not running inside the window
+            // that is being destroyed, and the registry check a turn later still,
+            // because unregistration happens on the window's own Closed event.
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                editor.Close();
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    Check("closing the editor unregisters it",
+                        !HostWindow.windowMap.Values.Contains(editor));
+                    var summary = $"editor context check: {pass} PASS / {fail} FAIL";
+                    Log(summary);
+                    App.Log($"EditorContextCheck: {summary}");
+                });
+            });
+        }
+
         private readonly IDockSerializer _serializer;
         private readonly Dictionary<string, IDockable> _declared = new();
         private IDockable? _declaredRoot;
         private string? _defaultLayout;
         private IDockable? _lastClosed;
         private int _documentSeq;
+        private Microsoft.UI.Dispatching.DispatcherQueueTimer? _reproTimer;
     }
 }

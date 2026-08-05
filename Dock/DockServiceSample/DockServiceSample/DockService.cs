@@ -418,7 +418,8 @@ namespace DockServiceSample
         {
             var documentControl = new DocumentSampleControl1
             {
-                DocumentText = "May the force be with you."
+                DocumentText = "Central document area (CenterPermanent group): cannot be closed. "
+                             + "Drag the surrounding tool tabs to rearrange the layout around it."
             };
             var info = new ControlInfo("document1", StandardControlGroup.CenterPermanent)
             {
@@ -429,7 +430,8 @@ namespace DockServiceSample
 
             var leftToolControl = new ToolSampleControl1
             {
-                ToolText = "You must unlearn what you have learned."
+                ToolText = "Left tool (Left group): a scene hierarchy would live here. "
+                         + "Close it from the tab, then bring it back from the View menu."
             };
             info = new ControlInfo("left_tool", StandardControlGroup.Left)
             {
@@ -440,7 +442,8 @@ namespace DockServiceSample
 
             var rightToolControl = new ToolSampleControl1
             {
-                ToolText = "If you will not be turned, you will be destroyed."
+                ToolText = "Right tool (Right group): a properties inspector would live here. "
+                         + "Use the chrome pin button to auto-hide it to the edge."
             };
             info = new ControlInfo("right_tool", StandardControlGroup.Right)
             {
@@ -451,7 +454,8 @@ namespace DockServiceSample
 
             var bottomToolControl = new ToolSampleControl1
             {
-                ToolText = "I am your Father!"
+                ToolText = "Bottom tool (Bottom group): output and logs would live here. "
+                         + "Layout checks report their results to this pane."
             };
             info = new ControlInfo("bottom_tool", StandardControlGroup.Bottom)
             {
@@ -460,13 +464,18 @@ namespace DockServiceSample
             id = GetPersistenceId(info);
             m_controlInfoDict[id] = info;
 
-            var toolWindowControl = new ToolSampleControl1
+            // A FLOAT panel, not a window: it is torn out of the main window's
+            // layout and stays part of that context. The real window is
+            // SampleWindow, opened from the Sample menu.
+            var floatToolControl = new ToolSampleControl1
             {
-                ToolText = "Do or do not. there’s no try."
+                ToolText = "Float tool (Floating group): starts in a float window of its own, "
+                         + "torn out of the main layout but still part of it — drag it onto "
+                         + "the main window's guides to dock it, or toggle it from the View menu."
             };
-            info = new ControlInfo("window_tool", StandardControlGroup.Floating)
+            info = new ControlInfo("float_tool", StandardControlGroup.Floating)
             {
-                Control = toolWindowControl
+                Control = floatToolControl
             };
             id = GetPersistenceId(info);
             m_controlInfoDict[id] = info;
@@ -613,6 +622,195 @@ namespace DockServiceSample
             yield return ProbeLoneToolRootEdge(factory, manager);
             yield return ProbeCrossRootEdgeNodeMove(factory, Orientation.Vertical, "wrap");
             yield return ProbeCrossRootEdgeNodeMove(factory, Orientation.Horizontal, "flat");
+            yield return ProbeRootWithoutDefaultDockable(factory);
+            yield return ProbeToolDockWithoutActiveDockable(factory);
+            yield return ProbeEmptyDocumentDockKeepsAnchor(factory, manager);
+            yield return ProbeFindCoversUnloadedFloatWindow(factory);
+        }
+
+        /// <summary>Stand-in for a dock control whose window has not loaded yet —
+        /// carries a layout, nothing else.</summary>
+        private sealed class ProbeDockControl : IDockControl
+        {
+            public IDockManager DockManager => null;
+            public IDockControlState DockControlState => null;
+            public IDock Layout { get; set; }
+            public object DefaultContext { get; set; }
+            public bool InitializeLayout { get; set; }
+            public bool InitializeFactory { get; set; }
+            public IFactory Factory { get; set; }
+        }
+
+        /// <summary>
+        /// A float window's OWN dock control only registers when it loads, so for a
+        /// beat after SplitToWindow the floated dockable exists in the model but
+        /// under no registered layout — and an id lookup in that window reported it
+        /// missing (the View menu unticked a panel that was visibly on screen).
+        /// Find must reach dockables through IRootDock.Windows for exactly those
+        /// not-yet-registered layouts.
+        /// </summary>
+        private static string ProbeFindCoversUnloadedFloatWindow(IFactory factory)
+        {
+            var tool = WinUIDockManager.CreateDockable(DockableType.Tool, "probe_unloaded_float_tool", "probe", null);
+
+            var floatPane = factory.CreateToolDock();
+            floatPane.Id = "ProbeUnloadedFloatPane";
+            floatPane.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList(tool));
+
+            var floatRoot = factory.CreateRootDock();
+            floatRoot.Id = "ProbeUnloadedFloatRoot";
+            floatRoot.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(floatPane));
+            floatRoot.DefaultDockable = floatPane;
+
+            var window = factory.CreateDockWindow();
+            window.Id = "ProbeUnloadedFloatWindow";
+            window.Layout = floatRoot;
+
+            var mainRoot = factory.CreateRootDock();
+            mainRoot.Id = "ProbeUnloadedMainRoot";
+            mainRoot.VisibleDockables = new ObservableCollection<IDockable>(
+                factory.CreateList<IDockable>(factory.CreateToolDock()));
+            mainRoot.Windows = new ObservableCollection<IDockWindow> { window };
+
+            // The main layout is registered; the float window's control is NOT —
+            // exactly the state right after SplitToWindow returns.
+            var stub = new ProbeDockControl { Layout = mainRoot };
+            factory.DockControls.Add(stub);
+
+            try
+            {
+                var found = factory.Find(d => ReferenceEquals(d, tool)).Any();
+                return found
+                    ? "unloaded float lookup: PASS"
+                    : "unloaded float lookup: FAIL — the floated tool is invisible to Find";
+            }
+            finally
+            {
+                factory.DockControls.Remove(stub);
+            }
+        }
+
+        /// <summary>
+        /// VS document-well semantics (D22): moving the LAST document out of an
+        /// IsCollapsable=False pane must leave the pane in the layout, empty, and
+        /// still able to take the document back by Fill. Exercises the whole chain:
+        /// cross-owner move → RemoveDockable(collapse) → the CollapseDock guard,
+        /// then Fill into a dock with no ActiveDockable and no children.
+        /// </summary>
+        private static string ProbeEmptyDocumentDockKeepsAnchor(IFactory factory, IDockManager manager)
+        {
+            var document = WinUIDockManager.CreateDockable(DockableType.Document, "probe_anchor_doc", "probe", null);
+            var other = WinUIDockManager.CreateDockable(DockableType.Document, "probe_anchor_other", "other", null);
+
+            var home = factory.CreateDocumentDock();
+            home.Id = "ProbeAnchorHome";
+            home.IsCollapsable = false;
+            home.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(document));
+
+            var away = factory.CreateDocumentDock();
+            away.Id = "ProbeAnchorAway";
+            away.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(other));
+
+            var layout = factory.CreateProportionalDock();
+            layout.Id = "ProbeAnchorLayout";
+            layout.Orientation = Orientation.Horizontal;
+            layout.VisibleDockables = new ObservableCollection<IDockable>(
+                factory.CreateList<IDockable>(home, factory.CreateProportionalDockSplitter(), away));
+
+            var root = factory.CreateRootDock();
+            root.Id = "ProbeAnchorRoot";
+            root.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(layout));
+            root.DefaultDockable = layout;
+
+            factory.InitDockable(root, null);
+
+            // The same move a drag onto the other pane makes.
+            if (!manager.ValidateDockable(document, away, DragAction.Move, DockOperation.Fill, true))
+            {
+                return "document anchor: FAIL — moving the last document out was refused";
+            }
+
+            if (!factory.Find(root, d => ReferenceEquals(d, home)).Any())
+            {
+                return "document anchor: FAIL — the emptied pane collapsed away";
+            }
+
+            if (home.VisibleDockables?.Count != 0)
+            {
+                return "document anchor: FAIL — the emptied pane still lists something";
+            }
+
+            // And back into the EMPTY pane.
+            if (!manager.ValidateDockable(document, home, DragAction.Move, DockOperation.Fill, true))
+            {
+                return "document anchor: FAIL — fill into the empty pane was refused";
+            }
+
+            return home.VisibleDockables?.Contains(document) == true
+                ? "document anchor: PASS"
+                : "document anchor: FAIL — the document did not land back home";
+        }
+
+        /// <summary>
+        /// A tabbed dock with tabs but no ActiveDockable draws an empty chrome
+        /// while its tab strip still lists everything — the pane-level sibling of
+        /// the root's missing DefaultDockable. Same source too: a layout file only
+        /// carries the property if it was set when the file was written.
+        /// </summary>
+        private static string ProbeToolDockWithoutActiveDockable(IFactory factory)
+        {
+            var tool = WinUIDockManager.CreateDockable(DockableType.Tool, "probe_no_active_tool", "probe", null);
+
+            var pane = factory.CreateToolDock();
+            pane.Id = "ProbeNoActivePane";
+            pane.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList(tool));
+            pane.ActiveDockable = null;
+
+            var layout = factory.CreateProportionalDock();
+            layout.Id = "ProbeNoActiveLayout";
+            layout.Orientation = Orientation.Vertical;
+            layout.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(pane));
+
+            var root = factory.CreateRootDock();
+            root.Id = "ProbeNoActiveRoot";
+            root.VisibleDockables = new ObservableCollection<IDockable>(factory.CreateList<IDockable>(layout));
+            root.DefaultDockable = layout;
+
+            factory.InitLayout(root);
+
+            return ReferenceEquals(pane.ActiveDockable, tool)
+                ? "edge check no-active: PASS"
+                : "edge check no-active: FAIL — the pane still has no active tab";
+        }
+
+        /// <summary>
+        /// A root whose DefaultDockable is missing must still render. Deserialized
+        /// layouts are the usual source: the property only reaches the file if it
+        /// was set when the file was written, and the symptom — an empty window —
+        /// says nothing about the tree underneath being perfectly intact.
+        /// </summary>
+        private static string ProbeRootWithoutDefaultDockable(IFactory factory)
+        {
+            var layout = factory.CreateProportionalDock();
+            layout.Id = "ProbeNoDefaultLayout";
+            layout.Orientation = Orientation.Vertical;
+            layout.VisibleDockables = new ObservableCollection<IDockable>(
+                factory.CreateList<IDockable>(factory.CreateToolDock()));
+
+            var root = factory.CreateRootDock();
+            root.Id = "ProbeNoDefaultRoot";
+            root.VisibleDockables = new ObservableCollection<IDockable>(
+                factory.CreateList<IDockable>(layout));
+
+            // Deliberately not set — this is the state a layout file without the
+            // property deserializes into.
+            root.DefaultDockable = null;
+
+            factory.InitLayout(root);
+
+            return ReferenceEquals(root.DefaultDockable, layout)
+                ? "edge check no-default: PASS"
+                : "edge check no-default: FAIL — root still has nothing to render";
         }
 
         /// <summary>

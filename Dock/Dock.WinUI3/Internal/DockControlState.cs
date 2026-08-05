@@ -473,7 +473,14 @@ namespace Dock.WinUI3.Internal
                                 {
                                     var fromWindow = HostWindow.GetWindowForElement(inputActiveDockControl);
                                     var toWindow = HostWindow.GetWindowForElement(inputDockControl);
-                                    if (!DockSettings.DockBetweenFloatWindows && toWindow != HostWindow.MainWindow)
+                                    if (fromWindow is null || toWindow is null)
+                                        continue;
+
+                                    // What the setting forbids is dropping INTO a float
+                                    // window, and HostWindow is exactly that type. Asking
+                                    // "is it the main window" instead also rejects every
+                                    // other dock-hosting window an application may open.
+                                    if (!DockSettings.DockBetweenFloatWindows && toWindow is HostWindow)
                                         continue;
 
                                     var toPoint = Extensions.TransformPoint(fromWindow.Content, point, toWindow.Content);

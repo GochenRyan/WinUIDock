@@ -12,7 +12,7 @@
     Title="WinUIDock Sample"
     mc:Ignorable="d">
 
-    <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+    <Grid RowDefinitions="Auto,Auto,*" Background="{ThemeResource DockBackgroundBrush}">
         <MenuBar Grid.Row="0">
             <MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open Layout..." Click="Open_Click"/>
@@ -30,8 +30,6 @@
                 <MenuFlyoutSeparator/>
                 <ToggleMenuFlyoutItem Tag="Output" Text="Output" IsChecked="True" Click="TogglePanel_Click"/>
                 <ToggleMenuFlyoutItem Tag="ErrorList" Text="Error List" IsChecked="True" Click="TogglePanel_Click"/>
-                <MenuFlyoutSeparator/>
-                <ToggleMenuFlyoutItem Tag="Toolbox" Text="Toolbox" IsChecked="True" Click="TogglePanel_Click"/>
             </MenuBarItem>
 
             <!-- Each item exercises a dock feature end to end; results go to Output. -->
@@ -49,6 +47,17 @@
                 <MenuFlyoutItem Text="Reset to default layout" Click="ResetLayout_Click"/>
             </MenuBarItem>
 
+            <!-- Each editor opens as a context of its own: separate window,
+                 separate DockControl, separate Factory. Panels cannot be dragged
+                 between a context and the main window. -->
+            <MenuBarItem Title="Editors">
+                <MenuFlyoutItem Text="Open Animation Editor" Click="OpenAnimationEditor_Click"/>
+                <MenuFlyoutItem Text="Open Shader Graph" Click="OpenShaderGraph_Click"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Reset editor layout templates" Click="ResetEditorTemplates_Click"/>
+                <MenuFlyoutItem Text="Check editor contexts" Click="CheckEditorContexts_Click"/>
+            </MenuBarItem>
+
             <MenuBarItem Title="Theme">
                 <RadioMenuFlyoutItem x:Name="ThemeDarkItem" Text="Dark" GroupName="ThemeGroup" IsChecked="True" Click="ThemeDark_Click"/>
                 <RadioMenuFlyoutItem x:Name="ThemeLightItem" Text="Light" GroupName="ThemeGroup" Click="ThemeLight_Click"/>
@@ -63,32 +72,33 @@
             </MenuBarItem>
         </MenuBar>
 
-        <controls:DockControl x:Name="Dock" Grid.Row="1" InitializeLayout="True" InitializeFactory="True">
+        <!-- The Maya-Shelf role: a real toolbar, not a dock panel. A Toolbox that
+             lives in a ToolDock inherits tabs, close and drag-away — none of which
+             a shelf wants. Buttons reuse the Sample menu's handlers. -->
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsOpen="False"
+                    HorizontalAlignment="Left" Background="Transparent">
+            <AppBarButton Icon="Add" Label="New document" Click="NewDocument_Click"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="NewWindow" Label="Float Outliner" Click="FloatPanel_Click"/>
+            <AppBarButton Icon="Pin" Label="Auto-hide Outliner" Click="PinPanel_Click"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="Refresh" Label="Reset layout" Click="ResetLayout_Click"/>
+        </CommandBar>
+
+        <controls:DockControl x:Name="Dock" Grid.Row="2" InitializeLayout="True" InitializeFactory="True">
             <controls:DockControl.Factory>
                 <modewinui3:Factory/>
             </controls:DockControl.Factory>
             <winui3controls:RootDock x:Name="Root"
                                      Id="Root"
                                      IsCollapsable="False"
-                                     DefaultDockable="{x:Bind MainLayout, Mode=OneWay}">
+                                     DefaultDockable="{x:Bind Body, Mode=OneWay}">
                 <winui3controls:RootDock.Windows>
 
                 </winui3controls:RootDock.Windows>
 
-                <!-- Game-editor shape. Outer level is VERTICAL: a toolbar strip across
-                     the top, everything else underneath. -->
-                <winui3controls:ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Vertical">
-
-                    <winui3controls:ToolDock x:Name="TopPane" Id="TopPane" Proportion="0" Alignment="Top"
-                                             ActiveDockable="{x:Bind Toolbox, Mode=OneWay}">
-                        <winui3controls:Tool x:Name="Toolbox" Id="Toolbox" Title="Toolbox">
-                            <TextBlock Margin="8" Text="Toolbox — a full-width strip above the working area."/>
-                        </winui3controls:Tool>
-                    </winui3controls:ToolDock>
-
-                    <winui3controls:ProportionalDockSplitter x:Name="TopSplitter" Id="TopSplitter" />
-
-                    <!-- Inner level is HORIZONTAL and holds THREE columns. The right
+                    <!-- Game-editor shape: HORIZONTAL with THREE columns (the toolbar
+                         is the CommandBar above, outside the dock tree). The right
                          column is a direct child here, which is what lets it run the
                          full height: the bottom pane sits inside the centre column, so
                          it can no longer cut across the right one. -->
@@ -170,8 +180,6 @@
                         </winui3controls:ToolDock>
 
                     </winui3controls:ProportionalDock>
-
-                </winui3controls:ProportionalDock>
             </winui3controls:RootDock>
         </controls:DockControl>
     </Grid>

@@ -62,6 +62,19 @@ namespace Dock.WinUI3.Controls
             var active = toolDock.ActiveDockable;
             if (active is null)
             {
+                // The null transition IS the release order: merely returning here
+                // keeps the stale DataContext, and this host then fights the
+                // tool's new host for the shared element, one steal per frame.
+                if (_toolContentControl.Content is not null || _toolContentControl.DataContext is not null)
+                {
+                    Internal.DockDiag.Log(
+                        $"ToolControl releasing content host on {Internal.DockDiag.Describe(this)} (ActiveDockable is null)");
+                    _toolContentControl.Content = null;
+                    _toolContentControl.DataContext = null;
+                    _innerContent = null;
+                    _hostAttempts = 0;
+                }
+
                 return;
             }
 

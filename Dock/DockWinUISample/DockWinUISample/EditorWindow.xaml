@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<winuiex:WindowEx
+    xmlns:winuiex="using:WinUIEx"
+    x:Class="DockWinUISample.EditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Dock.WinUI3.Controls"
+    xmlns:modewinui3="using:Dock.Model.WinUI3"
+    xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    Title="Editor"
+    mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+        <MenuBar Grid.Row="0">
+            <MenuBarItem Title="Layout">
+                <MenuFlyoutItem Text="Save as this editor's template" Click="SaveTemplate_Click"/>
+                <MenuFlyoutItem Text="Reset to the built-in layout" Click="ResetTemplate_Click"/>
+            </MenuBarItem>
+        </MenuBar>
+
+        <!-- Its own DockControl AND its own Factory instance. The factory is the
+             boundary of a docking universe: hit testing walks Factory.DockControls,
+             so a separate instance is all it takes to keep this window's panels
+             from docking into the main window's, and vice versa. -->
+        <controls:DockControl x:Name="Dock" Grid.Row="1" InitializeLayout="True" InitializeFactory="True">
+            <controls:DockControl.Factory>
+                <modewinui3:Factory/>
+            </controls:DockControl.Factory>
+            <winui3controls:RootDock x:Name="Root"
+                                     Id="Root"
+                                     IsCollapsable="False"
+                                     CanClose="False"
+                                     DefaultDockable="{x:Bind Body, Mode=OneWay}">
+                <winui3controls:RootDock.Windows>
+
+                </winui3controls:RootDock.Windows>
+
+                <!-- Ids repeat what the main window already uses ("Properties",
+                     "Root", …) on purpose: each context resolves ids against its
+                     own factory, so the collision is not one. -->
+                <winui3controls:ProportionalDock x:Name="Body" Id="Body" Orientation="Horizontal">
+
+                    <winui3controls:ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.22" Alignment="Left"
+                                             ActiveDockable="{x:Bind Assets, Mode=OneWay}">
+                        <winui3controls:Tool x:Name="Assets" Id="Assets" Title="Assets">
+                            <TextBlock x:Name="AssetsText" Margin="8" TextWrapping="Wrap"/>
+                        </winui3controls:Tool>
+                    </winui3controls:ToolDock>
+
+                    <winui3controls:ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter"/>
+
+                    <winui3controls:ProportionalDock x:Name="Center" Id="Center" Orientation="Vertical">
+
+                        <!-- The document well never collapses (VS semantics): with
+                             IsCollapsable off, floating the last document leaves an
+                             empty pane behind that stays a drop target — so the trip
+                             out is no longer one-way and the float ban 063 added is
+                             gone again. Closing the well itself stays forbidden. -->
+                        <winui3controls:DocumentDock x:Name="EditorPane" Id="EditorPane"
+                                                     CanClose="False" IsCollapsable="False"
+                                                     ActiveDockable="{x:Bind Stage, Mode=OneWay}">
+                            <winui3controls:Document x:Name="Stage" Id="Stage" Title="Stage"
+                                                     CanClose="False">
+                                <ContentPresenter x:Name="StageHost"/>
+                            </winui3controls:Document>
+                        </winui3controls:DocumentDock>
+
+                        <winui3controls:ProportionalDockSplitter x:Name="BottomSplitter" Id="BottomSplitter"/>
+
+                        <winui3controls:ToolDock x:Name="BottomPane" Id="BottomPane" Proportion="0.28" Alignment="Bottom"
+                                                 ActiveDockable="{x:Bind LogTool, Mode=OneWay}">
+                            <winui3controls:Tool x:Name="LogTool" Id="Log" Title="Log">
+                                <ScrollViewer>
+                                    <TextBlock x:Name="LogText" Margin="8" FontFamily="Consolas" FontSize="12"
+                                               TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </winui3controls:Tool>
+                        </winui3controls:ToolDock>
+
+                    </winui3controls:ProportionalDock>
+
+                    <winui3controls:ProportionalDockSplitter x:Name="RightSplitter" Id="RightSplitter"/>
+
+                    <winui3controls:ToolDock x:Name="RightPane" Id="RightPane" Proportion="0.24" Alignment="Right"
+                                             ActiveDockable="{x:Bind Properties, Mode=OneWay}">
+                        <winui3controls:Tool x:Name="Properties" Id="Properties" Title="Properties">
+                            <TextBlock x:Name="PropertiesText" Margin="8" TextWrapping="Wrap"/>
+                        </winui3controls:Tool>
+                    </winui3controls:ToolDock>
+
+                </winui3controls:ProportionalDock>
+            </winui3controls:RootDock>
+        </controls:DockControl>
+    </Grid>
+</winuiex:WindowEx>

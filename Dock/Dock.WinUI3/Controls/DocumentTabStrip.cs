@@ -1,4 +1,5 @@
 using Dock.Model.Core;
+using System;
 using Dock.Model.WinUI3.Controls;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
@@ -20,26 +21,104 @@ namespace Dock.WinUI3.Controls
         {
             this.DefaultStyleKey = typeof(DocumentTabStrip);
             Loaded += DocumentTabStrip_Loaded;
+            Unloaded += DocumentTabStrip_Unloaded;
+            PointerWheelChanged += DocumentTabStrip_PointerWheelChanged;
         }
 
 
         private void DocumentTabStrip_Loaded(object sender, RoutedEventArgs e)
         {
-            if (DataContext is DocumentDock dock)
-            {
-                ItemsSource = dock.VisibleDockables;
-            }
+            BindDock();
             BindCreateButton();
             DataContextChanged += DocumentTabStrip_DataContextChanged;
         }
 
+        // Why a custom panel and not a ScrollViewer: see TabOverflowPanel.
+        private TabOverflowPanel TabPanel => ItemsPanelRoot as TabOverflowPanel;
+
+        private void DocumentTabStrip_Unloaded(object sender, RoutedEventArgs e)
+        {
+            DataContextChanged -= DocumentTabStrip_DataContextChanged;
+            UnhookActiveDockable();
+        }
+
         private void DocumentTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
+            BindDock();
+            BindCreateButton();
+        }
+
+        private void BindDock()
+        {
+            UnhookActiveDockable();
+
             if (DataContext is DocumentDock dock)
             {
                 ItemsSource = dock.VisibleDockables;
+
+                // A tab activated from code (new document, restore) can sit
+                // outside the viewport — scroll it in.
+                _boundDock = dock;
+                _activeDockableToken = dock.RegisterPropertyChangedCallback(
+                    DocumentDock.ActiveDockableProperty, (_, _) => BringActiveTabIntoView());
+                BringActiveTabIntoView();
             }
-            BindCreateButton();
+        }
+
+        private void UnhookActiveDockable()
+        {
+            try
+            {
+                if (_boundDock is not null && _activeDockableToken != 0)
+                {
+                    _boundDock.UnregisterPropertyChangedCallback(DocumentDock.ActiveDockableProperty, _activeDockableToken);
+                }
+            }
+            catch
+            {
+                // Dock already torn down.
+            }
+
+            _boundDock = null;
+            _activeDockableToken = 0;
+        }
+
+        private void DocumentTabStrip_PointerWheelChanged(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (TabPanel is not { } panel || panel.ExtentWidth <= panel.ViewportWidth)
+            {
+                return;
+            }
+
+            var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
+            panel.Offset -= delta;
+            e.Handled = true;
+        }
+
+        private void BringActiveTabIntoView()
+        {
+            // Deferred: right after activation the container may not exist yet.
+            // Everything inside the guard: when this runs the window may be
+            // mid-teardown, where even reading a DP throws.
+            DispatcherQueue?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                try
+                {
+                    if (TabPanel is not { } panel
+                        || !IsLoaded
+                        || XamlRoot is null
+                        || _boundDock?.ActiveDockable is not { } active
+                        || ContainerFromItem(active) is not UIElement container)
+                    {
+                        return;
+                    }
+
+                    panel.EnsureVisible(container);
+                }
+                catch
+                {
+                }
+            });
         }
 
         protected override void OnApplyTemplate()
@@ -80,6 +159,8 @@ namespace Dock.WinUI3.Controls
         }
 
         private Button _createButton;
+        private DocumentDock _boundDock;
+        private long _activeDockableToken;
 
         protected override void OnItemsChanged(object e)
         {
@@ -131,7 +212,18 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            return base.MeasureOverride(availableSize);
+            try
+            {
+                return base.MeasureOverride(availableSize);
+            }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException
+                                           or ArgumentException
+                                           or UnauthorizedAccessException)
+            {
+                // Teardown-time measure of a half-dead template.
+                Internal.DockDiag.Log($"DocumentTabStrip.MeasureOverride teardown-time failure: {ex.Message}");
+                return DesiredSize;
+            }
         }
     }
 }

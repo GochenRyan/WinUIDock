@@ -1,4 +1,5 @@
 using Dock.Model.Controls;
+using System;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
 using Dock.Model.WinUI3.Core;
@@ -255,7 +256,25 @@ namespace Dock.WinUI3.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            Size finalSize = base.MeasureOverride(availableSize);
+            Size finalSize;
+
+            try
+            {
+                finalSize = base.MeasureOverride(availableSize);
+            }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException
+                                           or ArgumentException
+                                           or UnauthorizedAccessException)
+            {
+                // Teardown-time measure of a half-dead template.
+                Internal.DockDiag.Log($"DocumentTabStripItem.MeasureOverride teardown-time failure: {ex.Message}");
+                return DesiredSize;
+            }
+
+            if (_dragTool is null || _titleItem is null || _closeButton is null || _border is null)
+            {
+                return finalSize;
+            }
 
             _dragTool.Width = _titleItem.DesiredSize.Width + _closeButton.DesiredSize.Width + _dragTool.Spacing * 2;
             _border.Width = _dragTool.Width + _border.Padding.Left + _border.Padding.Right;

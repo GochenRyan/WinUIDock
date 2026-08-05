@@ -15,6 +15,14 @@ public abstract partial class FactoryBase
 
         if (layout is IDock dock)
         {
+            // RootDockControl renders DefaultDockable: a root arriving without
+            // one (deserialized layouts, typically) shows an EMPTY window however
+            // complete its tree is.
+            if (dock is IRootDock rootLayout && rootLayout.DefaultDockable is null)
+            {
+                rootLayout.DefaultDockable = FindRenderableChild(rootLayout);
+            }
+
             if (dock.DefaultDockable is not null)
             {
                 dock.ActiveDockable = dock.DefaultDockable;
@@ -28,6 +36,26 @@ public abstract partial class FactoryBase
                 rootDock.ShowWindows.Execute(null);
             }
         }
+    }
+
+    /// <summary>The first child a root dock could sensibly render: splitters and
+    /// leaf dockables are skipped, so an empty root still yields null.</summary>
+    private static IDockable? FindRenderableChild(IRootDock rootDock)
+    {
+        if (rootDock.VisibleDockables is not { } dockables)
+        {
+            return null;
+        }
+
+        foreach (var dockable in dockables)
+        {
+            if (dockable is IDock and not IProportionalDockSplitter)
+            {
+                return dockable;
+            }
+        }
+
+        return null;
     }
 
     /// <inheritdoc/>
@@ -55,6 +83,16 @@ public abstract partial class FactoryBase
                 }
 
                 UpdateIsEmpty(dock);
+            }
+
+            // Tabbed docks render their ActiveDockable: tabs present but none
+            // active draws an empty chrome. Pane-level sibling of the root's
+            // DefaultDockable heal above.
+            if (dock is IToolDock or IDocumentDock
+                && dock.ActiveDockable is null
+                && dock.VisibleDockables?.Count > 0)
+            {
+                dock.ActiveDockable = dock.VisibleDockables[0];
             }
         }
 

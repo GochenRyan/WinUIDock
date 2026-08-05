@@ -216,6 +216,12 @@ namespace Dock.WinUI3.Controls
             typeof(DockControl),
             new PropertyMetadata(false));
 
+        public static readonly DependencyProperty RegisterFactoryProperty = DependencyProperty.Register(
+            nameof(RegisterFactory),
+            typeof(bool),
+            typeof(DockControl),
+            new PropertyMetadata(true));
+
         public IDock Layout
         {
             get { return (IDock)GetValue(ContentProperty); }
@@ -255,12 +261,30 @@ namespace Dock.WinUI3.Controls
             set { SetValue(IsDraggingDockProperty, value); }
         }
 
+        /// <summary>
+        /// Whether this control's factory backs the single-factory
+        /// WinUIDockManager facade. Secondary dock windows must set this False,
+        /// or the last one to load silently repoints the service API at itself.
+        /// In XAML set it as an ATTRIBUTE — attributes apply before the nested
+        /// Factory property element.
+        /// </summary>
+        public bool RegisterFactory
+        {
+            get { return (bool)GetValue(RegisterFactoryProperty); }
+            set { SetValue(RegisterFactoryProperty, value); }
+        }
+
         public IDockManager DockManager => _dockManager;
 
         public IDockControlState DockControlState => _dockControlState;
 
         private static void OnFactoryChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
         {
+            if (ob is DockControl { RegisterFactory: false })
+            {
+                return;
+            }
+
             var factory = args.NewValue as IFactory;
             WinUIDockManager.SetFactory(factory);
         }
@@ -292,6 +316,32 @@ namespace Dock.WinUI3.Controls
             if (layout?.Factory is null)
             {
                 return;
+            }
+
+            // Close the outgoing layout's float windows here, at the one choke
+            // point every layout swap passes through — left open, they still show
+            // panels the incoming layout is about to adopt, and one UIElement in
+            // two windows' trees dies in native code a tick later.
+            if (layout is global::Dock.Model.Controls.IRootDock { Windows: { } windows })
+            {
+                foreach (var window in new List<IDockWindow>(windows))
+                {
+                    try
+                    {
+                        // Sever first, synchronously: Exit's close is deferred a
+                        // tick, the adoption happens in THIS tick.
+                        if (window.Host is HostWindowControl hostControl)
+                        {
+                            hostControl.SeverContentForTeardown();
+                        }
+
+                        window.Exit();
+                    }
+                    catch
+                    {
+                        // Already torn down — nothing left to close.
+                    }
+                }
             }
 
             layout.Factory.DockControls.Remove(this);
@@ -333,13 +383,18 @@ namespace Dock.WinUI3.Controls
                 layout.Factory.ContextLocator = new Dictionary<string, Func<object>>();
                 layout.Factory.HostWindowLocator = new Dictionary<string, Func<IHostWindow>>
                 {
-                    [nameof(IDockWindow)] = () => new HostWindowControl(new HostWindow())
+                    [nameof(IDockWindow)] = GetHostWindow
                 };
                 layout.Factory.DockableLocator = new Dictionary<string, Func<IDockable>>();
                 layout.Factory.DefaultContextLocator = GetContext;
                 layout.Factory.DefaultHostWindowLocator = GetHostWindow;
 
-                IHostWindow GetHostWindow() => new HostWindowControl(new HostWindow());
+                // Float windows are owned by the window THIS control lives in
+                // (a panel torn off an editor dies with that editor). The owner
+                // must resolve LATE — at Initialize time this control may not be
+                // in a XamlRoot yet.
+                IHostWindow GetHostWindow()
+                    => new HostWindowControl(new HostWindow(HostWindow.GetWindowForElement(this)));
 
                 object GetContext() => DefaultContext;
             }

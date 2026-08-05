@@ -49,8 +49,6 @@ namespace Dock.WinUI3
         private static readonly string[] _acrylicBrushKeys =
         {
             "DockAcrylicFlyoutBrush",
-            "DockAcrylicGuidePlateBrush",
-            "DockAcrylicChromeBrush",
         };
 
         /// <summary>The theme last applied through <see cref="SetTheme"/>.</summary>

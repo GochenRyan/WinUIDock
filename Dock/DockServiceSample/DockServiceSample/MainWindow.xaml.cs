@@ -50,6 +50,39 @@ namespace DockServiceSample
             // leaves a verdict in crash.log. The opt-in DOCKSAMPLE_REPRO branch is
             // the exception — that one rearranges the live layout on purpose.
             m_dockService.CheckRootEdgeQuietly();
+
+            // Opt-in: opens and closes a real window, which is not something
+            // every launch should do.
+            if (Environment.GetEnvironmentVariable("DOCKSAMPLE_WINDOWCHECK") == "1")
+            {
+                var window = OpenSampleWindow();
+                DispatcherQueue.TryEnqueue(() => window.Close());
+            }
+        }
+
+        private void OpenSampleWindow_Click(object sender, RoutedEventArgs e) => OpenSampleWindow();
+
+        /// <summary>
+        /// Opens the extra window and asserts the one thing that can silently rot:
+        /// the WinUIDockManager facade must still point at the MAIN dock, because
+        /// every service call in this sample goes through it.
+        /// </summary>
+        private SampleWindow OpenSampleWindow()
+        {
+            var before = WinUIDockManager.GetFactory();
+
+            var window = new SampleWindow(this);
+            window.Activate();
+
+            var facadeIntact = ReferenceEquals(before, WinUIDockManager.GetFactory());
+            var isolated = window.DockControl.Factory is { } extra && !ReferenceEquals(extra, before);
+
+            App.Log("SampleWindow", null,
+                $"facade check: {(facadeIntact ? "PASS" : "FAIL — the sample window clobbered the facade")}");
+            App.Log("SampleWindow", null,
+                $"isolation check: {(isolated ? "PASS" : "FAIL — the sample window shares the main factory")}");
+
+            return window;
         }
 
         private async void Save_Click(object sender, RoutedEventArgs e)
@@ -188,6 +221,11 @@ namespace DockServiceSample
             factory.DockableClosed += Refresh;
             factory.DockablePinned += Refresh;
             factory.DockableUnpinned += Refresh;
+            // Float windows change what "is open" without touching any dockable
+            // event this menu listens to — closing one via its caption X, most
+            // visibly. Window events keep the ticks honest.
+            factory.WindowOpened += Refresh;
+            factory.WindowClosed += Refresh;
 
             SyncViewMenu();
         }

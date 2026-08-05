@@ -274,11 +274,11 @@ public abstract partial class FactoryBase : IFactory
     }
 
     /// <summary>
-    /// Share of the window handed to a freshly created edge region. Kept in sync
-    /// with <c>DockRootEdgeProportion</c> on the WinUI3 side so the drop preview
-    /// and the resulting layout agree.
+    /// Share of the window handed to a freshly created edge region. Public because
+    /// the WinUI3 drop preview draws its edge band from the same number — a second
+    /// copy there is how the preview starts lying about where the drop will land.
     /// </summary>
-    private const double RootEdgeProportion = 0.2;
+    public const double RootEdgeProportion = 0.2;
 
     /// <inheritdoc/>
     public virtual bool SplitToRootEdge(IRootDock rootDock, IDock dock, DockOperation operation)
@@ -386,7 +386,7 @@ public abstract partial class FactoryBase : IFactory
     /// binds its content to — anchoring anywhere else would build a correct tree
     /// that never reaches the screen.
     /// </summary>
-    private static IDock? GetRootLayout(IRootDock rootDock)
+    public static IDock? GetRootLayout(IRootDock rootDock)
     {
         if (rootDock.VisibleDockables is not { } dockables)
         {
@@ -541,6 +541,14 @@ public abstract partial class FactoryBase : IFactory
         {
             return;
         }
+
+        // A dockable leaving for its own window must not stay pinned — the pin
+        // flyout would keep a live host that fights the float window's one for
+        // the shared content. Here at the choke point, not in each caller.
+        DockDiagnostics.Log(() =>
+            $"SplitToWindow: {DockDiagnostics.Describe(dockable)} owner={DockDiagnostics.Describe(dockable.Owner)} "
+            + $"pinned={IsDockablePinned(dockable)}");
+        UnpinDockable(dockable);
 
         RemoveDockable(dockable, true);
 

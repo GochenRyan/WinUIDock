@@ -472,20 +472,6 @@ public class DockManager : IDockManager
         return true;
     }
 
-    /// <summary>True when <paramref name="dockable"/> is, or lives under, <paramref name="branch"/>.</summary>
-    private static bool IsInside(IDockable dockable, IDockable branch)
-    {
-        for (IDockable? node = dockable; node is not null; node = node.Owner)
-        {
-            if (ReferenceEquals(node, branch))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private bool DockToRootEdge(IDockable sourceDockable, IRootDock rootDock, DockOperation operation, bool bExecute)
     {
         var factory = rootDock.Factory ?? sourceDockable.Factory ?? sourceDockable.Owner?.Factory;
@@ -681,42 +667,6 @@ public class DockManager : IDockManager
         return true;
     }
 
-    private bool DockDockIntoDock(IDock sourceDock, IDock targetDock, DragAction action, DockOperation operation, bool bExecute)
-    {
-        var visible = sourceDock.VisibleDockables?.ToList();
-        if (visible is null)
-        {
-            return true;
-        }
-
-        if (visible.Count == 1)
-        {
-            var sourceDockable = visible.FirstOrDefault();
-            if (sourceDockable is null || DockDockableIntoDock(sourceDockable, targetDock, action, operation, bExecute) == false)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            var sourceDockable = visible.FirstOrDefault();
-            if (sourceDockable is null || DockDockableIntoDock(sourceDockable, targetDock, action, operation, bExecute) == false)
-            {
-                return false;
-            }
-
-            foreach (var dockable in visible.Skip(1))
-            {
-                var targetDockable = visible.FirstOrDefault();
-                if (targetDockable is null || DockDockableIntoDockable(dockable, targetDockable, action, bExecute) == false)
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     private bool DockDockable(IDock sourceDock, IDockable targetDockable, IDock targetDock, DragAction action, DockOperation operation, bool bExecute)
     {
         return operation switch
@@ -889,6 +839,27 @@ public class DockManager : IDockManager
     /// <inheritdoc/>
     public bool ValidateDockable(IDockable sourceDockable, IDockable targetDockable, DragAction action, DockOperation operation, bool bExecute)
     {
+        // Dragging the pin flyout by its chrome resolves the source to
+        // rootDock.PinnedDock — a transient preview structure the root keeps
+        // forever. Moving that dock hijacks it (flyout and drop target end up
+        // sharing one instance); the gesture means "move the previewed TOOL".
+        if (sourceDockable is IToolDock { Owner: IRootDock previewRoot } previewDock
+            && ReferenceEquals(previewRoot.PinnedDock, previewDock))
+        {
+            DockDiagnostics.Log(() =>
+                $"ValidateDockable: redirecting pin-preview dock {DockDiagnostics.Describe(previewDock)} "
+                + $"to its previewed tool");
+
+            if (previewDock.VisibleDockables?.Count > 0 && previewDock.VisibleDockables[0] is { } previewed)
+            {
+                sourceDockable = previewed;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         if (TryDockToRoot(sourceDockable, targetDockable, action, operation, bExecute, out var rootResult))
         {
             return rootResult;

@@ -72,7 +72,32 @@ namespace Dock.WinUI3.Controls
             // New content assignment: give the guard a fresh budget.
             _repairAttempts = 0;
             _repairSuspended = false;
+            _healthyStreak = 0;
+
+            // A departing DataContext must release the shared element too — a
+            // presenter still holding it blocks the tool's next host.
+            if (args.NewValue is not Tool && _contentPresenter is not null)
+            {
+                _contentPresenter.Content = null;
+            }
+
             BindData();
+        }
+
+        /// <summary>
+        /// Permanently stands this host down for window teardown. The dying
+        /// window still counts as visible until its deferred close is pumped, so
+        /// without this the watchdog steals the element back from its new host.
+        /// </summary>
+        internal void StandDownForTeardown()
+        {
+            _repairSuspended = true;
+            LayoutUpdated -= ToolContentControl_LayoutUpdated;
+
+            if (_contentPresenter is not null)
+            {
+                _contentPresenter.Content = null;
+            }
         }
 
         /// <summary>
@@ -95,9 +120,18 @@ namespace Dock.WinUI3.Controls
             if (ReferenceEquals(_contentPresenter.Content, expected)
                 && ReferenceEquals(VisualTreeHelper.GetParent(expected), _contentPresenter))
             {
-                _repairAttempts = 0;
+                // Forgive the repair budget only after a SUSTAINED healthy run:
+                // in a two-host fight each host wins every other frame, so a
+                // reset-on-every-healthy-frame counter never trips the limit.
+                if (++_healthyStreak >= HealthyStreakToForgive)
+                {
+                    _repairAttempts = 0;
+                }
+
                 return;
             }
+
+            _healthyStreak = 0;
 
             // Only a host that is actually on screen may claim the shared
             // element — otherwise a collapsed flyout and the docked pane would
@@ -173,7 +207,7 @@ namespace Dock.WinUI3.Controls
 
         private void UpdateContent()
         {
-            if (_contentPresenter is null || DataContext is not Tool tool)
+            if (_repairSuspended || _contentPresenter is null || DataContext is not Tool tool)
             {
                 return;
             }
@@ -259,9 +293,11 @@ namespace Dock.WinUI3.Controls
         }
 
         private const int RepairAttemptLimit = 10;
+        private const int HealthyStreakToForgive = 10;
 
         private long _toolContentToken = 0;
         private int _repairAttempts;
+        private int _healthyStreak;
         private bool _repairSuspended;
         ContentPresenter _contentPresenter;
         private DockableControl _dockableControl;

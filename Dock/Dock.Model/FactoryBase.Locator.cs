@@ -141,17 +141,42 @@ public abstract partial class FactoryBase
     /// <inheritdoc/>
     public IEnumerable<IDockable> Find(Func<IDockable, bool> predicate)
     {
+        var layouts = new List<IDock>();
         foreach (var dockControl in DockControls)
         {
-            var dock = dockControl.Layout;
-            if (dock is null)
+            if (dockControl.Layout is { } dock)
+            {
+                layouts.Add(dock);
+            }
+        }
+
+        // A float window's DockControl only registers when it LOADS — until then
+        // its dockables exist in the model but under no registered layout. Walk
+        // Windows for exactly those; the reference set keeps loaded ones from
+        // being enumerated twice.
+        var registered = new HashSet<IDockable>(layouts);
+
+        foreach (var dock in layouts)
+        {
+            foreach (var result in Find(dock, predicate))
+            {
+                yield return result;
+            }
+
+            if (dock is not IRootDock { Windows: { } windows })
             {
                 continue;
             }
 
-            foreach (var result in Find(dock, predicate))
+            foreach (var window in windows)
             {
-                yield return result;
+                if (window.Layout is { } layout && !registered.Contains(layout))
+                {
+                    foreach (var result in Find(layout, predicate))
+                    {
+                        yield return result;
+                    }
+                }
             }
         }
     }
@@ -164,11 +189,12 @@ public abstract partial class FactoryBase
     /// leaving it out made callers believe it was gone (and re-create it under the
     /// same Id).
     ///
-    /// Deliberately does NOT descend into <see cref="IRootDock.Windows"/>: every
-    /// floating window registers its own DockControl, so <see cref="Find(Func{IDockable, bool})"/>
-    /// already reaches those dockables through <see cref="IFactory.DockControls"/>.
-    /// Walking Windows here as well would yield the same instance twice and make
-    /// uniqueness checks report phantom duplicates.
+    /// Deliberately does NOT descend into <see cref="IRootDock.Windows"/>: a
+    /// LOADED floating window registers its own DockControl and is reached that
+    /// way; walking Windows here as well would yield the same instance twice and
+    /// make uniqueness checks report phantom duplicates. The not-yet-loaded gap
+    /// is closed by <see cref="Find(Func{IDockable, bool})"/>, which walks
+    /// Windows for exactly the layouts no registered control covers.
     /// </summary>
     public IEnumerable<IDockable> Find(IDock dock, Func<IDockable, bool> predicate)
     {

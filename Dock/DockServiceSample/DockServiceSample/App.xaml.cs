@@ -28,7 +28,7 @@ namespace DockServiceSample
             Log("BOOT", null,
                 $"DockServiceSample build {typeof(App).Assembly.GetName().Version} " +
                 $"| Dock.WinUI3 {typeof(Dock.WinUI3.Controls.HostWindowControl).Assembly.GetName().Version} " +
-                $"| marker=061-comment-cleanup");
+                $"| marker=076-doc-tab-overflow-scroll");
 
             // Crash forensics: dump to a file next to the exe so field repros keep
             // their evidence even without a debugger.

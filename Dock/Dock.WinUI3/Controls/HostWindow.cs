@@ -1,6 +1,5 @@
-﻿using Microsoft.UI.Windowing;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Windows.Foundation;
 using System.Collections.Generic;
 using WinUIEx;
 
@@ -9,46 +8,58 @@ using WinUIEx;
 
 namespace Dock.WinUI3.Controls
 {
+    /// <summary>
+    /// The window a torn-off dockable floats in, and — through its statics — the
+    /// registry of every top-level window that hosts a dock control.
+    ///
+    /// Being in the registry is what lets coordinate transforms resolve which
+    /// window an element lives in, so a window that carries its own DockControl
+    /// (an asset-editor window, say) must register itself through
+    /// <see cref="Register"/>. Float windows do it from their constructor.
+    /// </summary>
     public class HostWindow : WindowEx
     {
-        public HostWindow() : base()
+        public HostWindow() : this(null)
         {
-            RegisterWindow(AppWindow, this);
+        }
+
+        /// <param name="owner">
+        /// The window this one belongs to: it closes when the owner closes. Null
+        /// falls back to <see cref="MainWindow"/>, which is right for a panel torn
+        /// off the main window and wrong for one torn off anything else.
+        /// </param>
+        public HostWindow(Window owner) : base()
+        {
+            Register(this, owner ?? MainWindow);
         }
 
         public static Dictionary<AppWindow, Window> windowMap = new Dictionary<AppWindow, Window>();
 
-        private static void RegisterWindow(AppWindow appWindow, Window window)
+        private static readonly Dictionary<AppWindow, Window> _owners = new Dictionary<AppWindow, Window>();
+        private static readonly List<Window> _empty = new List<Window>();
+
+        /// <summary>
+        /// Adds a dock-hosting window to the registry and ties its lifetime to
+        /// <paramref name="owner"/>. Registering twice is a no-op.
+        /// </summary>
+        public static void Register(Window window, Window owner)
         {
-            if (appWindow is null)
+            if (window is null)
+            {
+                return;
+            }
+
+            var appWindow = window.AppWindow;
+            if (appWindow is null || windowMap.ContainsKey(appWindow))
             {
                 return;
             }
 
             windowMap[appWindow] = window;
 
-            // Float windows do not outlive the main window. The subscription must be
-            // removed again when this window closes on its own — otherwise every
-            // float window ever created leaves a handler behind that still captures
-            // it, and closing the main window then calls Close() on a long-dead
-            // window: "The WinUI Desktop Window object has already been closed."
-            TypedEventHandler<object, WindowEventArgs> closeWithMain = null;
-
-            if (_mainWindow != null)
+            if (owner is { } && !ReferenceEquals(owner, window))
             {
-                closeWithMain = (_, _) =>
-                {
-                    try
-                    {
-                        window.Close();
-                    }
-                    catch
-                    {
-                        // Already gone — nothing to do.
-                    }
-                };
-
-                _mainWindow.Closed += closeWithMain;
+                _owners[appWindow] = owner;
             }
 
             // Remove by the CAPTURED key: Window.AppWindow is not reliably
@@ -60,12 +71,53 @@ namespace Dock.WinUI3.Controls
             window.Closed += (_, _) =>
             {
                 windowMap.Remove(appWindow);
-
-                if (closeWithMain is not null && _mainWindow is not null)
-                {
-                    _mainWindow.Closed -= closeWithMain;
-                }
+                _owners.Remove(appWindow);
+                CloseOwned(window);
             };
+        }
+
+        /// <summary>
+        /// Closes everything registered under <paramref name="owner"/>, deepest
+        /// first.
+        ///
+        /// Walking the chain here rather than subscribing each window to its
+        /// owner's Closed is what makes the cascade reach grandchildren: during
+        /// shutdown the queued close of an intermediate window may never be
+        /// pumped, so its own Closed handler would never run to pass the message
+        /// along.
+        /// </summary>
+        private static void CloseOwned(Window owner)
+        {
+            foreach (var owned in OwnedBy(owner))
+            {
+                CloseOwned(owned);
+
+                try
+                {
+                    owned.Close();
+                }
+                catch
+                {
+                    // Already gone — nothing to do.
+                }
+            }
+        }
+
+        private static List<Window> OwnedBy(Window owner)
+        {
+            List<Window> owned = null;
+
+            // Materialized before anything closes: Close() can raise Closed
+            // synchronously, and that mutates both dictionaries.
+            foreach (var entry in _owners)
+            {
+                if (ReferenceEquals(entry.Value, owner) && windowMap.TryGetValue(entry.Key, out var window))
+                {
+                    (owned ??= new List<Window>()).Add(window);
+                }
+            }
+
+            return owned ?? _empty;
         }
 
         public static Window GetWindow(AppWindow appWindow)
@@ -120,10 +172,18 @@ namespace Dock.WinUI3.Controls
 
         private static Window _mainWindow;
 
+        /// <summary>
+        /// The application's root window. Setting it registers it as an owner, so
+        /// everything else in the registry closes with it.
+        /// </summary>
         public static Window MainWindow
         {
             get { return _mainWindow; }
-            set { _mainWindow = value; }
+            set
+            {
+                _mainWindow = value;
+                Register(value, null);
+            }
         }
     }
 }

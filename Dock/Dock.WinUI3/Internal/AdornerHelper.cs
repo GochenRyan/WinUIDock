@@ -69,6 +69,22 @@ namespace Dock.WinUI3.Internal
                 IsOpen = true
             };
 
+            // The popup subtree gets laid out on the NEXT tick, but the very next
+            // pointer move already hit-tests the guides — unarranged, every probe
+            // misses. Lay out the POPUP SUBTREE only: UpdateLayout() forces the
+            // whole island, and mid-drag that island can hold panels whose
+            // measure throws — in a pointer handler, above any layout guard.
+            try
+            {
+                host.Measure(new Size(root.ActualWidth, root.ActualHeight));
+                host.Arrange(new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            }
+            catch
+            {
+                // Transient — worst case the first move misses the guides, and the
+                // next layout tick arranges them anyway.
+            }
+
             _currentElement = element;
         }
 

@@ -34,12 +34,9 @@ namespace Dock.WinUI3.Controls
     [TemplatePart(Name = ClusterPlatePartName, Type = typeof(Border))]
     public sealed class DockTarget : Control
     {
-        /// <summary>
-        /// Share of the window a freshly created edge region takes. Must match
-        /// FactoryBase.RootEdgeProportion, otherwise the preview lies about where
-        /// the drop will land.
-        /// </summary>
-        private const double RootEdgeProportion = 0.2;
+        // Single source in the model: the preview must draw the same share the
+        // drop will actually take.
+        private const double RootEdgeProportion = global::Dock.Model.FactoryBase.RootEdgeProportion;
 
         public const string ClusterPlatePartName = "PART_ClusterPlate";
         public const string TopIndicatorPartName = "PART_TopIndicator";
@@ -441,31 +438,11 @@ namespace Dock.WinUI3.Controls
             return null;
         }
 
-        /// <summary>
-        /// The single layout node a root dock hosts — mirrors FactoryBase.GetRootLayout.
-        /// </summary>
+        // The model's own answer to "which node does this root render" — a local
+        // mirror here had already drifted (it missed the DefaultDockable check, so
+        // guide validity could disagree with where the drop would actually land).
         private static IDock GetRootLayout(IRootDock rootDock)
-        {
-            if (rootDock.VisibleDockables is not { } dockables)
-            {
-                return null;
-            }
-
-            if (rootDock.ActiveDockable is IDock active && dockables.Contains(active))
-            {
-                return active;
-            }
-
-            foreach (var dockable in dockables)
-            {
-                if (dockable is IDock dock)
-                {
-                    return dock;
-                }
-            }
-
-            return null;
-        }
+            => global::Dock.Model.FactoryBase.GetRootLayout(rootDock);
 
         private static bool IsRootOperation(DockOperation operation)
         {

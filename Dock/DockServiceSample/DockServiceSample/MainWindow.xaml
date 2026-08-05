@@ -27,10 +27,12 @@
                 <ToggleMenuFlyoutItem Tag="left_tool" Text="Left tool" IsChecked="True" Click="TogglePanel_Click"/>
                 <ToggleMenuFlyoutItem Tag="right_tool" Text="Right tool" IsChecked="True" Click="TogglePanel_Click"/>
                 <ToggleMenuFlyoutItem Tag="bottom_tool" Text="Bottom tool" IsChecked="True" Click="TogglePanel_Click"/>
-                <ToggleMenuFlyoutItem Tag="window_tool" Text="Window tool" IsChecked="True" Click="TogglePanel_Click"/>
+                <ToggleMenuFlyoutItem Tag="float_tool" Text="Float tool" IsChecked="True" Click="TogglePanel_Click"/>
             </MenuBarItem>
 
             <MenuBarItem Title="Sample">
+                <MenuFlyoutItem Text="Open sample window (own dock context)" Click="OpenSampleWindow_Click"/>
+                <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Reset to default layout" Click="ResetDefault_Click"/>
                 <MenuFlyoutItem Text="Save &amp; reload layout (round-trip test)" Click="RoundTrip_Click"/>
                 <MenuFlyoutItem Text="List parked (hidden) dockables" Click="ListHidden_Click"/>

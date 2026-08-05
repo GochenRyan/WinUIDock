@@ -315,6 +315,42 @@ namespace Dock.WinUI3.Controls
             }
         }
 
+        /// <summary>
+        /// Synchronously releases the model-owned content elements so a layout
+        /// swap can re-parent them in the SAME tick. Exit() closes deferred
+        /// (load-bearing for the drag paths), and until that close is pumped this
+        /// window still counts as visible — so the hosts must both let go AND
+        /// stand their watchdogs down, or they steal the elements back from the
+        /// new host (a cross-island re-parent that dies in native code).
+        /// </summary>
+        public void SeverContentForTeardown()
+        {
+            try
+            {
+                foreach (var element in this.FindDescendants())
+                {
+                    switch (element)
+                    {
+                        case ToolContentControl toolContent:
+                            toolContent.StandDownForTeardown();
+                            break;
+                        case DocumentContentControl documentContent:
+                            documentContent.StandDownForTeardown();
+                            break;
+                    }
+                }
+            }
+            catch
+            {
+                // Tree mid-teardown — the deferred close finishes the job.
+            }
+
+            if (_dockControl is not null)
+            {
+                _dockControl.Layout = null;
+            }
+        }
+
         public void Exit()
         {
             // Deferred close: Exit is reached synchronously from pointer-event
@@ -481,11 +517,74 @@ namespace Dock.WinUI3.Controls
             y = _ownerWindowY;
         }
 
+        // WindowWidth/Height carry the DOCK-CONTENT area (DIPs). SetSize converts
+        // to the OUTER bounds Window.Width wants; treating content as outer makes
+        // every float/save-load round shrink the window by one chrome.
+
         public void SetSize(double width, double height)
         {
-            TrySetExtent(v => _ownerWindow.Width = v, width, nameof(width));
-            TrySetExtent(v => _ownerWindow.Height = v, height, nameof(height));
+            var (chromeWidth, chromeHeight) = GetChromeOverheadDips();
+            TrySetExtent(v => _ownerWindow.Width = v, width + chromeWidth, nameof(width));
+            TrySetExtent(v => _ownerWindow.Height = v, height + chromeHeight, nameof(height));
         }
+
+        /// <summary>
+        /// Outer-minus-content overhead in DIPs: the measured OS frame plus the
+        /// caption strip, which lives INSIDE the client area
+        /// (ExtendsContentIntoTitleBar) and so is not part of the frame delta.
+        /// </summary>
+        private (double Width, double Height) GetChromeOverheadDips()
+        {
+            var frameWidth = 0.0;
+            var frameHeight = 0.0;
+
+            try
+            {
+                if (_ownerWindow.AppWindow is { } appWindow)
+                {
+                    var outer = appWindow.Size;
+                    var client = appWindow.ClientSize;
+                    var scale = GetDpiScale();
+
+                    if (outer.Width >= client.Width && outer.Height >= client.Height && scale > 0)
+                    {
+                        frameWidth = (outer.Width - client.Width) / scale;
+                        frameHeight = (outer.Height - client.Height) / scale;
+                    }
+                }
+            }
+            catch
+            {
+                // Window mid-teardown — fall back to the caption strip alone.
+            }
+
+            var captionHeight = DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0);
+            return (frameWidth, frameHeight + captionHeight);
+        }
+
+        private double GetDpiScale()
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_ownerWindow);
+                if (hwnd != IntPtr.Zero)
+                {
+                    var dpi = GetDpiForWindow(hwnd);
+                    if (dpi > 0)
+                    {
+                        return dpi / 96.0;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return 1.0;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint GetDpiForWindow(IntPtr hwnd);
 
         /// <summary>
         /// Applies one window extent, skipping values the OS would refuse. A zero or
@@ -515,8 +614,16 @@ namespace Dock.WinUI3.Controls
 
         public void GetSize(out double width, out double height)
         {
+            // Symmetric with SetSize: report the DOCK-CONTENT area. The tracked
+            // extents are the CLIENT size (Window.SizeChanged reports it in DIPs),
+            // which still contains the in-content caption strip.
             width = _ownerWindowWidth;
             height = _ownerWindowHeight;
+
+            if (height > 0)
+            {
+                height = Math.Max(0, height - DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0));
+            }
         }
 
         public void SetTitle(string title)
