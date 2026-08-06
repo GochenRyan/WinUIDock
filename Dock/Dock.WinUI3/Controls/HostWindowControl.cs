@@ -191,6 +191,10 @@ namespace Dock.WinUI3.Controls
         public bool IsTracked { get; set; }
         public IDockWindow Window { get; set; }
 
+        /// <summary>The WinUI window this control fills — for callers inside the
+        /// library that need to raise or activate it (drag drop-target focus).</summary>
+        internal WinUIEx.WindowEx OwnerWindow => _ownerWindow;
+
         public void Present(bool isDialog)
         {
             if (isDialog)

@@ -12,8 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.0.240109" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
+    <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.2.251219" />
+    <!-- TitleBar is still a Labs preview; TabbedCommandBar is stable 8.2. Both require
+         WindowsAppSDK 1.6+, so this SAMPLE runs on 1.6 while the Dock libraries stay on
+         1.5 (NuGet unifies upward at the app; libraries are forward-compatible). -->
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.TitleBar" Version="0.1.251217-build.2433" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" Version="8.2.251219" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>

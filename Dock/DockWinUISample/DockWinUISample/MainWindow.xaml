@@ -9,11 +9,27 @@
     xmlns:controls="using:Dock.WinUI3.Controls"
     xmlns:modewinui3="using:Dock.Model.WinUI3"
     xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     Title="WinUIDock Sample"
     mc:Ignorable="d">
 
-    <Grid RowDefinitions="Auto,Auto,*" Background="{ThemeResource DockBackgroundBrush}">
-        <MenuBar Grid.Row="0">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+
+        <!-- Tall title bar (Toolkit Labs TitleBar), deliberately spare: icon and
+             title only — no search, no avatar. Window="{x:Bind}" +
+             AutoConfigureCustomTitleBar let the control extend content into the
+             caption area and manage the drag region on its own. -->
+        <toolkit:TitleBar x:Name="AppTitleBar" Grid.Row="0"
+                          Title="WinUIDock Sample"
+                          DisplayMode="Tall"
+                          AutoConfigureCustomTitleBar="True"
+                          Window="{x:Bind}">
+            <toolkit:TitleBar.Icon>
+                <FontIcon Glyph="&#xE8A9;"/>
+            </toolkit:TitleBar.Icon>
+        </toolkit:TitleBar>
+
+        <MenuBar Grid.Row="1">
             <MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open Layout..." Click="Open_Click"/>
                 <MenuFlyoutItem Text="Save Layout..." Click="Save_Click"/>
@@ -74,18 +90,40 @@
 
         <!-- The Maya-Shelf role: a real toolbar, not a dock panel. A Toolbox that
              lives in a ToolDock inherits tabs, close and drag-away — none of which
-             a shelf wants. Buttons reuse the Sample menu's handlers. -->
-        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsOpen="False"
-                    HorizontalAlignment="Left" Background="Transparent">
-            <AppBarButton Icon="Add" Label="New document" Click="NewDocument_Click"/>
-            <AppBarSeparator/>
-            <AppBarButton Icon="NewWindow" Label="Float Outliner" Click="FloatPanel_Click"/>
-            <AppBarButton Icon="Pin" Label="Auto-hide Outliner" Click="PinPanel_Click"/>
-            <AppBarSeparator/>
-            <AppBarButton Icon="Refresh" Label="Reset layout" Click="ResetLayout_Click"/>
-        </CommandBar>
+             a shelf wants. Ribbon-style categories (Toolkit TabbedCommandBar);
+             buttons reuse the menu handlers. -->
+        <!-- The wrapping Border draws the divider between the menu bar and the
+             ribbon (TabbedCommandBar is a NavigationView; its template ignores
+             its own BorderThickness). -->
+        <Border Grid.Row="2"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0">
+        <toolkit:TabbedCommandBar>
+            <toolkit:TabbedCommandBar.MenuItems>
+                <toolkit:TabbedCommandBarItem Header="Home" DefaultLabelPosition="Right">
+                    <AppBarButton Icon="Add" Label="New document" Click="NewDocument_Click"/>
+                    <AppBarSeparator/>
+                    <AppBarButton Icon="NewWindow" Label="Float Outliner" Click="FloatPanel_Click"/>
+                    <AppBarButton Icon="Pin" Label="Auto-hide Outliner" Click="PinPanel_Click"/>
+                    <AppBarSeparator/>
+                    <AppBarButton Icon="Refresh" Label="Reset layout" Click="ResetLayout_Click"/>
+                </toolkit:TabbedCommandBarItem>
+                <toolkit:TabbedCommandBarItem Header="Layout" DefaultLabelPosition="Right">
+                    <AppBarButton Icon="OpenFile" Label="Open layout" Click="Open_Click"/>
+                    <AppBarButton Icon="Save" Label="Save layout" Click="Save_Click"/>
+                    <AppBarSeparator/>
+                    <AppBarButton Icon="Undo" Label="Reset editor templates" Click="ResetEditorTemplates_Click"/>
+                </toolkit:TabbedCommandBarItem>
+                <toolkit:TabbedCommandBarItem Header="Diagnostics" DefaultLabelPosition="Right">
+                    <AppBarButton Icon="Accept" Label="Check ids" Click="ValidateIds_Click"/>
+                    <AppBarButton Icon="ViewAll" Label="Check editor contexts" Click="CheckEditorContexts_Click"/>
+                    <AppBarButton Icon="ShowResults" Label="List hidden" Click="ListHidden_Click"/>
+                </toolkit:TabbedCommandBarItem>
+            </toolkit:TabbedCommandBar.MenuItems>
+        </toolkit:TabbedCommandBar>
+        </Border>
 
-        <controls:DockControl x:Name="Dock" Grid.Row="2" InitializeLayout="True" InitializeFactory="True">
+        <controls:DockControl x:Name="Dock" Grid.Row="3" InitializeLayout="True" InitializeFactory="True">
             <controls:DockControl.Factory>
                 <modewinui3:Factory/>
             </controls:DockControl.Factory>

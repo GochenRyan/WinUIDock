@@ -1,4 +1,5 @@
-﻿using Dock.Model.Core;
+﻿using Dock.Model.Controls;
+using Dock.Model.Core;
 using Dock.Settings;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
@@ -171,6 +172,42 @@ namespace Dock.WinUI3.Internal
             {
                 _adornerHelper.RemoveAdorner(adorner);
             }
+        }
+
+        /// <summary>
+        /// A drag that ends in a float window leaves it BEHIND the source window:
+        /// the drop shows the new window first, but the cleanup that follows
+        /// (adorner teardown, pointer-capture release) re-activates the source on
+        /// top of it. Activating the dockable's final host window one tick later
+        /// wins that race; a dockable that landed in a plain dock resolves to a
+        /// root without a window and is a no-op.
+        /// </summary>
+        private static void ActivateFinalHostWindow(IDockable dockable)
+        {
+            var current = dockable?.Owner;
+            while (current is { } && current is not IRootDock)
+            {
+                current = current.Owner;
+            }
+
+            if (current is not IRootDock root
+                || root.Window?.Host is not HostWindowControl host
+                || host.OwnerWindow is not { } window)
+            {
+                return;
+            }
+
+            window.DispatcherQueue?.TryEnqueue(() =>
+            {
+                try
+                {
+                    window.Activate();
+                }
+                catch
+                {
+                    // The window closed between the drop and this tick.
+                }
+            });
         }
 
         private static bool IsPointInBounds(Point point, FrameworkElement element)
@@ -364,8 +401,10 @@ namespace Dock.WinUI3.Internal
                     }
                 case EventType.Released:
                     {
+                        IDockable draggedDockable = null;
                         if (_state.DoDragDrop)
                         {
+                            draggedDockable = _state.DragControl?.DataContext as IDockable;
                             if (_state.DropControl is { } && _state.TargetDockControl is { })
                             {
                                 var isDropEnabled = true;
@@ -406,6 +445,8 @@ namespace Dock.WinUI3.Internal
                         _state.End();
                         _raisedWindow = IntPtr.Zero;
                         activeDockControl.IsDraggingDock = false;
+
+                        ActivateFinalHostWindow(draggedDockable);
                         break;
                     }
                 case EventType.Moved:

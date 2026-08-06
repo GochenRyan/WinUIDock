@@ -10,11 +10,24 @@
     xmlns:controls="using:Dock.WinUI3.Controls" 
     xmlns:modewinui3="using:Dock.Model.WinUI3" 
     xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     Title="WinUIDock Service Sample"
     mc:Ignorable="d">
 
-    <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
-        <MenuBar Grid.Row="0">
+    <Grid RowDefinitions="Auto,Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+
+        <!-- Same spare tall title bar as DockWinUISample: icon + title only. -->
+        <toolkit:TitleBar Grid.Row="0"
+                          Title="WinUIDock Service Sample"
+                          DisplayMode="Tall"
+                          AutoConfigureCustomTitleBar="True"
+                          Window="{x:Bind}">
+            <toolkit:TitleBar.Icon>
+                <FontIcon Glyph="&#xE8A9;"/>
+            </toolkit:TitleBar.Icon>
+        </toolkit:TitleBar>
+
+        <MenuBar Grid.Row="1">
             <MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open Layout..." Click="Open_Click"/>
                 <MenuFlyoutItem Text="Save Layout..." Click="Save_Click"/>
@@ -41,7 +54,7 @@
             </MenuBarItem>
         </MenuBar>
 
-        <controls:DockControl x:Name="Dock" Grid.Row="1" InitializeLayout="True" InitializeFactory="True">
+        <controls:DockControl x:Name="Dock" Grid.Row="2" InitializeLayout="True" InitializeFactory="True">
             <controls:DockControl.Factory>
                 <modewinui3:Factory/>
             </controls:DockControl.Factory>

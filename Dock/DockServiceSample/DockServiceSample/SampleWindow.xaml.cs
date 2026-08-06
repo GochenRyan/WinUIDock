@@ -1,4 +1,4 @@
-using Dock.WinUI3;
+﻿using Dock.WinUI3;
 using Dock.WinUI3.Controls;
 using Microsoft.UI.Xaml;
 using WinUIEx;
@@ -19,6 +19,9 @@ namespace DockServiceSample
         public SampleWindow(Window owner)
         {
             InitializeComponent();
+
+            // Placement persists across runs (size/position/maximized).
+            PersistenceId = "SampleWindow";
 
             HostWindow.Register(this, owner);
             DockThemeManager.RegisterWindow(this);

@@ -42,6 +42,11 @@ namespace DockWinUISample
 
             _kind = kind;
 
+            // Window geometry persists per editor KIND (the Unreal model), matching
+            // the per-kind layout templates below. Set before activation so WinUIEx
+            // restores the placement while the window is being set up.
+            PersistenceId = kind == EditorKind.Animation ? "AnimationEditor" : "ShaderGraphEditor";
+
             // Enters the dock registry so coordinate transforms can resolve this
             // window, and — through the owner — so it and everything torn off it
             // close when the application's main window does.
@@ -50,6 +55,7 @@ namespace DockWinUISample
             DockThemeManager.RegisterWindow(this);
 
             Title = kind == EditorKind.Animation ? "Animation Editor" : "Shader Graph";
+            EditorTitleBar.Title = Title;
             AssetsText.Text = kind == EditorKind.Animation
                 ? "Clips, skeletons, curves."
                 : "Materials, textures, functions.";

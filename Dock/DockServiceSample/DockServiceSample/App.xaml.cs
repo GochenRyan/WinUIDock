@@ -22,13 +22,21 @@ namespace DockServiceSample
         {
             this.InitializeComponent();
 
+            // Window-placement persistence (PersistenceId windows). Must be set
+            // before the first window initializes; file-backed because this app
+            // is unpackaged (no ApplicationData).
+            WinUIEx.WindowManager.PersistenceStorage = new Dock.WinUI3.FilePersistenceStorage(
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "winuidock-servicesample", "window-placement.json"));
+
             // Stamp which build is actually running. A packaged (MSIX) launch loads
             // whatever was last deployed, which is easy to mistake for a rebuild —
             // if this line is missing from crash.log, the binaries are stale.
             Log("BOOT", null,
                 $"DockServiceSample build {typeof(App).Assembly.GetName().Version} " +
                 $"| Dock.WinUI3 {typeof(Dock.WinUI3.Controls.HostWindowControl).Assembly.GetName().Version} " +
-                $"| marker=076-doc-tab-overflow-scroll");
+                $"| marker=082-save-truncate-flush");
 
             // Crash forensics: dump to a file next to the exe so field repros keep
             // their evidence even without a debugger.

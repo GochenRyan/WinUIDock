@@ -32,6 +32,10 @@ namespace DockWinUISample
         {
             this.InitializeComponent();
 
+            // Placement (size/position/maximized) persists across runs via WinUIEx;
+            // the dock layout itself is persisted separately on Closed below.
+            PersistenceId = "MainWindow";
+
             // Registers the content root AND the OS title bar for theming.
             DockThemeManager.RegisterWindow(this);
             // The black theme is the primary look; opt into it regardless of the
@@ -64,9 +68,16 @@ namespace DockWinUISample
                 _defaultLayout = _serializer.Serialize(layout);
             }
 
+            // Auto-persistence: layout saved on close, restored on the next run;
+            // open editor windows recorded as a session and reopened on activation.
+            Closed += (_, _) => SaveLayoutAndSession();
+            Activated += RestoreSessionOnFirstActivation;
+
             // The factory only exists once the dock control has loaded.
             Dock.Loaded += (_, _) =>
             {
+                LoadAutoSavedLayout();
+
                 HookFactoryEvents();
 
                 // Opt-in rather than automatic: the check opens and closes a real
@@ -288,7 +299,9 @@ namespace DockWinUISample
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    // WinExe has no console — a silent catch would read as success.
+                    App.Log("save-layout failed: " + e);
+                    Log("Save Layout failed: " + e.Message);
                 }
             }
         }
@@ -327,7 +340,9 @@ namespace DockWinUISample
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    // WinExe has no console — a silent catch would read as success.
+                    App.Log("open-layout failed: " + e);
+                    Log("Open Layout failed: " + e.Message);
                 }
             }
         }
@@ -345,6 +360,99 @@ namespace DockWinUISample
 
         private IDockable? Declared(string id)
             => _declared.TryGetValue(id, out var d) ? d : null;
+
+        // ---- Auto-persistence: dock layout + open-editor session ----
+
+        private static string PersistFolder => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "winuidock-sample");
+
+        private static string AutoLayoutPath => Path.Combine(PersistFolder, "layout-main.json");
+        private static string SessionPath => Path.Combine(PersistFolder, "session.json");
+
+        private void LoadAutoSavedLayout()
+        {
+            try
+            {
+                if (!File.Exists(AutoLayoutPath))
+                {
+                    return;
+                }
+
+                using var stream = File.OpenRead(AutoLayoutPath);
+                var saved = _serializer.Load<IDock>(stream, ResolveDockable);
+                if (saved is { })
+                {
+                    Dock.Layout = saved;
+                    SyncViewMenu();
+                    App.Log("auto-layout: restored from " + AutoLayoutPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                // A broken file falls back to the XAML default layout.
+                App.Log("auto-layout: load failed: " + ex.Message);
+            }
+        }
+
+        private void SaveLayoutAndSession()
+        {
+            try
+            {
+                // Float geometry is flushed inside DockSerializer.Save.
+                if (Dock?.Layout is { } layout)
+                {
+                    Directory.CreateDirectory(PersistFolder);
+                    using var stream = File.Create(AutoLayoutPath);
+                    _serializer.Save(stream, layout);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Log("auto-layout: save failed: " + ex.Message);
+            }
+
+            try
+            {
+                Directory.CreateDirectory(PersistFolder);
+                var kinds = _openEditors.Select(editor => editor.Kind.ToString()).ToList();
+                File.WriteAllText(SessionPath, System.Text.Json.JsonSerializer.Serialize(kinds));
+            }
+            catch (Exception ex)
+            {
+                App.Log("session: save failed: " + ex.Message);
+            }
+        }
+
+        /// <summary>Reopens the editor windows that were open when the app closed —
+        /// the Unreal "restore open asset tabs" behavior, always on in this sample.
+        /// Runs on first activation: editors are owned windows, and opening them
+        /// needs this window fully up.</summary>
+        private void RestoreSessionOnFirstActivation(object sender, WindowActivatedEventArgs args)
+        {
+            Activated -= RestoreSessionOnFirstActivation;
+
+            try
+            {
+                if (!File.Exists(SessionPath))
+                {
+                    return;
+                }
+
+                var kinds = System.Text.Json.JsonSerializer.Deserialize<List<string>>(File.ReadAllText(SessionPath));
+                foreach (var name in kinds ?? new List<string>())
+                {
+                    if (Enum.TryParse<EditorKind>(name, out var kind))
+                    {
+                        OpenEditor(kind);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Log("session: restore failed: " + ex.Message);
+            }
+        }
 
         /// <summary>
         /// A panel counts as open while it is anywhere in the layout — including
@@ -554,11 +662,18 @@ namespace DockWinUISample
 
         // ---- Editors menu: one asset-editor window per context ----
 
+        private readonly List<EditorWindow> _openEditors = new();
+
         private EditorWindow OpenEditor(EditorKind kind)
         {
             // Owned by this window, so it closes when the application does — and
             // so does anything torn off it.
             var editor = new EditorWindow(kind, this);
+
+            // Tracked for the session manifest saved on close.
+            _openEditors.Add(editor);
+            editor.Closed += (_, _) => _openEditors.Remove(editor);
+
             editor.Activate();
             Log($"opened the {kind} editor in a context of its own");
             return editor;

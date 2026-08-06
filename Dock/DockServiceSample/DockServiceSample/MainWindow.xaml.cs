@@ -26,6 +26,11 @@ namespace DockServiceSample
         {
             this.InitializeComponent();
 
+            // Placement (size/position/maximized) persists via WinUIEx; the dock
+            // layout itself is auto-saved on Closed below.
+            PersistenceId = "MainWindow";
+            Closed += (_, _) => SaveLayoutAutomatically();
+
             DockThemeManager.RegisterRoot(Content as FrameworkElement);
             DockThemeManager.SetTheme(ElementTheme.Dark);
 
@@ -50,6 +55,8 @@ namespace DockServiceSample
             // leaves a verdict in crash.log. The opt-in DOCKSAMPLE_REPRO branch is
             // the exception — that one rearranges the live layout on purpose.
             m_dockService.CheckRootEdgeQuietly();
+
+            LoadAutoSavedLayout();
 
             // Opt-in: opens and closes a real window, which is not something
             // every launch should do.
@@ -258,6 +265,53 @@ namespace DockServiceSample
         private void CheckRootEdge_Click(object sender, RoutedEventArgs e)
         {
             m_dockService.LogRootEdgeCheck();
+        }
+
+        // ---- Auto-persistence: layout saved on close, restored on the next run ----
+
+        private static string AutoLayoutPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "winuidock-servicesample", "layout-main.json");
+
+        private void LoadAutoSavedLayout()
+        {
+            try
+            {
+                if (!File.Exists(AutoLayoutPath))
+                {
+                    return;
+                }
+
+                using var stream = File.OpenRead(AutoLayoutPath);
+                m_dockService.LoadLayout(stream);
+                SyncViewMenu();
+                App.Log("AutoLayout", null, "restored from " + AutoLayoutPath);
+            }
+            catch (Exception ex)
+            {
+                // A broken file falls back to the default layout.
+                App.Log("AutoLayout", ex, "load failed");
+            }
+        }
+
+        private void SaveLayoutAutomatically()
+        {
+            if (m_dockService is null)
+            {
+                return;
+            }
+
+            try
+            {
+                // Float geometry is flushed inside DockSerializer.Save.
+                Directory.CreateDirectory(Path.GetDirectoryName(AutoLayoutPath));
+                using var stream = File.Create(AutoLayoutPath);
+                m_dockService.SaveLayout(stream);
+            }
+            catch (Exception ex)
+            {
+                App.Log("AutoLayout", ex, "save failed");
+            }
         }
 
         private DockService m_dockService;

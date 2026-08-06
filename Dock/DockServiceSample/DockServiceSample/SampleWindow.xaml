@@ -9,6 +9,7 @@
     xmlns:controls="using:Dock.WinUI3.Controls"
     xmlns:modewinui3="using:Dock.Model.WinUI3"
     xmlns:winui3controls="using:Dock.Model.WinUI3.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     Title="Sample Window"
     mc:Ignorable="d">
 
@@ -20,8 +21,20 @@
          RegisterFactory="False" is what keeps this window out of the
          WinUIDockManager static facade: the service API this sample is built on
          must keep pointing at the MAIN dock. -->
-    <Grid Background="{ThemeResource DockBackgroundBrush}">
-        <controls:DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True"
+    <Grid RowDefinitions="Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+
+        <!-- Same spare tall title bar as the main window: icon + title only. -->
+        <toolkit:TitleBar Grid.Row="0"
+                          Title="Sample Window"
+                          DisplayMode="Tall"
+                          AutoConfigureCustomTitleBar="True"
+                          Window="{x:Bind}">
+            <toolkit:TitleBar.Icon>
+                <FontIcon Glyph="&#xE8A9;"/>
+            </toolkit:TitleBar.Icon>
+        </toolkit:TitleBar>
+
+        <controls:DockControl x:Name="Dock" Grid.Row="1" InitializeLayout="True" InitializeFactory="True"
                               RegisterFactory="False">
             <controls:DockControl.Factory>
                 <modewinui3:Factory/>

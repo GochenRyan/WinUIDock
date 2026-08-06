@@ -34,7 +34,16 @@ namespace DockWinUISample
         {
             this.InitializeComponent();
 
-            Log($"BOOT: DockWinUISample marker=076-doc-tab-overflow-scroll");
+            Log($"BOOT: DockWinUISample marker=082-save-truncate-flush");
+
+            // Window-placement persistence (PersistenceId windows). Must be set
+            // before the first window initializes: WinUIEx reads the stored
+            // placement during window setup, not on demand. File-backed because
+            // this app is unpackaged (no ApplicationData).
+            WinUIEx.WindowManager.PersistenceStorage = new Dock.WinUI3.FilePersistenceStorage(
+                System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "winuidock-sample", "window-placement.json"));
 
             // Interop failures surface at the WinUI boundary with the managed stack
             // stripped; first-chance fires AT the throw. Opt-in — noisy by nature.

@@ -1,4 +1,5 @@
 ﻿using Dock.Model;
+using Dock.Model.Controls;
 using Dock.Model.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -70,11 +71,31 @@ public sealed class DockSerializer : IDockSerializer
     /// <inheritdoc/>
     public void Save<T>(Stream stream, T value)
     {
+        // A live layout's float geometry sits in the host's position cache between
+        // layout ticks; flush it into the model so the file gets current positions.
+        // No-op per window when it has no host (headless snapshots).
+        if (value is IRootDock root && root.Windows is { } windows)
+        {
+            foreach (var window in windows)
+            {
+                window.Save();
+            }
+        }
+
         var text = Serialize(value);
         if (string.IsNullOrWhiteSpace(text))
         {
             return;
         }
+
+        // Callers hand in streams over EXISTING files (file pickers do not truncate
+        // on overwrite). Shorter content over a longer file would leave the old
+        // tail behind — unreadable JSON on the next load.
+        if (stream.CanSeek)
+        {
+            stream.SetLength(0);
+        }
+
         using var streamWriter = new StreamWriter(stream, Encoding.UTF8);
         streamWriter.Write(text);
     }
