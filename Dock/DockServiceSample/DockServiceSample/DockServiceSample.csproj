@@ -14,8 +14,8 @@
   <ItemGroup>
     <!-- Labs preview; requires WindowsAppSDK 1.6+ (aligned solution-wide in 078). -->
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.TitleBar" Version="0.1.251217-build.2433" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260710003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
