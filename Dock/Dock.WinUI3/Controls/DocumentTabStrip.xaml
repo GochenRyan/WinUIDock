@@ -11,9 +11,17 @@
                     <!-- Single row; overflow scrolls inside TabOverflowPanel.
                          A wrapping panel is a trap here: the second row gets
                          clipped by the strip's one-row height and those tabs
-                         become unreachable. -->
-                    <local:DockPanel LastChildFill="False"
-                                     Background="{ThemeResource DockChromeBackgroundBrush}">
+                         become unreachable.
+                         PART_TitleBarDragArea is the trailing blank fill: in a
+                         float window the strip is promoted to the window title
+                         row and Window.SetTitleBar points at it (native move /
+                         snap / double-click-maximize). Padding carries the
+                         system caption-button inset in that mode. -->
+                    <!-- Background OUTSIDE the padding margin, so the strip
+                         still paints under the system caption buttons. -->
+                    <Border Background="{ThemeResource DockChromeBackgroundBrush}">
+                    <local:DockPanel LastChildFill="True"
+                                     Margin="{TemplateBinding Padding}">
                         <!-- Docked right so it never scrolls out of reach. -->
                         <Button x:Name="PART_CreateButton"
                                 local:DockPanel.Dock="Right"
@@ -35,8 +43,12 @@
                                       Fill="{ThemeResource DockTabItemForegroundRestBrush}"/>
                             </Viewbox>
                         </Button>
-                        <ItemsPresenter local:DockPanel.Dock="Left"/>
+                        <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                        local:DockPanel.Dock="Left"/>
+                        <Border x:Name="PART_TitleBarDragArea"
+                                Background="Transparent"/>
                     </local:DockPanel>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

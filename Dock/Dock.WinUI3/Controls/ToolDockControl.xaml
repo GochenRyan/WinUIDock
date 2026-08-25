@@ -11,8 +11,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolDockControl">
+                    <!-- IsSizeTracked=False: the dock's visible bounds are written
+                         by the CONTENT host inside ToolControl (stored-size
+                         invariant: bounds = content DIPs); this pane wrapper
+                         would race it with the whole-pane rect. -->
                     <local:DockableControl Name="PART_DockableControl"
                                            TrackingMode="Visible"
+                                           IsSizeTracked="False"
                                            Background="{ThemeResource DockBackgroundBrush}">
                         <local:ToolChromeControl x:Name="PART_ToolChromeControl">
                             <!--<local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 

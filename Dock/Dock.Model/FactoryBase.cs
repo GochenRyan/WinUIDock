@@ -558,9 +558,10 @@ public abstract partial class FactoryBase : IFactory
             AddWindow(rootDock, window);
             window.X = x;
             window.Y = y;
-            window.WindowWidth = width;
 
-            //TODO: fix height reduction after multiple splits
+            // width/height are CONTENT DIPs (stored-size invariant, see
+            // IDockWindow.WindowWidth); the host's SetSize adds the float chrome.
+            window.WindowWidth = width;
             window.WindowHeight = height;
             window.Present(false);
 

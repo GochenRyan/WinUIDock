@@ -1,3 +1,4 @@
+using CommunityToolkit.WinUI;
 using Dock.Model.Core;
 using System;
 using Dock.Model.WinUI3.Controls;
@@ -13,13 +14,18 @@ using Windows.Foundation;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = CreateButtonPartName, Type = typeof(Button))]
-    public sealed class DocumentTabStrip : ItemsControl
+    [TemplatePart(Name = ItemsPresenterName, Type = typeof(ItemsPresenter))]
+    [TemplatePart(Name = TitleBarDragAreaName, Type = typeof(Border))]
+    public sealed class DocumentTabStrip : ItemsControl, IFloatTitleBarStrip
     {
         public const string CreateButtonPartName = "PART_CreateButton";
+        public const string ItemsPresenterName = "PART_ItemsPresenter";
+        public const string TitleBarDragAreaName = "PART_TitleBarDragArea";
 
         public DocumentTabStrip()
         {
             this.DefaultStyleKey = typeof(DocumentTabStrip);
+            _titleSupport = new FloatTitleStripSupport(this, "DockDocumentTabStripHeight", 28.0);
             Loaded += DocumentTabStrip_Loaded;
             Unloaded += DocumentTabStrip_Unloaded;
             PointerWheelChanged += DocumentTabStrip_PointerWheelChanged;
@@ -31,6 +37,7 @@ namespace Dock.WinUI3.Controls
             BindDock();
             BindCreateButton();
             DataContextChanged += DocumentTabStrip_DataContextChanged;
+            _titleSupport.OnLoaded();
         }
 
         // Why a custom panel and not a ScrollViewer: see TabOverflowPanel.
@@ -40,6 +47,7 @@ namespace Dock.WinUI3.Controls
         {
             DataContextChanged -= DocumentTabStrip_DataContextChanged;
             UnhookActiveDockable();
+            _titleSupport.OnUnloaded();
         }
 
         private void DocumentTabStrip_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -126,6 +134,8 @@ namespace Dock.WinUI3.Controls
             base.OnApplyTemplate();
 
             _createButton = GetTemplateChild(CreateButtonPartName) as Button;
+            _titleBarDragArea = GetTemplateChild(TitleBarDragAreaName) as FrameworkElement;
+            _titleSupport.OnApplyTemplate(GetTemplateChild(ItemsPresenterName) as ItemsPresenter);
             BindCreateButton();
         }
 
@@ -161,6 +171,44 @@ namespace Dock.WinUI3.Controls
         private Button _createButton;
         private DocumentDock _boundDock;
         private long _activeDockableToken;
+        private readonly FloatTitleStripSupport _titleSupport;
+        private FrameworkElement _titleBarDragArea;
+
+        // ----- Float single-row chrome: the strip as the window title row -----
+
+        /// <summary>
+        /// True while this strip IS its float window's title row. Set only by
+        /// HostWindowControl's title-role arbitration; strips inside any other
+        /// window never register as candidates and stay false.
+        /// </summary>
+        public static readonly DependencyProperty IsWindowTitleBarProperty = DependencyProperty.Register(
+            nameof(IsWindowTitleBar),
+            typeof(bool),
+            typeof(DocumentTabStrip),
+            new PropertyMetadata(false, OnIsWindowTitleBarChanged));
+
+        public bool IsWindowTitleBar
+        {
+            get => (bool)GetValue(IsWindowTitleBarProperty);
+            set => SetValue(IsWindowTitleBarProperty, value);
+        }
+
+        private static void OnIsWindowTitleBarChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
+        {
+            (ob as DocumentTabStrip)?._titleSupport.ApplyTitleRole((bool)args.NewValue);
+        }
+
+        Control IFloatTitleBarStrip.Strip => this;
+
+        FrameworkElement IFloatTitleBarStrip.TitleBarDragArea => _titleBarDragArea;
+
+        // Rank by the owning pane, symmetric with ToolTabStrip (this strip is
+        // already at the top of its DocumentControl, but the pane origin is the
+        // stable comparison anchor).
+        FrameworkElement IFloatTitleBarStrip.RankAnchor =>
+            this.FindAscendant<DocumentControl>() ?? (FrameworkElement)this;
+
+        void IFloatTitleBarStrip.SetTitleBarRightInset(double dips) => _titleSupport.SetRightInset(dips);
 
         protected override void OnItemsChanged(object e)
         {

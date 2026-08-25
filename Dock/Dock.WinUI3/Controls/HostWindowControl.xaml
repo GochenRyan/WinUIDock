@@ -11,21 +11,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:HostWindowControl">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <!-- Height comes from the DockFloatTitleBarHeight metric,
-                                 applied to PART_TitleBar in code (GridLength resources
-                                 are not declarable in XAML). -->
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-
-                        <local:HostWindowTitleBar x:Name="PART_TitleBar" />
-
-                        <local:DockControl x:Name="PART_DockControl"
-                                           Grid.Row="1">
-                        </local:DockControl>
-                    </Grid>
+                    <!-- Single-row float chrome: no dedicated title bar row.
+                         The dock content fills the window and the top pane's
+                         tab strip doubles as the title row (tabs left, blank
+                         caption-drag fill, system buttons right) — see the
+                         title-role arbitration in HostWindowControl. -->
+                    <local:DockControl x:Name="PART_DockControl"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

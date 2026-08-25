@@ -1,6 +1,8 @@
+using CommunityToolkit.WinUI;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.WinUI3.Controls;
+using Dock.Model.WinUI3.Core;
 using Dock.WinUI3.Internal;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -26,6 +28,8 @@ namespace Dock.WinUI3.Controls
         public const string DragToolName = "PART_DragTool";
         public const string TitleItemName = "PART_TitleItem";
         public const string BorderItemName = "PART_Border";
+        public const string IconItemName = "PART_IconItem";
+        public const string CloseButtonName = "PART_CloseButton";
 
         public const string FloatItemName = "PART_FloatItem";
         public const string DockItemName = "PART_DockItem";
@@ -48,6 +52,16 @@ namespace Dock.WinUI3.Controls
         private void ToolTabStripItem_Loaded(object sender, RoutedEventArgs e)
         {
             DataContextChanged += ToolTabStripItem_DataContextChanged;
+
+            // Float single-row chrome: the close x follows the owning strip's
+            // title-role state, which can flip while this item stays loaded.
+            _strip = this.FindAscendant<ToolTabStrip>();
+            if (_strip is not null && _stripTitleToken == 0)
+            {
+                _stripTitleToken = _strip.RegisterPropertyChangedCallback(
+                    ToolTabStrip.IsWindowTitleBarProperty, (_, _) => UpdateCloseButton());
+            }
+
             UpdateIdleState();
         }
 
@@ -60,6 +74,22 @@ namespace Dock.WinUI3.Controls
         {
             if (_canPinToken != 0 && DataContext is Tool tool)
                 tool.UnregisterPropertyChangedCallback(Tool.CanPinProperty, _canPinToken);
+
+            if (_strip is not null && _stripTitleToken != 0)
+            {
+                try
+                {
+                    _strip.UnregisterPropertyChangedCallback(ToolTabStrip.IsWindowTitleBarProperty, _stripTitleToken);
+                }
+                catch
+                {
+                    // Strip already torn down.
+                }
+
+                _stripTitleToken = 0;
+            }
+
+            _strip = null;
         }
 
         protected override void OnApplyTemplate()
@@ -68,6 +98,8 @@ namespace Dock.WinUI3.Controls
             _dragTool = GetTemplateChild(DragToolName) as StackPanel;
             _titleItem = GetTemplateChild(TitleItemName) as TextBlock;
             _border = GetTemplateChild(BorderItemName) as Border;
+            _iconItem = GetTemplateChild(IconItemName) as IconSourceElement;
+            _closeButton = GetTemplateChild(CloseButtonName) as Button;
 
             BindData();
         }
@@ -105,6 +137,32 @@ namespace Dock.WinUI3.Controls
                     Path = new PropertyPath("Title"),
                     Mode = BindingMode.OneWay
                 });
+
+                if (_closeButton is not null)
+                {
+                    _closeButton.ClearValue(Button.CommandProperty);
+                    _closeButton.SetBinding(Button.CommandProperty, new Binding
+                    {
+                        Source = DataContext,
+                        Path = new PropertyPath("Owner.Factory.CloseDockableCmd"),
+                        Mode = BindingMode.OneWay
+                    });
+
+                    _closeButton.ClearValue(Button.CommandParameterProperty);
+                    _closeButton.SetBinding(Button.CommandParameterProperty, new Binding
+                    {
+                        Source = DataContext,
+                        Path = new PropertyPath(""),
+                        Mode = BindingMode.OneWay
+                    });
+                }
+
+                UpdateIcon();
+                if (_iconToken != 0)
+                    tool.UnregisterPropertyChangedCallback(DockableBase.IconProperty, _iconToken);
+                _iconToken = tool.RegisterPropertyChangedCallback(DockableBase.IconProperty, (_, _) => UpdateIcon());
+
+                UpdateCloseButton();
                 AddFlyout();
 
                 if (tool.Owner is ToolDock dock)
@@ -159,6 +217,8 @@ namespace Dock.WinUI3.Controls
                 {
                     UpdateIdleState();
                 }
+
+                UpdateCloseButton();
             }
         }
 
@@ -175,6 +235,40 @@ namespace Dock.WinUI3.Controls
             {
                 VisualStateManager.GoToState(this, NormalState, true);
             }
+
+            UpdateCloseButton();
+        }
+
+        /// <summary>Icon slot: shown only when the dockable carries an
+        /// IconSource; collapsed otherwise so it costs no width or spacing.</summary>
+        private void UpdateIcon()
+        {
+            if (_iconItem is null)
+            {
+                return;
+            }
+
+            var iconSource = (DataContext as DockableBase)?.Icon as IconSource;
+            _iconItem.IconSource = iconSource;
+            _iconItem.Visibility = iconSource is null ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        /// <summary>Close x on the ACTIVE tab, only while the owning strip is a
+        /// float window's title row (docked tool tabs keep today's no-x look;
+        /// closing there stays on the chrome caption / context flyout).</summary>
+        private void UpdateCloseButton()
+        {
+            if (_closeButton is null)
+            {
+                return;
+            }
+
+            var visible = _strip is { IsWindowTitleBar: true }
+                          && DataContext is IDockable { CanClose: true } dockable
+                          && dockable.Owner is IDock dock
+                          && dock.ActiveDockable == dockable;
+
+            _closeButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void _titleItem_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -339,7 +433,10 @@ namespace Dock.WinUI3.Controls
         {
             Size finalSize = base.MeasureOverride(availableSize);
 
-            _dragTool.Width = _titleItem.DesiredSize.Width + _dragTool.Spacing * 2;
+            // Manual width: title plus whichever of icon/close are visible
+            // (collapsed elements desire 0), matching DocumentTabStripItem.
+            var extras = (_iconItem?.DesiredSize.Width ?? 0) + (_closeButton?.DesiredSize.Width ?? 0);
+            _dragTool.Width = _titleItem.DesiredSize.Width + extras + _dragTool.Spacing * 2;
             _border.Width = _dragTool.Width + _border.Padding.Left + _border.Padding.Right;
 
             return finalSize;
@@ -348,8 +445,13 @@ namespace Dock.WinUI3.Controls
         private StackPanel _dragTool;
         private TextBlock _titleItem;
         private Border _border;
+        private IconSourceElement _iconItem;
+        private Button _closeButton;
+        private ToolTabStrip _strip;
         private MenuFlyoutItem _autoHideItem;
 
         private long _canPinToken = 0;
+        private long _stripTitleToken = 0;
+        private long _iconToken = 0;
     }
 }

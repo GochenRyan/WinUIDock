@@ -49,6 +49,18 @@ namespace Dock.WinUI3.Controls
 
         public void RecordSize()
         {
+            // Two Visible-mode DockableControls share one dock as DataContext (the
+            // pane wrapper in ToolDockControl/DocumentDockControl and the content
+            // host in ToolControl/DocumentControl); if both wrote the dock's
+            // visible bounds, last SizeChanged would win. Float sizing consumes
+            // those bounds; the stored-size invariant (WindowWidth/Height =
+            // CONTENT DIPs) needs exactly one writer: the content host. Pane
+            // wrappers opt out via IsSizeTracked="False".
+            if (!IsSizeTracked)
+            {
+                return;
+            }
+
             if (DataContext is not IDockable dockable)
             {
                 return;
@@ -203,6 +215,24 @@ namespace Dock.WinUI3.Controls
         {
             get { return (TrackingMode)GetValue(TrackingModeProperty); }
             set { SetValue(TrackingModeProperty, value); }
+        }
+
+        /// <summary>
+        /// Whether this control writes its bounds into the dockable's tracking
+        /// slots (see the note in <see cref="RecordSize"/>). Pointer tracking and
+        /// control registration are unaffected. Default true.
+        /// </summary>
+        public static readonly DependencyProperty IsSizeTrackedProperty =
+        DependencyProperty.Register(
+            nameof(IsSizeTracked),
+            typeof(bool),
+            typeof(DockableControl),
+            new PropertyMetadata(true));
+
+        public bool IsSizeTracked
+        {
+            get { return (bool)GetValue(IsSizeTrackedProperty); }
+            set { SetValue(IsSizeTrackedProperty, value); }
         }
 
         protected override Size MeasureOverride(Size availableSize)

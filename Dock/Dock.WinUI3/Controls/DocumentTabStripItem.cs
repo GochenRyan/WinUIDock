@@ -29,6 +29,7 @@ namespace Dock.WinUI3.Controls
         public const string DragToolName = "PART_DragTool";
         public const string TitleItemName = "PART_TitleItem";
         public const string CloseButtonName = "PART_CloseButton";
+        public const string IconItemName = "PART_IconItem";
 
         public const string FloatItemName = "PART_FloatItem";
         public const string CloseSelfItemName = "PART_CloseSelfItem";
@@ -74,6 +75,7 @@ namespace Dock.WinUI3.Controls
             _dragTool = GetTemplateChild(DragToolName) as StackPanel;
             _titleItem = GetTemplateChild(TitleItemName) as TextBlock;
             _closeButton = GetTemplateChild(CloseButtonName) as Button;
+            _iconItem = GetTemplateChild(IconItemName) as IconSourceElement;
 
             BindData();
         }
@@ -125,6 +127,14 @@ namespace Dock.WinUI3.Controls
                     Converter = DockConverters.DockBoolToVisibilityConverter,
                     Mode = BindingMode.OneWay
                 });
+
+                UpdateIcon();
+                if (document is DockableBase dockableBase)
+                {
+                    if (_iconToken != 0)
+                        dockableBase.UnregisterPropertyChangedCallback(DockableBase.IconProperty, _iconToken);
+                    _iconToken = dockableBase.RegisterPropertyChangedCallback(DockableBase.IconProperty, (_, _) => UpdateIcon());
+                }
 
                 var menuFlyout = new MenuFlyout();
                 menuFlyout.XamlRoot = this.XamlRoot;
@@ -254,6 +264,20 @@ namespace Dock.WinUI3.Controls
             }
         }
 
+        /// <summary>Icon slot: shown only when the dockable carries an
+        /// IconSource; collapsed otherwise so it costs no width or spacing.</summary>
+        private void UpdateIcon()
+        {
+            if (_iconItem is null)
+            {
+                return;
+            }
+
+            var iconSource = (DataContext as DockableBase)?.Icon as IconSource;
+            _iconItem.IconSource = iconSource;
+            _iconItem.Visibility = iconSource is null ? Visibility.Collapsed : Visibility.Visible;
+        }
+
         protected override Size MeasureOverride(Size availableSize)
         {
             Size finalSize;
@@ -276,7 +300,8 @@ namespace Dock.WinUI3.Controls
                 return finalSize;
             }
 
-            _dragTool.Width = _titleItem.DesiredSize.Width + _closeButton.DesiredSize.Width + _dragTool.Spacing * 2;
+            var iconWidth = _iconItem?.DesiredSize.Width ?? 0;
+            _dragTool.Width = _titleItem.DesiredSize.Width + _closeButton.DesiredSize.Width + iconWidth + _dragTool.Spacing * 2;
             _border.Width = _dragTool.Width + _border.Padding.Left + _border.Padding.Right;
 
             return finalSize;
@@ -286,5 +311,7 @@ namespace Dock.WinUI3.Controls
         private StackPanel _dragTool;
         private TextBlock _titleItem;
         private Button _closeButton;
+        private IconSourceElement _iconItem;
+        private long _iconToken;
     }
 }

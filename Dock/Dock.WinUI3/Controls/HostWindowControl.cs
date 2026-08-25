@@ -15,11 +15,9 @@ using WinUIEx;
 namespace Dock.WinUI3.Controls
 {
     [TemplatePart(Name = DockControlName, Type = typeof(DockControl))]
-    [TemplatePart(Name = TitleBarName, Type = typeof(HostWindowTitleBar))]
     public class HostWindowControl : ContentControl, IHostWindow
     {
         public const string DockControlName = "PART_DockControl";
-        public const string TitleBarName = "PART_TitleBar";
 
         public HostWindowControl(HostWindow hostWindow)
         {
@@ -64,6 +62,10 @@ namespace Dock.WinUI3.Controls
         {
             _ownerWindowWidth = args.Size.Width;
             _ownerWindowHeight = args.Size.Height;
+
+            // Caption-button inset is reported in raw pixels and can change with
+            // the DPI the window sits on — refresh the title strip's reservation.
+            PushTitleStripInset();
         }
 
         private void _ownerWindow_PositionChanged(object sender, Windows.Graphics.PointInt32 e)
@@ -84,15 +86,11 @@ namespace Dock.WinUI3.Controls
             {
                 _dockControl.Layout = dock;
             }
-
-            if (_titleBar != null && dock != null)
-            {
-                _titleBar.TitleText = ResolveTitle(dock);
-            }
         }
 
-        // Float windows show the floated content's own title (walk down the
-        // active chain to the leaf tool/document) instead of the parent window's.
+        // The floated content's own title (walk down the active chain to the
+        // leaf tool/document) — used for the OS-level window title only
+        // (taskbar / Alt-Tab); the in-window title row is the tab strip itself.
         private static string ResolveTitle(IDock dock)
         {
             IDockable current = dock;
@@ -141,7 +139,21 @@ namespace Dock.WinUI3.Controls
                 Internal.DockDiag.Log(
                     $"HostWindowControl.LayoutUpdated on a dead window — unsubscribing: {ex.Message}");
                 LayoutUpdated -= HostWindowControl_LayoutUpdated;
+                return;
             }
+
+            // Closed-loop guard for the single-row chrome: the title role must
+            // sit on the TOP-most strip, and panes can move inside this window
+            // without any load/unload event firing. Cheap (a couple of
+            // transforms over a tiny candidate list) and follows the repo's
+            // per-frame-verification discipline for cross-host state.
+            VerifyTitleStrip();
+
+            // Closed-loop half of SetSize. Frame-driven ON PURPOSE: the OS
+            // applies resizes asynchronously and in two steps, so event-driven
+            // fixups act on stale intermediates and stall or oscillate; frames
+            // keep coming until the measured content host matches the request.
+            ConvergeContentSize();
         }
 
         public static readonly DependencyProperty IsToolWindowProperty = DependencyProperty.Register(
@@ -175,9 +187,8 @@ namespace Dock.WinUI3.Controls
             _dockControl = GetTemplateChild(DockControlName) as DockControl;
             _dockControl.Layout = DataContext as IDock;
 
-            _titleBar = GetTemplateChild(TitleBarName) as HostWindowTitleBar;
-            _titleBar.Height = DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0);
-            _ownerWindow.SetTitleBar(_titleBar);
+            // No SetTitleBar here: the caption drag region is the blank fill of
+            // whichever tab strip wins the title role — see UpdateTitleStrip().
             UpdateTemplateChilren();
         }
 
@@ -521,27 +532,234 @@ namespace Dock.WinUI3.Controls
             y = _ownerWindowY;
         }
 
-        // WindowWidth/Height carry the DOCK-CONTENT area (DIPs). SetSize converts
-        // to the OUTER bounds Window.Width wants; treating content as outer makes
-        // every float/save-load round shrink the window by one chrome.
+        // STORED-SIZE INVARIANT: IDockWindow.WindowWidth/Height carry the floated
+        // dock's CONTENT area in DIPs — the rect of the content host inside the
+        // pane (what DockableControl size tracking records while docked, see
+        // IsSizeTracked). Every producer/consumer agrees on that one meaning:
+        //   - DockableControl (content host) records it while docked,
+        //   - FloatDockable/SplitToWindow pass it through unchanged,
+        //   - SetSize resizes the CLIENT to content + in-client float chrome,
+        //   - GetSize subtracts the in-client chrome back out for Save().
+        // Sizing the client to the raw content rect would make every float come
+        // out one title row + borders SMALLER than the pane.
 
         public void SetSize(double width, double height)
         {
-            var (chromeWidth, chromeHeight) = GetChromeOverheadDips();
-            TrySetExtent(v => _ownerWindow.Width = v, width + chromeWidth, nameof(width));
-            TrySetExtent(v => _ownerWindow.Height = v, height + chromeHeight, nameof(height));
+            var (chromeWidth, chromeHeight) = GetContentChromeOverheadDips();
+            var clientWidth = width + chromeWidth;
+            var clientHeight = height + chromeHeight;
+
+            if (!IsFinite(clientWidth) || !IsFinite(clientHeight) || width <= 0.0 || height <= 0.0)
+            {
+                // Zero/garbage extents reach here whenever a layout was saved
+                // before the window was ever sized; the OS would refuse them
+                // with "The parameter is incorrect".
+                Internal.DockDiag.Log($"HostWindowControl.SetSize ignoring invalid content size ({width}x{height})");
+                return;
+            }
+
+            // No open-loop geometry math: the OS frame delta, ResizeClient AND
+            // even the in-client chrome all wobble by a physical pixel or two
+            // (non-client reconfiguration, fractional-DPI border rounding that
+            // depends on sub-pixel origins), and every float paid those errors
+            // as lost content. Instead: apply a best-effort guess now, then
+            // CONVERGE the measured CONTENT HOST onto the requested content size
+            // (closed loop, same discipline as the content watchdogs).
+            _targetContentWidth = width;
+            _targetContentHeight = height;
+            _clientSizeFixups = 0;
+            _convergeWaitFrames = 0;
+            _lastConvergeWidth = -1;
+            _lastConvergeHeight = -1;
+
+            Internal.DockDiag.Log($"HostWindowControl.SetSize content={width:F1}x{height:F1} "
+                + $"chrome={chromeWidth:F1}x{chromeHeight:F1} -> initial client guess={clientWidth:F1}x{clientHeight:F1} DIPs");
+
+            try
+            {
+                var (frameWidth, frameHeight) = GetFrameOverheadEstimateDips();
+                _ownerWindow.Width = clientWidth + frameWidth;
+                _ownerWindow.Height = clientHeight + frameHeight;
+            }
+            catch (Exception ex)
+            {
+                // Losing a restored size is cosmetic; taking down the app is not.
+                Internal.DockDiag.Log($"HostWindowControl.SetSize failed for {width}x{height}: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// Outer-minus-content overhead in DIPs: the measured OS frame plus the
-        /// caption strip, which lives INSIDE the client area
-        /// (ExtendsContentIntoTitleBar) and so is not part of the frame delta.
+        /// Second half of SetSize: measure the CONTENT HOST the window actually
+        /// laid out and apply the remaining delta as a relative outer resize.
+        /// Driving the loop off the content host (not the client) folds every
+        /// geometry wobble — OS frame, non-client reconfiguration, fractional-DPI
+        /// border rounding — into one measured correction. The stability gate
+        /// avoids acting on sizes the OS is still applying; the fixup cap keeps
+        /// a fight with a concurrent user resize impossible.
         /// </summary>
-        private (double Width, double Height) GetChromeOverheadDips()
+        private void ConvergeContentSize()
         {
-            var frameWidth = 0.0;
-            var frameHeight = 0.0;
+            if (_targetContentWidth <= 0 || _targetContentHeight <= 0 || _ownerWindowClosed)
+            {
+                return;
+            }
 
+            // The single-row chrome promotion (caption collapses, strip moves to
+            // the top at title height) lands a beat AFTER the window shows and
+            // shifts the content by the chrome delta — converging before it wins
+            // the race and bakes the pre-promotion chrome into the size. Wait
+            // for the title role (or a frame budget, for stripless layouts).
+            if (_titleStrip is null && _convergeWaitFrames < 30)
+            {
+                _convergeWaitFrames++;
+                return;
+            }
+
+            var (host, multiple) = FindContentHosts();
+            if (host is null)
+            {
+                // Content still materializing — later frames retry.
+                return;
+            }
+
+            if (multiple)
+            {
+                // Several panes: "the content" is ambiguous; the initial guess
+                // (content + standard chrome) is the best available meaning.
+                _targetContentWidth = 0;
+                _targetContentHeight = 0;
+                return;
+            }
+
+            var actualWidth = host.ActualWidth;
+            var actualHeight = host.ActualHeight;
+            var scale = GetDpiScale();
+
+            // Converged when within ONE physical pixel: at fractional scales the
+            // exact DIP target may sit between representable pixel sizes.
+            var tolerance = Math.Max(0.6, scale > 0 ? 1.05 / scale : 0.6);
+            var deltaWidth = _targetContentWidth - actualWidth;
+            var deltaHeight = _targetContentHeight - actualHeight;
+
+            if (Math.Abs(deltaWidth) <= tolerance && Math.Abs(deltaHeight) <= tolerance)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.ConvergeContentSize converged at "
+                    + $"{actualWidth:F1}x{actualHeight:F1} (target {_targetContentWidth:F1}x{_targetContentHeight:F1}, fixups={_clientSizeFixups})");
+                _targetContentWidth = 0;
+                _targetContentHeight = 0;
+                return;
+            }
+
+            // The OS applies our resize asynchronously — acting on a value that
+            // is still moving stacks corrections and oscillates. Only act once
+            // the same actual size has been observed on two consecutive frames.
+            if (Math.Abs(actualWidth - _lastConvergeWidth) > 0.01 || Math.Abs(actualHeight - _lastConvergeHeight) > 0.01)
+            {
+                _lastConvergeWidth = actualWidth;
+                _lastConvergeHeight = actualHeight;
+                return;
+            }
+
+            if (++_clientSizeFixups > 4)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.ConvergeContentSize giving up after 4 fixups "
+                    + $"(target={_targetContentWidth:F1}x{_targetContentHeight:F1}, actual={actualWidth:F1}x{actualHeight:F1})");
+                _targetContentWidth = 0;
+                _targetContentHeight = 0;
+                return;
+            }
+
+            try
+            {
+                if (_ownerWindow.WindowState != WindowState.Normal)
+                {
+                    // Maximized/minimized geometry is not ours to correct.
+                    _targetContentWidth = 0;
+                    _targetContentHeight = 0;
+                    return;
+                }
+
+                if (_ownerWindow.AppWindow is not { } appWindow || scale <= 0)
+                {
+                    return;
+                }
+
+                var outerWidth = appWindow.Size.Width / scale;
+                var outerHeight = appWindow.Size.Height / scale;
+
+                Internal.DockDiag.Log($"HostWindowControl.ConvergeContentSize fixup #{_clientSizeFixups}: "
+                    + $"content {actualWidth:F1}x{actualHeight:F1} -> {_targetContentWidth:F1}x{_targetContentHeight:F1} "
+                    + $"(outer {outerWidth:F1}x{outerHeight:F1} {deltaWidth:+0.0;-0.0}x{deltaHeight:+0.0;-0.0})");
+
+                _ownerWindow.Width = outerWidth + deltaWidth;
+                _ownerWindow.Height = outerHeight + deltaHeight;
+
+                // Force a fresh stability observation before the next action.
+                _lastConvergeWidth = -1;
+                _lastConvergeHeight = -1;
+            }
+            catch (Exception ex)
+            {
+                Internal.DockDiag.Log($"HostWindowControl.ConvergeContentSize failed: {ex.Message}");
+                _targetContentWidth = 0;
+                _targetContentHeight = 0;
+            }
+        }
+
+        /// <summary>
+        /// The window's dock CONTENT host(s): the size-tracking DockableControl
+        /// inside a Tool/Document pane (root wrapper and zero-size branches like
+        /// the auto-hide flyout host excluded). Returns the first plus whether
+        /// more than one exists — with several panes "the content size" is
+        /// ambiguous and callers fall back to client-minus-standard-chrome.
+        /// </summary>
+        private (DockableControl Host, bool Multiple) FindContentHosts()
+        {
+            DockableControl first = null;
+
+            try
+            {
+                foreach (var descendant in this.FindDescendants().OfType<DockableControl>())
+                {
+                    if (descendant.TrackingMode != TrackingMode.Visible || !descendant.IsSizeTracked)
+                    {
+                        continue;
+                    }
+
+                    if (descendant.DataContext is not IDock || descendant.DataContext is Model.Controls.IRootDock)
+                    {
+                        continue;
+                    }
+
+                    if (descendant.ActualWidth <= 0 || descendant.ActualHeight <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (first is null)
+                    {
+                        first = descendant;
+                    }
+                    else
+                    {
+                        return (first, true);
+                    }
+                }
+            }
+            catch
+            {
+                // Tree mid-teardown.
+            }
+
+            return (first, false);
+        }
+
+        /// <summary>
+        /// Outer-minus-client ESTIMATE in DIPs for the initial guess (the
+        /// convergence step absorbs its error).
+        /// </summary>
+        private (double Width, double Height) GetFrameOverheadEstimateDips()
+        {
             try
             {
                 if (_ownerWindow.AppWindow is { } appWindow)
@@ -552,18 +770,39 @@ namespace Dock.WinUI3.Controls
 
                     if (outer.Width >= client.Width && outer.Height >= client.Height && scale > 0)
                     {
-                        frameWidth = (outer.Width - client.Width) / scale;
-                        frameHeight = (outer.Height - client.Height) / scale;
+                        return ((outer.Width - client.Width) / scale, (outer.Height - client.Height) / scale);
                     }
                 }
             }
             catch
             {
-                // Window mid-teardown — fall back to the caption strip alone.
+                // Window mid-teardown — fall through to the zero estimate.
             }
 
-            var captionHeight = DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0);
-            return (frameWidth, frameHeight + captionHeight);
+            return (0.0, 0.0);
+        }
+
+        /// <summary>
+        /// Client-minus-content overhead in DIPs: the single-row title strip plus
+        /// the borders between the client edge and the content host (RootDockControl's
+        /// 1px frame and the pane's 1px content border — both hardcoded in their
+        /// templates). Present identically for tool and document floats.
+        /// Border sides are snapped to PHYSICAL pixels the way XAML layout
+        /// rounding does (a 1px border at 150% DPI arranges as 2 physical px =
+        /// 1.333 DIPs); without the snap every float lost ~1.3 DIPs of content
+        /// per border pair at fractional scales.
+        /// </summary>
+        private (double Width, double Height) GetContentChromeOverheadDips()
+        {
+            var scale = GetDpiScale();
+            double Snap(double dips) => scale > 0
+                ? Math.Round(dips * scale, MidpointRounding.AwayFromZero) / scale
+                : dips;
+
+            // Root frame + pane content border: 1px per side, two sides each.
+            var borders = 4 * Snap(1.0);
+            var titleRow = Snap(DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0));
+            return (borders, titleRow + borders);
         }
 
         private double GetDpiScale()
@@ -590,43 +829,36 @@ namespace Dock.WinUI3.Controls
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern uint GetDpiForWindow(IntPtr hwnd);
 
-        /// <summary>
-        /// Applies one window extent, skipping values the OS would refuse. A zero or
-        /// negative extent is the dangerous one: it reaches here whenever a layout was
-        /// saved before the window had ever been sized (the tracked extents start at
-        /// zero), and the resize call then fails with "The parameter is incorrect".
-        /// </summary>
-        private static void TrySetExtent(Action<double> apply, double value, string what)
-        {
-            if (!IsFinite(value) || value <= 0.0)
-            {
-                Internal.DockDiag.Log($"HostWindowControl.SetSize ignoring invalid {what} ({value})");
-                return;
-            }
-
-            try
-            {
-                apply(value);
-            }
-            catch (Exception ex)
-            {
-                Internal.DockDiag.Log($"HostWindowControl.SetSize failed for {what}={value}: {ex.Message}");
-            }
-        }
-
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
         public void GetSize(out double width, out double height)
         {
-            // Symmetric with SetSize: report the DOCK-CONTENT area. The tracked
-            // extents are the CLIENT size (Window.SizeChanged reports it in DIPs),
-            // which still contains the in-content caption strip.
-            width = _ownerWindowWidth;
-            height = _ownerWindowHeight;
+            // Symmetric with SetSize: report the CONTENT area (stored-size
+            // invariant). Preferred source is the MEASURED content host — the
+            // same layout quantity the docked-side recorder writes — so
+            // save/refloat round trips are exact. With several panes (or before
+            // the tree is up) fall back to client minus the standard chrome,
+            // mirroring what SetSize builds the window from.
+            var (host, multiple) = FindContentHosts();
+            if (host is not null && !multiple)
+            {
+                width = host.ActualWidth;
+                height = host.ActualHeight;
+                return;
+            }
+
+            width = ActualWidth > 0 ? ActualWidth : _ownerWindowWidth;
+            height = ActualHeight > 0 ? ActualHeight : _ownerWindowHeight;
+
+            var (chromeWidth, chromeHeight) = GetContentChromeOverheadDips();
+            if (width > 0)
+            {
+                width = Math.Max(0, width - chromeWidth);
+            }
 
             if (height > 0)
             {
-                height = Math.Max(0, height - DockMetrics.GetDouble("DockFloatTitleBarHeight", 32.0));
+                height = Math.Max(0, height - chromeHeight);
             }
         }
 
@@ -654,14 +886,260 @@ namespace Dock.WinUI3.Controls
             => Internal.LayoutGuard.Run(
                 this, () => base.ArrangeOverride(finalSize), finalSize, nameof(HostWindowControl) + ".Arrange");
 
+        // ----- Float single-row chrome: title-role arbitration -----
+        //
+        // Every tab strip living in this float window registers as a candidate;
+        // the strip whose PANE sits closest to the window origin becomes the
+        // title row: it stretches, gets the caption-button inset, and its blank
+        // trailing fill is handed to Window.SetTitleBar (native move / snap /
+        // double-click-maximize). Tabs stay client-area elements, so tab drag
+        // keeps feeding the existing dock pipeline untouched.
+
+        internal void RegisterTitleStrip(Internal.IFloatTitleBarStrip strip)
+        {
+            if (strip is null || _titleStripCandidates.Contains(strip))
+            {
+                return;
+            }
+
+            _titleStripCandidates.Add(strip);
+            RequestTitleStripUpdate();
+        }
+
+        internal void UnregisterTitleStrip(Internal.IFloatTitleBarStrip strip)
+        {
+            if (!_titleStripCandidates.Remove(strip))
+            {
+                return;
+            }
+
+            if (ReferenceEquals(strip, _titleStrip))
+            {
+                // Demote NOW: the strip is unloading and a deferred demotion
+                // would poke a dead template.
+                TrySetTitleRole(strip, false);
+                _titleStrip = null;
+                TrySetWindowTitleBar(null);
+            }
+
+            RequestTitleStripUpdate();
+        }
+
+        /// <summary>Deferred + coalesced (dispatcher hop, NOT a timer): strips
+        /// register from Loaded, before their first layout pass has produced
+        /// meaningful positions.</summary>
+        private void RequestTitleStripUpdate()
+        {
+            if (_titleStripUpdateQueued || _ownerWindowClosed)
+            {
+                return;
+            }
+
+            _titleStripUpdateQueued = true;
+            var enqueued = DispatcherQueue?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                _titleStripUpdateQueued = false;
+                UpdateTitleStrip();
+            }) ?? false;
+
+            if (!enqueued)
+            {
+                _titleStripUpdateQueued = false;
+            }
+        }
+
+        /// <summary>Per-frame drift check (see LayoutUpdated): re-arbitrates only
+        /// when the computed winner changed, so a settled window costs a couple
+        /// of transform reads per frame at most.</summary>
+        private void VerifyTitleStrip()
+        {
+            if (_titleStripUpdateQueued || _titleStripCandidates.Count == 0)
+            {
+                return;
+            }
+
+            if (!ReferenceEquals(PickTitleStrip(), _titleStrip))
+            {
+                RequestTitleStripUpdate();
+            }
+        }
+
+        private void UpdateTitleStrip()
+        {
+            if (_ownerWindowClosed)
+            {
+                return;
+            }
+
+            var winner = PickTitleStrip();
+            if (ReferenceEquals(winner, _titleStrip))
+            {
+                // Same owner; keep its inset fresh (RightInset can settle late).
+                PushTitleStripInset();
+                return;
+            }
+
+            if (_titleStrip is { } previous)
+            {
+                TrySetTitleRole(previous, false);
+            }
+
+            _titleStrip = winner;
+
+            if (winner is null)
+            {
+                // No strip (transient, or a stripless layout): fall back to the
+                // system's default top drag band rather than an immovable window.
+                TrySetWindowTitleBar(null);
+                return;
+            }
+
+            PushTitleStripInset();
+            TrySetTitleRole(winner, true);
+            TrySetWindowTitleBar(winner.TitleBarDragArea);
+
+            Internal.DockDiag.Log($"HostWindowControl title role -> {Internal.DockDiag.Describe(winner.Strip)}");
+        }
+
+        /// <summary>The candidate whose pane origin is closest to the window's
+        /// top-left ((y, x) lexicographic), i.e. the strip the single-row chrome
+        /// belongs to. Candidates that cannot be transformed (mid-teardown) are
+        /// skipped.</summary>
+        private Internal.IFloatTitleBarStrip PickTitleStrip()
+        {
+            Internal.IFloatTitleBarStrip best = null;
+            var bestX = double.MaxValue;
+            var bestY = double.MaxValue;
+
+            foreach (var candidate in _titleStripCandidates)
+            {
+                try
+                {
+                    var anchor = candidate.RankAnchor;
+                    if (anchor is null || candidate.Strip.XamlRoot is null)
+                    {
+                        continue;
+                    }
+
+                    // A pane that has never been arranged (or is collapsed away)
+                    // is not a real title-row candidate; its (0,0) origin would
+                    // beat every rendered pane.
+                    if (anchor.ActualWidth <= 0 || anchor.ActualHeight <= 0)
+                    {
+                        continue;
+                    }
+
+                    var origin = anchor.TransformToVisual(this).TransformPoint(new Windows.Foundation.Point(0, 0));
+                    // Half-DIP tolerance: panes on the same row should tie on Y
+                    // and fall through to the X comparison.
+                    if (best is null
+                        || origin.Y < bestY - 0.5
+                        || (Math.Abs(origin.Y - bestY) <= 0.5 && origin.X < bestX))
+                    {
+                        best = candidate;
+                        bestX = origin.X;
+                        bestY = origin.Y;
+                    }
+                }
+                catch
+                {
+                    // Candidate mid-teardown — not a valid title row.
+                }
+            }
+
+            return best;
+        }
+
+        private void TrySetTitleRole(Internal.IFloatTitleBarStrip strip, bool enabled)
+        {
+            try
+            {
+                switch (strip)
+                {
+                    case ToolTabStrip tool:
+                        tool.IsWindowTitleBar = enabled;
+                        break;
+                    case DocumentTabStrip document:
+                        document.IsWindowTitleBar = enabled;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Internal.DockDiag.Log($"HostWindowControl title role toggle failed: {ex.Message}");
+            }
+        }
+
+        private void TrySetWindowTitleBar(UIElement element)
+        {
+            try
+            {
+                _ownerWindow.SetTitleBar(element);
+            }
+            catch (Exception ex)
+            {
+                // Window mid-teardown, or not shown yet — the close path and the
+                // next arbitration re-run cover both.
+                Internal.DockDiag.Log($"HostWindowControl.SetTitleBar failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Space the title strip must keep clear of the system caption
+        /// buttons: AppWindow reports it in RAW pixels, the strip lays out in
+        /// DIPs. Falls back to three standard buttons' worth when the window is
+        /// not far enough along to report it.</summary>
+        private void PushTitleStripInset()
+        {
+            if (_titleStrip is null || _ownerWindowClosed)
+            {
+                return;
+            }
+
+            var inset = 138.0; // 3 caption buttons x 46 DIPs
+            try
+            {
+                var titleBar = _ownerWindow.AppWindow?.TitleBar;
+                var scale = GetDpiScale();
+                if (titleBar is { RightInset: > 0 } && scale > 0)
+                {
+                    inset = titleBar.RightInset / scale;
+                }
+            }
+            catch
+            {
+                // Keep the fallback.
+            }
+
+            try
+            {
+                _titleStrip.SetTitleBarRightInset(inset);
+            }
+            catch
+            {
+                // Strip mid-teardown; unregistration follows.
+            }
+        }
+
+        private readonly List<Internal.IFloatTitleBarStrip> _titleStripCandidates = new();
+        private Internal.IFloatTitleBarStrip _titleStrip;
+        private bool _titleStripUpdateQueued;
+
         private WindowEx _ownerWindow;
         private DockControl _dockControl;
-        private HostWindowTitleBar _titleBar;
 
         private double _ownerWindowX;
         private double _ownerWindowY;
         private double _ownerWindowWidth;
         private double _ownerWindowHeight;
         private bool _ownerWindowClosed;
+
+        // Pending SetSize target (content DIPs) for the per-frame convergence
+        // step; zero means no request in flight.
+        private double _targetContentWidth;
+        private double _targetContentHeight;
+        private int _clientSizeFixups;
+        private int _convergeWaitFrames;
+        private double _lastConvergeWidth = -1;
+        private double _lastConvergeHeight = -1;
     }
 }

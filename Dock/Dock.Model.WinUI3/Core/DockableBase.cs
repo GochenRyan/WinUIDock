@@ -56,6 +56,15 @@ namespace Dock.Model.WinUI3.Core
         [JsonIgnore]
         public IDockable RestoreOwner { get => (IDockable)GetValue(RestoreOwnerProperty); set => SetValue(RestoreOwnerProperty, value); }
 
+        /// <summary>
+        /// Optional tab icon (an IconSource). View-only and NOT serialized: like
+        /// Content, it is runtime state the host re-associates after a layout
+        /// load. Tabs collapse the icon slot when this is null.
+        /// </summary>
+        [IgnoreDataMember]
+        [JsonIgnore]
+        public object Icon { get => GetValue(IconProperty); set => SetValue(IconProperty, value); }
+
         [IgnoreDataMember]
         [JsonIgnore]
         public int RestoreIndex { get => (int)GetValue(RestoreIndexProperty); set => SetValue(RestoreIndexProperty, value); }
@@ -115,6 +124,12 @@ namespace Dock.Model.WinUI3.Core
         public static readonly DependencyProperty RestoreOwnerProperty = DependencyProperty.Register(
             nameof(RestoreOwner),
             typeof(IDockable),
+            typeof(DockableBase),
+            new PropertyMetadata(null));
+
+        public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
+            nameof(Icon),
+            typeof(object),
             typeof(DockableBase),
             new PropertyMetadata(null));
 

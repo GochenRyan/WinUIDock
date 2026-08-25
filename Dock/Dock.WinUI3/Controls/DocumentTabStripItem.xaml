@@ -76,6 +76,12 @@
                                 <StackPanel x:Name="PART_DragTool"
                                             Orientation="Horizontal"
                                             Spacing="4">
+                                    <!-- Icon slot: collapsed unless the dockable
+                                         carries an IconSource (DockableBase.Icon). -->
+                                    <IconSourceElement x:Name="PART_IconItem"
+                                               Width="16" Height="16"
+                                               VerticalAlignment="Center"
+                                               Visibility="Collapsed"/>
                                     <TextBlock x:Name="PART_TitleItem"
                                                Margin="0"
                                                VerticalAlignment="Center"

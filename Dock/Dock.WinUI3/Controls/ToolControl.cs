@@ -206,6 +206,23 @@ namespace Dock.WinUI3.Controls
             }
         }
 
+        /// <summary>
+        /// Float single-row chrome: flips the tab strip between its docked
+        /// place (VS-style bottom tabs) and the top of the pane, where it acts
+        /// as the float window's title row. Explicit both ways — the same strip
+        /// instance can be promoted and demoted while panes come and go inside
+        /// a float window.
+        /// </summary>
+        internal void SetTabStripPlacementTop(bool top)
+        {
+            if (_toolTabStrip is { } strip)
+            {
+                // Dock here is the library's own enum (Controls/Dock.cs), which
+                // shadows the root namespace inside this namespace.
+                DockPanel.SetDock(strip, top ? Dock.Top : Dock.Bottom);
+            }
+        }
+
         protected override Size MeasureOverride(Size availableSize)
         {
             Size size = base.MeasureOverride(availableSize);

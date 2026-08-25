@@ -33,12 +33,18 @@ public interface IDockWindow
     double Y { get; set; }
 
     /// <summary>
-    /// Gets or sets window width.
+    /// Gets or sets window width — the floated dock's CONTENT area in DIPs
+    /// (stored-size invariant). Producers: DockableControl content-host size
+    /// tracking (while docked) and IHostWindow.GetSize (while floating);
+    /// consumer: IHostWindow.SetSize, which adds the float chrome back on.
+    /// Keeping ONE meaning end to end is what makes float/dock round trips
+    /// size-stable.
     /// </summary>
     double WindowWidth { get; set; }
 
     /// <summary>
-    /// Gets or sets window height.
+    /// Gets or sets window height — the floated dock's CONTENT area in DIPs
+    /// (see <see cref="WindowWidth"/> for the invariant).
     /// </summary>
     double WindowHeight { get; set; }
 

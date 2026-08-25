@@ -83,9 +83,34 @@ namespace Dock.WinUI3.Controls
                 return;
             }
 
-            _border.Visibility = toolDock.GripMode == GripMode.Hidden
+            _border.Visibility = toolDock.GripMode == GripMode.Hidden || _captionSuppressed
                 ? Visibility.Collapsed
                 : Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Float single-row chrome: while this pane's tab strip is the window
+        /// title row, the caption is fully redundant (title -> tabs, max/close
+        /// -> system caption buttons, pin never applies while floating, menu ->
+        /// tab context flyout) and is collapsed through the same path
+        /// GripMode.Hidden uses.
+        /// </summary>
+        internal void SetCaptionSuppressed(bool suppressed)
+        {
+            if (_captionSuppressed == suppressed)
+            {
+                return;
+            }
+
+            _captionSuppressed = suppressed;
+            if (DataContext is ToolDock toolDock)
+            {
+                UpdateGripVisibility(toolDock);
+            }
+            else if (_border is not null)
+            {
+                _border.Visibility = suppressed ? Visibility.Collapsed : Visibility.Visible;
+            }
         }
 
         private void ToolChromeControl_Loaded(object sender, RoutedEventArgs e)
@@ -596,5 +621,6 @@ namespace Dock.WinUI3.Controls
         private MenuFlyoutItem _autoHideItem;
         private long _activeDockableToken;
         private long _gripModeToken;
+        private bool _captionSuppressed;
     }
 }

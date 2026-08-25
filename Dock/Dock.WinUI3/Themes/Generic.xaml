@@ -23,7 +23,6 @@
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStrip.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentTabStripItem.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/DocumentContentControl.xaml" />
-        <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowTitleBar.xaml" />
         <ResourceDictionary Source="ms-appx:///Dock.WinUI3/Controls/HostWindowControl.xaml" />
     </ResourceDictionary.MergedDictionaries>
 

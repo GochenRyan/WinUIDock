@@ -13,7 +13,9 @@
         <Setter Property="MinHeight" Value="0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="BorderThickness" Value="0 1 0 0" />
-        <Setter Property="Margin" Value="0" />
+        <!-- 2px tab gap via margin: TabOverflowPanel packs by DesiredSize,
+             which includes margins. -->
+        <Setter Property="Margin" Value="0,0,2,0" />
         <Setter Property="settings:DockProperties.IsDragArea" Value="True"/>
         <Setter Property="settings:DockProperties.IsDropArea" Value="True"/>
         <Setter Property="Template">
@@ -62,11 +64,38 @@
                             <StackPanel x:Name="PART_DragTool"
                                         Orientation="Horizontal"
                                         Spacing="2">
+                                <!-- Icon slot: collapsed unless the dockable
+                                     carries an IconSource (DockableBase.Icon). -->
+                                <IconSourceElement x:Name="PART_IconItem"
+                                        Width="16" Height="16"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed"/>
                                 <TextBlock x:Name="PART_TitleItem"
                                         VerticalAlignment="Center"
                                         Margin="0"
                                         FontSize="{ThemeResource DockTabItemFontSize}"
                                         Foreground="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                <!-- Close x: only shown on the ACTIVE tab while
+                                     the strip is a float window's title row. -->
+                                <Button x:Name="PART_CloseButton"
+                                        BorderThickness="0"
+                                        VerticalAlignment="Center"
+                                        Margin="0"
+                                        Padding="0"
+                                        MinWidth="0"
+                                        MinHeight="0"
+                                        Width="{ThemeResource DockTabCloseButtonSize}"
+                                        Height="{ThemeResource DockTabCloseButtonSize}"
+                                        CornerRadius="2"
+                                        Background="Transparent"
+                                        Visibility="Collapsed">
+                                    <Viewbox Width="{ThemeResource DockTabCloseGlyphSize}"
+                                             Height="{ThemeResource DockTabCloseGlyphSize}">
+                                        <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
+                                              Width="16" Height="16"
+                                              Fill="{ThemeResource DockTabItemForegroundRestBrush}"/>
+                                    </Viewbox>
+                                </Button>
                             </StackPanel>
                         </local:DockableControl>
                     </Border>

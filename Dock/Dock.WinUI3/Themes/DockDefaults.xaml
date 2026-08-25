@@ -179,8 +179,12 @@
     <!-- Splitter / borders -->
     <x:Double x:Key="DockSplitterThickness">4</x:Double>
     <Thickness x:Key="DockRootBorderThickness">1</Thickness>
-    <!-- Float window -->
+    <!-- Float window. The title bar height is also the height of a tab strip
+         promoted to the window title row (single-row float chrome); the min
+         drag width is the blank caption-drag area the strip always reserves so
+         the window stays movable even with many tabs. -->
     <x:Double x:Key="DockFloatTitleBarHeight">32</x:Double>
+    <x:Double x:Key="DockFloatTitleBarMinDragWidth">48</x:Double>
     <!-- Auto-hide -->
     <x:Double x:Key="DockPinBarThickness">26</x:Double>
     <x:Double x:Key="DockPinnedFlyoutSize">300</x:Double>

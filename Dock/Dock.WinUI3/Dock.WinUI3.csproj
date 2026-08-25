@@ -17,7 +17,6 @@
     <None Remove="Controls\DocumentTabStrip.xaml" />
     <None Remove="Controls\DocumentTabStripItem.xaml" />
     <None Remove="Controls\HostWindowControl.xaml" />
-    <None Remove="Controls\HostWindowTitleBar.xaml" />
     <None Remove="Controls\PinnedDockControl.xaml" />
     <None Remove="Controls\ProportionalDockControl.xaml" />
     <None Remove="Controls\ProportionalStackPanelSplitter.xaml" />
@@ -79,12 +78,6 @@
 
   <ItemGroup>
     <Page Update="Controls\HostWindowControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Controls\HostWindowTitleBar.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

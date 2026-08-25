@@ -2,15 +2,40 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Dock.WinUI3.Controls" xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+    xmlns:local="using:Dock.WinUI3.Controls">
 
     <Style TargetType="local:ToolTabStrip">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:ToolTabStrip">
+                    <!-- The strip doubles as a float window's single-row title
+                         bar: tabs left, then a blank fill that Window.SetTitleBar
+                         turns into the native move/snap drag region. Padding is
+                         the caption-button inset in title-role mode (consumed as
+                         a margin so the background still runs under the system
+                         buttons). -->
+                    <Border Background="{ThemeResource DockChromeBackgroundBrush}">
+                        <local:DockPanel LastChildFill="True"
+                                         Margin="{TemplateBinding Padding}">
+                            <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                            local:DockPanel.Dock="Left"/>
+                            <Border x:Name="PART_TitleBarDragArea"
+                                    Background="Transparent"/>
+                        </local:DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <controls:WrapPanel Name="HorizontalWrapPanel" 
-                                        Background="{ThemeResource DockChromeBackgroundBrush}" 
-                                        HorizontalSpacing="2"/>
+                    <!-- Single row; overflow scrolls (wheel) inside
+                         TabOverflowPanel. The previous WrapPanel wrapped into a
+                         second row that the strip's one-row height clipped into
+                         unreachable tabs — same trap DocumentTabStrip already
+                         fixed. The explicit height keeps the row centered when
+                         the strip is taller (title-role mode). -->
+                    <local:TabOverflowPanel Height="{ThemeResource DockToolTabStripHeight}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>

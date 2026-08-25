@@ -8,6 +8,13 @@
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
+    <!-- Unpackaged + self-contained, same shape as the LevelEditor.WinUI shell: the built exe
+         runs directly (no MSIX deploy) and bundles the Windows App Runtime. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Self-contained WinAppSDK content is contributed by every referenced Dock project,
+         which collides on publish (NETSDK1152). Dedupe instead of erroring. -->
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	<UseRidGraph>true</UseRidGraph>
   </PropertyGroup>
 
