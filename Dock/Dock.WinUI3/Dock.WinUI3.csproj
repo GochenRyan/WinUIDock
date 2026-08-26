@@ -47,7 +47,51 @@
     <ProjectReference Include="..\Dock.Model.WinUI3\Dock.Model.WinUI3.csproj" />
     <ProjectReference Include="..\Dock.Model\Dock.Model.csproj" />
     <ProjectReference Include="..\Dock.Settings\Dock.Settings.csproj" />
+    <!-- Not an assembly reference: build ordering + output path only. The dist
+         snapshot ships Dock.Serializer alongside the docking assemblies even
+         though nothing in this project consumes it. -->
+    <ProjectReference Include="..\Dock.Serializer\Dock.Serializer.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="DockDistSerializer" />
   </ItemGroup>
+
+  <!-- Consumer snapshot: everything an app needs to reference the Dock libraries as
+       binaries (assemblies + PRI resource indexes + compiled XAML content resolved via
+       ms-appx:///Dock.WinUI3/... + dependency manifest). The destination is wiped first
+       so deleted files can never linger as stale .xbf. Runs on Release builds, or on
+       demand with -p:DockDist=true. -->
+  <Target Name="PublishDockDist" AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Release' Or '$(DockDist)' == 'true'">
+    <PropertyGroup>
+      <DockDistDir>$(MSBuildProjectDirectory)\..\..\dist\</DockDistDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <DockDistRoot Include="$(TargetDir)Dock.Model.dll;
+                             $(TargetDir)Dock.Model.WinUI3.dll;
+                             $(TargetDir)Dock.Model.WinUI3.pri;
+                             $(TargetDir)Dock.Settings.dll;
+                             $(TargetDir)Dock.Settings.pri;
+                             $(TargetDir)Dock.WinUI3.dll;
+                             $(TargetDir)Dock.WinUI3.pri;
+                             $(TargetDir)Dock.WinUI3.deps.json" />
+      <DockDistRoot Include="@(DockDistSerializer)" />
+      <DockDistXaml Include="$(TargetDir)Dock.WinUI3\**\*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(DockDistDir)" />
+    <Copy SourceFiles="@(DockDistRoot)" DestinationFolder="$(DockDistDir)" />
+    <Copy SourceFiles="@(DockDistXaml)" DestinationFolder="$(DockDistDir)Dock.WinUI3\%(RecursiveDir)" />
+    <GetFileHash Files="@(DockDistRoot)" Algorithm="SHA256" HashEncoding="hex">
+      <Output TaskParameter="Items" ItemName="DockDistHashedFiles" />
+    </GetFileHash>
+    <PropertyGroup>
+      <DockDistCombinedHashes>@(DockDistHashedFiles->'%(FileHash)')</DockDistCombinedHashes>
+      <DockDistRevision>$([System.String]::Format('{0:x8}', $([MSBuild]::StableStringHash('$(DockDistCombinedHashes)'))))</DockDistRevision>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(DockDistDir)REVISION.txt" Overwrite="true"
+                      Lines="revision=$(DockDistRevision);configuration=$(Configuration)|$(Platform);tfm=$(TargetFramework);@(DockDistHashedFiles->'%(Filename)%(Extension)=%(FileHash)')" />
+    <Message Importance="high" Text="Dock dist snapshot -> $(DockDistDir)" />
+  </Target>
 
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
