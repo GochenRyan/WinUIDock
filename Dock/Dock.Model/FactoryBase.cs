@@ -28,12 +28,23 @@ public abstract partial class FactoryBase : IFactory
     /// <inheritdoc/>
     public virtual void CollapseDock(IDock dock)
     {
-        if (!dock.IsCollapsable || dock.VisibleDockables is null || dock.VisibleDockables.Count != 0 || !dock.CanClose)
+        if (!dock.IsCollapsable || dock.VisibleDockables is null || dock.VisibleDockables.Count != 0)
         {
             return;
         }
 
         var rootDock = FindRoot(dock, _ => true);
+
+        // CanClose=false marks an application fixture that must survive emptying —
+        // but only while it sits in the MAIN layout. Inside a floating window that
+        // guard would keep a blank, chrome-only window alive (and let it be
+        // serialized and restored forever), so it does not apply there: the empty
+        // dock collapses and the cascade removes the emptied float window.
+        if (!dock.CanClose && rootDock is not { Window: not null })
+        {
+            return;
+        }
+
         if (rootDock is { })
         {
             if (dock is IToolDock toolDock)
