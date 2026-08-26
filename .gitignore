@@ -339,4 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 # Consumer binary snapshot produced by the PublishDockDist target
-/dist/
+/Dock/dist/

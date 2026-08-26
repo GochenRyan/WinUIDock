@@ -64,7 +64,7 @@
   <Target Name="PublishDockDist" AfterTargets="Build"
           Condition="'$(Configuration)' == 'Release' Or '$(DockDist)' == 'true'">
     <PropertyGroup>
-      <DockDistDir>$(MSBuildProjectDirectory)\..\..\dist\</DockDistDir>
+      <DockDistDir>$(MSBuildProjectDirectory)\..\dist\</DockDistDir>
     </PropertyGroup>
     <ItemGroup>
       <DockDistRoot Include="$(TargetDir)Dock.Model.dll;
