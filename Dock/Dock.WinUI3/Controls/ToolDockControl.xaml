@@ -18,7 +18,7 @@
                     <local:DockableControl Name="PART_DockableControl"
                                            TrackingMode="Visible"
                                            IsSizeTracked="False"
-                                           Background="{ThemeResource DockBackgroundBrush}">
+                                           Background="{ThemeResource DockLayoutBackgroundBrush}">
                         <local:ToolChromeControl x:Name="PART_ToolChromeControl">
                             <!--<local:ToolChromeControl IsActive="{Binding IsActive, Mode=OneWay}" 
                                                  Visibility="{Binding VisibleDockables, Mode=OneWay, Converter={StaticResource CollectionVisibilityConverter}, ConverterParameter=True}">-->

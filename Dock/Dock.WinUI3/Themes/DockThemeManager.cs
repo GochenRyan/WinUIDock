@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
@@ -140,19 +141,62 @@ namespace Dock.WinUI3
         {
             try
             {
-                window.SystemBackdrop = backdrop switch
+                // Assigning an unsupported material succeeds but renders nothing.
+                // Going transparent on top of that would leave a see-through
+                // window, so support is checked before either step.
+                var material = backdrop switch
                 {
-                    DockBackdrop.Mica => new MicaBackdrop(),
-                    DockBackdrop.MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
-                    DockBackdrop.Acrylic when _acrylicEnabled => new DesktopAcrylicBackdrop(),
+                    DockBackdrop.Mica when MicaController.IsSupported() => (SystemBackdrop)new MicaBackdrop(),
+                    DockBackdrop.MicaAlt when MicaController.IsSupported() => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+                    DockBackdrop.Acrylic when _acrylicEnabled && DesktopAcrylicController.IsSupported()
+                        => new DesktopAcrylicBackdrop(),
                     _ => null,
                 };
+
+                window.SystemBackdrop = material;
+                ApplyWindowSurfaceAlpha(material is not null);
             }
             catch
             {
                 // Closed window — the weak reference drops it from the registry.
             }
         }
+
+        /// <summary>
+        /// A window backdrop only reaches the eye if the surface above it lets it
+        /// through, and an opaque window surface makes SystemBackdrop a silent
+        /// no-op — the most common way the layered surface model is lost.
+        ///
+        /// Rather than hunting for "the root element" (host shells wrap their
+        /// content — WinUIEx's WindowEx does — so the element found is often not
+        /// the one actually painting), this mutates the shared
+        /// DockWindowSurfaceBrush instance: every consumer of that key updates at
+        /// once, in both theme dictionaries, with no load-order hazard. Hosts opt
+        /// in simply by painting their window root with that key.
+        /// </summary>
+        private static void ApplyWindowSurfaceAlpha(bool transparent)
+        {
+            foreach (var theme in new[] { ElementTheme.Dark, ElementTheme.Light })
+            {
+                if (TryGetResource("DockWindowSurfaceBrush", theme, out var value) &&
+                    value is SolidColorBrush brush)
+                {
+                    var color = brush.Color;
+                    if (transparent)
+                    {
+                        _windowSurfaceAlpha.TryAdd(theme, color.A);
+                        brush.Color = Color.FromArgb(0, color.R, color.G, color.B);
+                    }
+                    else if (_windowSurfaceAlpha.TryGetValue(theme, out var original))
+                    {
+                        brush.Color = Color.FromArgb(original, color.R, color.G, color.B);
+                        _windowSurfaceAlpha.Remove(theme);
+                    }
+                }
+            }
+        }
+
+        private static readonly Dictionary<ElementTheme, byte> _windowSurfaceAlpha = new();
 
         /// <summary>
         /// Registers a window: its content root follows SetTheme AND its OS title

@@ -58,7 +58,19 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ToolChromeControl">
-                    <Grid RowDefinitions="Auto,*">
+                    <!-- The pane card: the one opaque surface in a tool dock. The
+                         layout chain above it is transparent so the window
+                         backdrop shows through the gaps between cards. Border
+                         clips its child to CornerRadius in WinUI, which is what
+                         rounds the caption and the content below it.
+                         PinnedDockControl clears this background by name when the
+                         pane is an auto-hide flyout, so the acrylic it paints on
+                         the outer DockableControl stays visible. -->
+                    <Border x:Name="PART_PaneRoot"
+                            Background="{ThemeResource DockPaneBackgroundBrush}"
+                            BorderBrush="{ThemeResource DockPaneBorderBrush}"
+                            BorderThickness="{ThemeResource DockPaneBorderThickness}"
+                            CornerRadius="{ThemeResource DockPaneCornerRadius}">
                         <!-- WinUI requires VisualStateGroups on the template ROOT element;
                              attaching them to a child (PART_Border) makes GoToState a no-op. -->
                         <VisualStateManager.VisualStateGroups>
@@ -77,65 +89,67 @@
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        <ContentPresenter Grid.Row="1" />
-                        <Border x:Name="PART_Border"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                VerticalAlignment="Top"
-                                Grid.Row="0"
-                                Background="{ThemeResource DockCaptionBackgroundBrush}"
-                                Height="{ThemeResource DockToolChromeHeight}">
-                            <Grid x:Name="PART_Grip"
-                                  settings:DockProperties.IsDragArea="True">
-                                <local:DockPanel LastChildFill="True" Margin="{ThemeResource DockCaptionPadding}">
-                                    <TextBlock x:Name="PART_Title"
-                                               local:DockPanel.Dock="Left"
-                                               FontSize="{ThemeResource DockCaptionFontSize}"
-                                               Foreground="{ThemeResource DockCaptionForegroundBrush}"
-                                               VerticalAlignment="Center"/>
-                                    <StackPanel local:DockPanel.Dock="Right"
-                                                Orientation="Horizontal">
-                                        <Button x:Name="PART_MenuButton"
-                                                Style="{StaticResource ChromeButton}">
-                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
-                                                     Height="{ThemeResource DockCaptionGlyphSize}">
-                                                <Path local:DockIcon.Data="{StaticResource DockIconMenuData}"
-                                                      Width="16" Height="16"
-                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
-                                            </Viewbox>
-                                        </Button>
-                                        <Button x:Name="PART_PinButton"
-                                                Style="{StaticResource ChromeButton}">
-                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
-                                                     Height="{ThemeResource DockCaptionGlyphSize}">
-                                                <Path local:DockIcon.Data="{StaticResource DockIconPinData}"
-                                                      Width="16" Height="16"
-                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
-                                            </Viewbox>
-                                        </Button>
-                                        <Button x:Name="PART_MaximizeRestoreButton"
-                                                Style="{StaticResource ChromeButton}">
-                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
-                                                     Height="{ThemeResource DockCaptionGlyphSize}">
-                                                <Path local:DockIcon.Data="{StaticResource DockIconMaximizeData}"
-                                                      Width="16" Height="16"
-                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
-                                            </Viewbox>
-                                        </Button>
-                                        <Button x:Name="PART_CloseButton"
-                                                Style="{StaticResource ChromeButton}">
-                                            <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
-                                                     Height="{ThemeResource DockCaptionGlyphSize}">
-                                                <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
-                                                      Width="16" Height="16"
-                                                      Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
-                                            </Viewbox>
-                                        </Button>
-                                    </StackPanel>
-                                    <Grid x:Name="PART_Grid" />
-                                </local:DockPanel>
+                        <Grid RowDefinitions="Auto,*">
+                            <ContentPresenter Grid.Row="1" />
+                            <Border x:Name="PART_Border"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    VerticalAlignment="Top"
+                                    Grid.Row="0"
+                                    Background="{ThemeResource DockCaptionBackgroundBrush}"
+                                    Height="{ThemeResource DockToolChromeHeight}">
+                                <Grid x:Name="PART_Grip"
+                                      settings:DockProperties.IsDragArea="True">
+                                    <local:DockPanel LastChildFill="True" Margin="{ThemeResource DockCaptionPadding}">
+                                        <TextBlock x:Name="PART_Title"
+                                                   local:DockPanel.Dock="Left"
+                                                   FontSize="{ThemeResource DockCaptionFontSize}"
+                                                   Foreground="{ThemeResource DockCaptionForegroundBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <StackPanel local:DockPanel.Dock="Right"
+                                                    Orientation="Horizontal">
+                                            <Button x:Name="PART_MenuButton"
+                                                    Style="{StaticResource ChromeButton}">
+                                                <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                         Height="{ThemeResource DockCaptionGlyphSize}">
+                                                    <Path local:DockIcon.Data="{StaticResource DockIconMenuData}"
+                                                          Width="16" Height="16"
+                                                          Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                                </Viewbox>
+                                            </Button>
+                                            <Button x:Name="PART_PinButton"
+                                                    Style="{StaticResource ChromeButton}">
+                                                <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                         Height="{ThemeResource DockCaptionGlyphSize}">
+                                                    <Path local:DockIcon.Data="{StaticResource DockIconPinData}"
+                                                          Width="16" Height="16"
+                                                          Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                                </Viewbox>
+                                            </Button>
+                                            <Button x:Name="PART_MaximizeRestoreButton"
+                                                    Style="{StaticResource ChromeButton}">
+                                                <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                         Height="{ThemeResource DockCaptionGlyphSize}">
+                                                    <Path local:DockIcon.Data="{StaticResource DockIconMaximizeData}"
+                                                          Width="16" Height="16"
+                                                          Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                                </Viewbox>
+                                            </Button>
+                                            <Button x:Name="PART_CloseButton"
+                                                    Style="{StaticResource ChromeButton}">
+                                                <Viewbox Width="{ThemeResource DockCaptionGlyphSize}"
+                                                         Height="{ThemeResource DockCaptionGlyphSize}">
+                                                    <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
+                                                          Width="16" Height="16"
+                                                          Fill="{ThemeResource DockCaptionButtonForegroundBrush}"/>
+                                                </Viewbox>
+                                            </Button>
+                                        </StackPanel>
+                                        <Grid x:Name="PART_Grid" />
+                                    </local:DockPanel>
                             </Grid>
                         </Border>
-                    </Grid>
+                        </Grid>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

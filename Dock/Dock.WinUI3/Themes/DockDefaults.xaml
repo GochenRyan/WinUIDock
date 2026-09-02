@@ -22,13 +22,31 @@
 
         <!-- ===== Black theme (primary) ===== -->
         <ResourceDictionary x:Key="Default">
-            <!-- Surfaces -->
-            <SolidColorBrush x:Key="DockBackgroundBrush" Color="#1A1A1A" />
-            <SolidColorBrush x:Key="DockChromeBackgroundBrush" Color="#141414" />
-            <SolidColorBrush x:Key="DockPaneBackgroundBrush" Color="#202020" />
-            <SolidColorBrush x:Key="DockFloatWindowBackgroundBrush" Color="#1A1A1A" />
+            <!-- Surfaces. Five tiers, see the surface-model note at the bottom of
+                 this file. Greys carry a slight blue cast on purpose: neutral
+                 grey over a colored Mica backdrop reads as dirty. -->
+            <!-- L0/L1: the layout chain must stay transparent for the window
+                 backdrop to show through the gaps between panes. -->
+            <SolidColorBrush x:Key="DockLayoutBackgroundBrush" Color="Transparent" />
+            <!-- Opaque window base. NOT a layout surface: DockThemeManager reads
+                 this as the AppWindow title bar color, so it must stay opaque. -->
+            <SolidColorBrush x:Key="DockBackgroundBrush" Color="#16161A" />
+            <!-- What the HOST paints its window root with. Same colour as
+                 DockBackgroundBrush, but a separate instance: applying a window
+                 backdrop drops this one's alpha to 0 so the material shows
+                 through, and the title bar colour must not follow it. -->
+            <SolidColorBrush x:Key="DockWindowSurfaceBrush" Color="#16161A" />
+            <!-- Tab strips sit on the pane card, so they share its color. -->
+            <SolidColorBrush x:Key="DockChromeBackgroundBrush" Color="#1C1C20" />
+            <!-- L2 -->
+            <SolidColorBrush x:Key="DockPaneBackgroundBrush" Color="#1C1C20" />
+            <!-- L3: selected tab + the content it merges into, one step up. -->
+            <SolidColorBrush x:Key="DockSurfaceRaisedBrush" Color="#24242A" />
+            <!-- L4: inputs and scrollable list beds, one step down. -->
+            <SolidColorBrush x:Key="DockSurfaceSunkenBrush" Color="#161619" />
+            <SolidColorBrush x:Key="DockFloatWindowBackgroundBrush" Color="#16161A" />
             <!-- Tool caption -->
-            <SolidColorBrush x:Key="DockCaptionBackgroundBrush" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="DockCaptionBackgroundBrush" Color="#1C1C20" />
             <SolidColorBrush x:Key="DockCaptionActiveBackgroundBrush" Color="{ThemeResource SystemAccentColorDark1}" />
             <SolidColorBrush x:Key="DockCaptionForegroundBrush" Color="#C5C5C5" />
             <SolidColorBrush x:Key="DockCaptionActiveForegroundBrush" Color="#FFFFFF" />
@@ -37,20 +55,22 @@
             <SolidColorBrush x:Key="DockCaptionButtonForegroundBrush" Color="#C5C5C5" />
             <!-- Tabs -->
             <SolidColorBrush x:Key="DockTabItemBackgroundRestBrush" Color="Transparent" />
-            <SolidColorBrush x:Key="DockTabItemBackgroundHoverBrush" Color="#2A2A2A" />
-            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedBrush" Color="#202020" />
-            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedUnfocusedBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="DockTabItemForegroundRestBrush" Color="#A0A0A0" />
-            <SolidColorBrush x:Key="DockTabItemForegroundHoverBrush" Color="#E6E6E6" />
+            <SolidColorBrush x:Key="DockTabItemBackgroundHoverBrush" Color="#2E2E36" />
+            <!-- Selected tab = L3, matching the content it merges into. -->
+            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedBrush" Color="#24242A" />
+            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedUnfocusedBrush" Color="#1F1F24" />
+            <SolidColorBrush x:Key="DockTabItemForegroundRestBrush" Color="#9A9AA4" />
+            <SolidColorBrush x:Key="DockTabItemForegroundHoverBrush" Color="#E6E6EA" />
             <SolidColorBrush x:Key="DockTabItemForegroundSelectedBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="DockTabItemAccentBrush" Color="{ThemeResource SystemAccentColorLight2}" />
-            <SolidColorBrush x:Key="DockTabCloseButtonHoverBrush" Color="#3A3A3A" />
-            <!-- Borders -->
-            <SolidColorBrush x:Key="DockBorderBrush" Color="#2E2E2E" />
-            <SolidColorBrush x:Key="DockPaneBorderBrush" Color="#2E2E2E" />
+            <SolidColorBrush x:Key="DockTabCloseButtonHoverBrush" Color="#3A3A44" />
+            <!-- Borders. Separation is carried by gap + surface tone; borders are
+                 a faint edge highlight, not a drawn frame. -->
+            <SolidColorBrush x:Key="DockBorderBrush" Color="#12FFFFFF" />
+            <SolidColorBrush x:Key="DockPaneBorderBrush" Color="#12FFFFFF" />
             <!-- Splitter (invisible at rest, game-editor style) -->
             <SolidColorBrush x:Key="DockSplitterBackgroundBrush" Color="Transparent" />
-            <SolidColorBrush x:Key="DockSplitterHoverBrush" Color="#3A3A3A" />
+            <SolidColorBrush x:Key="DockSplitterHoverBrush" Color="#3A3A44" />
             <SolidColorBrush x:Key="DockSplitterPressedBrush" Color="{ThemeResource SystemAccentColorDark1}" />
             <!-- Drag/drop guides and preview -->
             <SolidColorBrush x:Key="DockDropPreviewFillBrush" Color="{ThemeResource SystemAccentColor}" Opacity="0.35" />
@@ -61,7 +81,7 @@
             <SolidColorBrush x:Key="DockGuideGlyphAccentBrush" Color="{ThemeResource SystemAccentColorLight2}" />
             <SolidColorBrush x:Key="DockGuideHoverBackgroundBrush" Color="#303030" />
             <!-- Auto-hide pin bar -->
-            <SolidColorBrush x:Key="DockPinBarBackgroundBrush" Color="#141414" />
+            <SolidColorBrush x:Key="DockPinBarBackgroundBrush" Color="#16161A" />
             <SolidColorBrush x:Key="DockPinItemForegroundBrush" Color="#A0A0A0" />
             <SolidColorBrush x:Key="DockPinItemHoverBrush" Color="#2A2A2A" />
             <SolidColorBrush x:Key="DockPinItemAccentBrush" Color="{ThemeResource SystemAccentColorLight2}" />
@@ -90,11 +110,16 @@
 
         <!-- ===== Light theme ===== -->
         <ResourceDictionary x:Key="Light">
-            <!-- Surfaces -->
-            <SolidColorBrush x:Key="DockBackgroundBrush" Color="#F3F3F3" />
-            <SolidColorBrush x:Key="DockChromeBackgroundBrush" Color="#EBEBEB" />
-            <SolidColorBrush x:Key="DockPaneBackgroundBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="DockFloatWindowBackgroundBrush" Color="#F3F3F3" />
+            <!-- Surfaces — same five tiers as the Default dictionary. -->
+            <SolidColorBrush x:Key="DockLayoutBackgroundBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DockBackgroundBrush" Color="#E4E4E8" />
+            <SolidColorBrush x:Key="DockWindowSurfaceBrush" Color="#E4E4E8" />
+            <SolidColorBrush x:Key="DockChromeBackgroundBrush" Color="#F7F7F9" />
+            <SolidColorBrush x:Key="DockPaneBackgroundBrush" Color="#F7F7F9" />
+            <!-- Light inverts the direction: raised = brighter, sunken = duller. -->
+            <SolidColorBrush x:Key="DockSurfaceRaisedBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DockSurfaceSunkenBrush" Color="#EBEBEF" />
+            <SolidColorBrush x:Key="DockFloatWindowBackgroundBrush" Color="#E4E4E8" />
             <!-- Tool caption -->
             <SolidColorBrush x:Key="DockCaptionBackgroundBrush" Color="#E8E8E8" />
             <SolidColorBrush x:Key="DockCaptionActiveBackgroundBrush" Color="{ThemeResource SystemAccentColorDark1}" />
@@ -107,15 +132,15 @@
             <SolidColorBrush x:Key="DockTabItemBackgroundRestBrush" Color="Transparent" />
             <SolidColorBrush x:Key="DockTabItemBackgroundHoverBrush" Color="#DEDEDE" />
             <SolidColorBrush x:Key="DockTabItemBackgroundSelectedBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedUnfocusedBrush" Color="#EFEFEF" />
+            <SolidColorBrush x:Key="DockTabItemBackgroundSelectedUnfocusedBrush" Color="#F2F2F2" />
             <SolidColorBrush x:Key="DockTabItemForegroundRestBrush" Color="#616161" />
             <SolidColorBrush x:Key="DockTabItemForegroundHoverBrush" Color="#1A1A1A" />
             <SolidColorBrush x:Key="DockTabItemForegroundSelectedBrush" Color="#1A1A1A" />
             <SolidColorBrush x:Key="DockTabItemAccentBrush" Color="{ThemeResource SystemAccentColorDark1}" />
             <SolidColorBrush x:Key="DockTabCloseButtonHoverBrush" Color="#CFCFCF" />
-            <!-- Borders -->
-            <SolidColorBrush x:Key="DockBorderBrush" Color="#D6D6D6" />
-            <SolidColorBrush x:Key="DockPaneBorderBrush" Color="#D6D6D6" />
+            <!-- Borders — faint edge highlight, not a drawn frame. -->
+            <SolidColorBrush x:Key="DockBorderBrush" Color="#22000000" />
+            <SolidColorBrush x:Key="DockPaneBorderBrush" Color="#22000000" />
             <!-- Splitter (invisible at rest, game-editor style) -->
             <SolidColorBrush x:Key="DockSplitterBackgroundBrush" Color="Transparent" />
             <SolidColorBrush x:Key="DockSplitterHoverBrush" Color="#C9C9C9" />
@@ -157,7 +182,31 @@
     <!-- ===== Metrics (theme-invariant) =====
          Defaults are tuned for a compact game-editor density. XAML consumers use
          {ThemeResource}; C#-side consumers go through DockMetrics (keep its
-         fallback constants in sync with these values). -->
+         fallback constants in sync with these values).
+
+         NOTE: {ThemeResource} inside a Style Setter of a CUSTOM TargetType is
+         evaluated eagerly at dictionary parse and crashes at startup. Consume
+         every key below on TEMPLATE ELEMENTS, never in a Setter on a local: type. -->
+
+    <!-- Surface geometry. The floating-island look comes from three things
+         together — corner radius, the gap between panes, and the transparent
+         layout chain behind them. Removing any one of them collapses it.
+
+         The gap is NOT a pane margin: a margin would stack with the splitter
+         that already sits between two panes and double-count. Instead the
+         splitter IS the gap (its hit area therefore equals the visible gap),
+         and DockRootPadding supplies the same gap along the window edges. -->
+    <CornerRadius x:Key="DockPaneCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="DockPaneTopCornerRadius">8,8,0,0</CornerRadius>
+    <CornerRadius x:Key="DockPaneBottomCornerRadius">0,0,8,8</CornerRadius>
+    <CornerRadius x:Key="DockControlCornerRadius">4</CornerRadius>
+    <Thickness x:Key="DockRootPadding">6</Thickness>
+    <Thickness x:Key="DockPaneBorderThickness">1</Thickness>
+    <!-- Inset between a pane card and its hosted content. 0 by default: the gap
+         between cards already supplies the breathing room, and a viewport that
+         must run edge-to-edge would be boxed in. Hosts opt in per surface. -->
+    <Thickness x:Key="DockPaneContentPadding">0</Thickness>
+
     <!-- Tool caption (chrome) -->
     <x:Double x:Key="DockToolChromeHeight">26</x:Double>
     <x:Double x:Key="DockCaptionFontSize">12</x:Double>
@@ -171,14 +220,17 @@
     <x:Double x:Key="DockDocumentTabStripHeight">28</x:Double>
     <Thickness x:Key="DockTabItemPadding">8,0,4,0</Thickness>
     <x:Double x:Key="DockTabItemFontSize">12</x:Double>
-    <CornerRadius x:Key="DockDocumentTabCornerRadius">4,4,0,0</CornerRadius>
-    <CornerRadius x:Key="DockToolTabCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="DockDocumentTabCornerRadius">6,6,0,0</CornerRadius>
+    <!-- Tool tabs sit along the BOTTOM of the pane, so they round downwards. -->
+    <CornerRadius x:Key="DockToolTabCornerRadius">0,0,6,6</CornerRadius>
     <x:Double x:Key="DockTabCloseButtonSize">16</x:Double>
     <x:Double x:Key="DockTabCloseGlyphSize">8</x:Double>
     <x:Double x:Key="DockActiveTabUnderlineThickness">2</x:Double>
-    <!-- Splitter / borders -->
-    <x:Double x:Key="DockSplitterThickness">4</x:Double>
-    <Thickness x:Key="DockRootBorderThickness">1</Thickness>
+    <!-- Splitter / borders. The splitter doubles as the inter-pane gap, so its
+         thickness is the gap width (keep DockRootPadding equal to it). -->
+    <x:Double x:Key="DockSplitterThickness">6</x:Double>
+    <!-- 0: the root no longer draws a frame; panes are separated by gap + tone. -->
+    <Thickness x:Key="DockRootBorderThickness">0</Thickness>
     <!-- Float window. The title bar height is also the height of a tab strip
          promoted to the window title row (single-row float chrome); the min
          drag width is the blank caption-drag area the strip always reserves so
@@ -199,10 +251,14 @@
          shared between elements in WinUI (a shared Style Data setter silently
          fails), so consume these through the DockIcon.Data attached property,
          which converts the string to a fresh Geometry per element:
-             <Path local:DockIcon.Data="{ThemeResource DockIconCloseData}"
+             <Path local:DockIcon.Data="{StaticResource DockIconCloseData}"
                    Width="16" Height="16" Fill="..."/>
          inside a Viewbox sized by the matching glyph-size metric. Hosts override
-         an icon by redefining its string key. -->
+         an icon by redefining its string key.
+         StaticResource, NOT ThemeResource: a {ThemeResource} aimed at a CUSTOM
+         attached property is silently dropped by the WinUI 3 runtime — nothing
+         is assigned and nothing is reported. Icon geometry is theme-invariant,
+         so the one-shot StaticResource is the right tool here anyway. -->
     <x:String x:Key="DockIconCloseData">M3.57,2.43 L13.57,12.43 L12.43,13.57 L2.43,3.57 Z M12.43,2.43 L13.57,3.57 L3.57,13.57 L2.43,12.43 Z</x:String>
     <x:String x:Key="DockIconMenuData">M2.6,5.2 L8,10.6 L13.4,5.2 L12.3,4.1 L8,8.4 L3.7,4.1 Z</x:String>
     <x:String x:Key="DockIconPinData">M6,1.5 L10,1.5 L10,6 L12,8 L4,8 L6,6 Z M7.4,8.5 L8.6,8.5 L8,13.5 Z</x:String>

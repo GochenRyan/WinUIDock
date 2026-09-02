@@ -185,11 +185,13 @@ namespace Dock.WinUI3.Controls
 
         /// <summary>
         /// Locates the flyout's paint surfaces once the inner templates exist:
-        /// the outer DockableControl (solid DockBackgroundBrush by template)
-        /// becomes the acrylic flyout surface, and the tool pane border becomes
-        /// transparent so the surface shows through the content area. With
-        /// acrylic disabled (the default) the surface renders the brush's solid
-        /// FallbackColor — visually the plain theme.
+        /// the outer DockableControl becomes the acrylic flyout surface, and the
+        /// surfaces stacked above it are cleared so it shows through the content
+        /// area. With acrylic disabled (the default) the surface renders the
+        /// brush's solid FallbackColor — visually the plain theme.
+        /// Two surfaces must be cleared: the tool pane border, and the pane card
+        /// ToolChromeControl paints (PART_PaneRoot) — the card is opaque by
+        /// design and would otherwise hide the material entirely.
         /// </summary>
         private void TryApplyFlyoutMaterial(object sender, object e)
         {
@@ -207,6 +209,10 @@ namespace Dock.WinUI3.Controls
             LayoutUpdated -= TryApplyFlyoutMaterial;
             _flyoutSurface = surface;
             paneBorder.Background = null;
+            if (_pinnedToolDock.FindDescendant<Border>(b => b.Name == "PART_PaneRoot") is { } paneCard)
+            {
+                paneCard.Background = null;
+            }
             ApplyFlyoutSurface();
         }
 

@@ -22,7 +22,12 @@
                             <local:ToolPinnedControl x:Name ="PART_BottomPinnedControl" 
                                                      local:DockPanel.Dock="Bottom" 
                                                      Orientation="Horizontal"/>
-                            <Grid BorderThickness="{ThemeResource DockRootBorderThickness}" BorderBrush="{ThemeResource DockBorderBrush}">
+                            <!-- Padding supplies along the window edges the same
+                                 gap the splitter supplies between panes, so every
+                                 pane card is inset by exactly one gap. -->
+                            <Grid BorderThickness="{ThemeResource DockRootBorderThickness}"
+                                  BorderBrush="{ThemeResource DockBorderBrush}"
+                                  Padding="{ThemeResource DockRootPadding}">
                                 <local:ProportionalDockControl x:Name ="PART_ProportionalDockControl"/>
                                 <local:PinnedDockControl x:Name="PART_PinnedDockControl"/>
                             </Grid>

@@ -12,25 +12,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:DocumentControl">
-                    <local:DockPanel x:Name="PART_DockPanel">
-                        <local:DocumentTabStrip x:Name="PART_TabStrip"
-                                                local:DockPanel.Dock="Top"
-                                                MaxHeight="{ThemeResource DockDocumentTabStripHeight}">
+                    <!-- The document pane card. The tab strip sits ON the card
+                         (its own background is the card colour) and the content
+                         below is one tier up, so the selected tab and the content
+                         read as a single connected shape. -->
+                    <Border x:Name="PART_PaneRoot"
+                            Background="{ThemeResource DockPaneBackgroundBrush}"
+                            BorderBrush="{ThemeResource DockPaneBorderBrush}"
+                            BorderThickness="{ThemeResource DockPaneBorderThickness}"
+                            CornerRadius="{ThemeResource DockPaneCornerRadius}">
+                        <local:DockPanel x:Name="PART_DockPanel">
+                            <local:DocumentTabStrip x:Name="PART_TabStrip"
+                                                    local:DockPanel.Dock="Top"
+                                                    MaxHeight="{ThemeResource DockDocumentTabStripHeight}">
 
-                        </local:DocumentTabStrip>
-                        <Border x:Name="PART_Border"
-                                local:DockPanel.Dock="Bottom"
-                                Background="{ThemeResource DockPaneBackgroundBrush}"
-                                BorderBrush="{ThemeResource DockPaneBorderBrush}"
-                                BorderThickness="1">
-                            <local:DockableControl x:Name="PART_DockableControl"
-                                                   TrackingMode="Visible">
-                                <local:DocumentContentControl x:Name="PART_DocumentContentControl"
-                                                  HorizontalAlignment="Stretch"
-                                                  VerticalAlignment="Stretch"/>
-                            </local:DockableControl>
-                        </Border>
-                    </local:DockPanel>
+                            </local:DocumentTabStrip>
+                            <Border x:Name="PART_Border"
+                                    local:DockPanel.Dock="Bottom"
+                                    Background="{ThemeResource DockSurfaceRaisedBrush}"
+                                    BorderThickness="0"
+                                    CornerRadius="{ThemeResource DockPaneBottomCornerRadius}"
+                                    Padding="{ThemeResource DockPaneContentPadding}">
+                                <local:DockableControl x:Name="PART_DockableControl"
+                                                       TrackingMode="Visible">
+                                    <local:DocumentContentControl x:Name="PART_DocumentContentControl"
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Stretch"/>
+                                </local:DockableControl>
+                            </Border>
+                        </local:DockPanel>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

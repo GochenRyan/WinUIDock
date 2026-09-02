@@ -4,9 +4,11 @@ using Dock.Model.Core;
 using Dock.Serializer;
 using Dock.WinUI3;
 using Dock.WinUI3.Controls;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +43,8 @@ namespace DockWinUISample
             // The black theme is the primary look; opt into it regardless of the
             // OS light/dark setting. Remove this to follow the OS theme instead.
             DockThemeManager.SetTheme(ElementTheme.Dark);
+
+            ApplyQaOverrides();
 
             _serializer = new DockSerializer(typeof(List<>));
 
@@ -251,6 +255,60 @@ namespace DockWinUISample
             // Main window now; float windows created later pick up the default.
             DockThemeManager.DefaultBackdrop = backdrop;
             DockThemeManager.SetBackdrop(this, backdrop);
+        }
+
+        /// <summary>
+        /// Startup overrides for screenshot regression runs:
+        ///   DOCKSAMPLE_BACKDROP = None | Mica | MicaAlt | Acrylic
+        ///   DOCKSAMPLE_THEME    = Dark | Light
+        ///   DOCKSAMPLE_ACRYLIC  = 1
+        /// Synthetic input cannot open a WinUI menu flyout reliably (the flyout
+        /// lives in a separate popup root), so capture scripts set these instead
+        /// of trying to click the Material menu.
+        /// </summary>
+        private void ApplyQaOverrides()
+        {
+            if (Environment.GetEnvironmentVariable("DOCKSAMPLE_ACRYLIC") == "1")
+            {
+                AcrylicToggleItem.IsChecked = true;
+                DockThemeManager.SetAcrylicEnabled(true);
+            }
+
+            var theme = Environment.GetEnvironmentVariable("DOCKSAMPLE_THEME");
+            if (Enum.TryParse<ElementTheme>(theme, ignoreCase: true, out var parsedTheme))
+            {
+                ThemeLightItem.IsChecked = parsedTheme == ElementTheme.Light;
+                ThemeDarkItem.IsChecked = parsedTheme != ElementTheme.Light;
+                DockThemeManager.SetTheme(parsedTheme);
+            }
+
+            var backdrop = Environment.GetEnvironmentVariable("DOCKSAMPLE_BACKDROP");
+            if (Enum.TryParse<DockBackdrop>(backdrop, ignoreCase: true, out var parsedBackdrop))
+            {
+                BackdropNoneItem.IsChecked = parsedBackdrop == DockBackdrop.None;
+                BackdropMicaItem.IsChecked = parsedBackdrop is DockBackdrop.Mica or DockBackdrop.MicaAlt;
+                BackdropAcrylicItem.IsChecked = parsedBackdrop == DockBackdrop.Acrylic;
+                ApplyBackdrop(parsedBackdrop);
+            }
+
+            // "The screenshot looks the same" is ambiguous for a backdrop: it can
+            // mean not applied, or applied over a dark uniform wallpaper. Record
+            // what actually happened so a capture run can tell the two apart.
+            try
+            {
+                var rootBrush = (Content as Panel)?.Background as SolidColorBrush;
+                File.WriteAllText(
+                    Path.Combine(AppContext.BaseDirectory, "qa-state.txt"),
+                    $"backdrop={backdrop}\n" +
+                    $"micaSupported={MicaController.IsSupported()}\n" +
+                    $"acrylicSupported={DesktopAcrylicController.IsSupported()}\n" +
+                    $"systemBackdrop={SystemBackdrop?.GetType().Name ?? "null"}\n" +
+                    $"rootBackgroundAlpha={rootBrush?.Color.A.ToString() ?? "n/a"}\n");
+            }
+            catch (IOException)
+            {
+                // Diagnostics only.
+            }
         }
 
         private async void Save_Click(object sender, RoutedEventArgs e)

@@ -78,7 +78,7 @@ namespace Dock.WinUI3.Internal
 
             if (_adornerHelper.Adorner is DockTarget target)
             {
-                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                var sourceDockable = GetSourceDockable(_state.DragControl);
                 var targetDockable = _state.DropControl?.DataContext as IDockable;
                 operation = target.GetDockOperation(point, relativeTo, dragAction, sourceDockable, targetDockable, Validate);
             }
@@ -146,7 +146,7 @@ namespace Dock.WinUI3.Internal
 
             if (_adornerHelper.Adorner is DockTarget target)
             {
-                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                var sourceDockable = GetSourceDockable(_state.DragControl);
                 var targetDockable = _state.DropControl?.DataContext as IDockable;
                 operation = target.GetDockOperation(point, relativeTo, dragAction, sourceDockable, targetDockable, Validate);
             }
@@ -254,7 +254,7 @@ namespace Dock.WinUI3.Internal
             EnsureAdorner(root, relativeTo);
             if (_adornerHelper.Adorner is DockTarget target)
             {
-                var sourceDockable = _state.DragControl?.DataContext as IDockable;
+                var sourceDockable = GetSourceDockable(_state.DragControl);
 
                 // Layout of the window the adorner is on — it decides whether the
                 // source's "already at this edge" suppression applies here at all.
@@ -270,7 +270,7 @@ namespace Dock.WinUI3.Internal
                 return false;
             }
 
-            if (_state.DragControl.DataContext is IDockable sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
+            if (GetSourceDockable(_state.DragControl) is { } sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
             {
                 var ownerWindow = HostWindow.GetWindowForElement(relativeTo);
                 GeneralTransform transform = ownerWindow.Content.TransformToVisual(relativeTo);
@@ -298,7 +298,7 @@ namespace Dock.WinUI3.Internal
                 return;
             }
 
-            if (_state.DragControl.DataContext is IDockable sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
+            if (GetSourceDockable(_state.DragControl) is { } sourceDockable && _state.DropControl.DataContext is IDockable targetDockable)
             {
                 // D18: deliberately NOT reduced to dock.ActiveDockable. Dragging a
                 // tool TAB gives a tool; dragging the chrome caption gives the whole
@@ -353,6 +353,29 @@ namespace Dock.WinUI3.Internal
             }
         }
 
+
+        /// <summary>
+        /// The dockable a gesture is actually moving. Grabbing a tool pane's
+        /// caption grabs the DOCK — its DataContext is the whole pane — so unless
+        /// the host opts out this resolves to the pane's active tool. Tab drags
+        /// already carry the individual tool and fall through unchanged.
+        /// </summary>
+        private static IDockable GetSourceDockable(Control dragControl)
+        {
+            if (dragControl?.DataContext is not IDockable dockable)
+            {
+                return null;
+            }
+
+            if (DockSettings.DragActiveToolOnly &&
+                dockable is IToolDock { ActiveDockable: { } active })
+            {
+                return active;
+            }
+
+            return dockable;
+        }
+
         private static bool IsMinimumDragDistance(Vector diff)
         {
             return (Math.Abs(diff.X) > DockSettings.MinimumHorizontalDragDistance
@@ -404,7 +427,7 @@ namespace Dock.WinUI3.Internal
                         IDockable draggedDockable = null;
                         if (_state.DoDragDrop)
                         {
-                            draggedDockable = _state.DragControl?.DataContext as IDockable;
+                            draggedDockable = GetSourceDockable(_state.DragControl);
                             if (_state.DropControl is { } && _state.TargetDockControl is { })
                             {
                                 var isDropEnabled = true;
@@ -462,7 +485,7 @@ namespace Dock.WinUI3.Internal
                             var haveMinimumDragDistance = IsMinimumDragDistance(diff);
                             if (haveMinimumDragDistance)
                             {
-                                if (_state.DragControl?.DataContext is IDockable targetDockable)
+                                if (GetSourceDockable(_state.DragControl) is { } targetDockable)
                                 {
                                     DockHelpers.ShowWindows(targetDockable);
                                 }

@@ -16,11 +16,17 @@
                         <local:ToolTabStrip x:Name="PART_TabStrip"
                                             MaxHeight="{ThemeResource DockToolTabStripHeight}"
                                             local:DockPanel.Dock="Bottom"/>
+                        <!-- Sits inside the ToolChromeControl pane card, which
+                             already paints the surface and the border; painting
+                             them again here would square off the rounded corners.
+                             Kept as a named element: PinnedDockControl clears its
+                             background for the auto-hide flyout, and the content
+                             padding token hangs off it. -->
                         <Border x:Name="PART_Border"
                                 local:DockPanel.Dock="Top"
-                                Background="{ThemeResource DockPaneBackgroundBrush}"
-                                BorderBrush="{ThemeResource DockPaneBorderBrush}"
-                                BorderThickness="1">
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="{ThemeResource DockPaneContentPadding}">
                             <local:DockableControl x:Name="PART_DockableControl"
                                                    TrackingMode="Visible">
                                 <ContentControl x:Name="PART_ToolContentControl">

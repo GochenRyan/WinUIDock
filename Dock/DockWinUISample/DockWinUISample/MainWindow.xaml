@@ -13,7 +13,7 @@
     Title="WinUIDock Sample"
     mc:Ignorable="d">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*" Background="{ThemeResource DockBackgroundBrush}">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Background="{ThemeResource DockWindowSurfaceBrush}">
 
         <!-- Tall title bar (Toolkit Labs TitleBar), deliberately spare: icon and
              title only — no search, no avatar. Window="{x:Bind}" +

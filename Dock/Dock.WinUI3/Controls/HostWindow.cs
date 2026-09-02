@@ -162,9 +162,26 @@ namespace Dock.WinUI3.Controls
                 }
             }
 
-            if (_mainWindow != null && element.XamlRoot == _mainWindow.Content?.XamlRoot)
+            // The same guard the loop above already has, which this fallback was
+            // missing: reading Content on a CLOSED Window throws 0x800710DD, and
+            // this runs from pointer handlers (DockControl.PointerExited). An
+            // exception escaping there crosses the WinRT ABI and fail-fasts the
+            // process (0xC000027B) rather than surfacing as a catchable error.
+            if (_mainWindow != null)
             {
-                return _mainWindow;
+                try
+                {
+                    if (element.XamlRoot == _mainWindow.Content?.XamlRoot)
+                    {
+                        return _mainWindow;
+                    }
+                }
+                catch
+                {
+                    // Closed main window (teardown in flight): drop it so later
+                    // lookups stop retrying a dead object.
+                    _mainWindow = null;
+                }
             }
 
             return null;

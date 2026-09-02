@@ -211,7 +211,7 @@ namespace Dock.WinUI3.Controls
         // DockSplitterThickness theme metric (host-overridable).
         internal static double ResolveSplitterThickness(double modelValue)
         {
-            return modelValue > 0 ? modelValue : DockMetrics.GetDouble("DockSplitterThickness", 4.0);
+            return modelValue > 0 ? modelValue : DockMetrics.GetDouble("DockSplitterThickness", 6.0);
         }
 
         private static void OnOrientationChanged(DependencyObject ob, DependencyPropertyChangedEventArgs args)
